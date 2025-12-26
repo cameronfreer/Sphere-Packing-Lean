@@ -1652,20 +1652,29 @@ lemma DF_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (D F) := D_differentiable F
 lemma serre_D_10_F_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (serre_D 10 F) :=
   serre_D_differentiable F_holo'
 
+/-- D(D F) expanded as polynomial in E₂, E₄, E₆. -/
+lemma DDF_aux : D (D F) = D (5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2
+    - 5 * 2⁻¹ * E₂ ^ 2 * E₄.toFun * E₆.toFun
+    + 5 * 6⁻¹ * E₂ * E₄.toFun ^ 3
+    + 5 * 3⁻¹ * E₂ * E₆.toFun ^ 2
+    - 5 * 6⁻¹ * E₄.toFun^2 * E₆.toFun) := by rw [F_aux]
+
 /-- Modular linear differential equation satisfied by `F`. -/
 theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
   -- The modular linear differential equation for F = (E₂·E₄ - E₆)².
   -- Both sides expand to polynomials in E₂, E₄, E₆ via the Ramanujan identities.
   --
-  -- The calculation is lengthy but purely algebraic after applying the
-  -- Ramanujan identities: D(E₂) = (E₂² - E₄)/12, D(E₄) = (E₂·E₄ - E₆)/3,
-  -- D(E₆) = (E₂·E₆ - E₄²)/2
+  -- The proof requires:
+  -- 1. Expand serre_D 10 F = D F - (5/6) E₂ F using serre_D_10_F
+  -- 2. Expand serre_D 12 (g) = D g - E₂ g for g = D F - (5/6) E₂ F
+  -- 3. Use F_aux: D F = 5/6 E₂³ E₄² - 5/2 E₂² E₄ E₆ + 5/6 E₂ E₄³ + 5/3 E₂ E₆² - 5/6 E₄² E₆
+  -- 4. Compute D(D F) by applying D_sub, D_add, D_mul to each term in F_aux
+  -- 5. Substitute Ramanujan identities: D E₂ = (E₂² - E₄)/12, D E₄ = (E₂ E₄ - E₆)/3,
+  --    D E₆ = (E₂ E₆ - E₄²)/2
+  -- 6. Expand RHS definitions and verify algebraic equality with ring_nf
   --
-  -- The full algebraic verification requires computing D(D F) where F_aux gives D F,
-  -- then combining with the serre_D terms. This is a known identity from the
-  -- theory of modular forms.
-  --
-  -- Proof deferred: requires extensive D-rule applications and ring verification.
+  -- This is a known identity from the theory of modular forms. The algebraic
+  -- verification is lengthy but straightforward.
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
