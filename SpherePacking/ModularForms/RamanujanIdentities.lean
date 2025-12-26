@@ -1661,20 +1661,40 @@ lemma DDF_aux : D (D F) = D (5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2
 
 /-- Modular linear differential equation satisfied by `F`. -/
 theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
-  -- The modular linear differential equation for F = (E₂·E₄ - E₆)².
-  -- Both sides expand to polynomials in E₂, E₄, E₆ via the Ramanujan identities.
-  --
-  -- The proof requires:
-  -- 1. Expand serre_D 10 F = D F - (5/6) E₂ F using serre_D_10_F
-  -- 2. Expand serre_D 12 (g) = D g - E₂ g for g = D F - (5/6) E₂ F
-  -- 3. Use F_aux: D F = 5/6 E₂³ E₄² - 5/2 E₂² E₄ E₆ + 5/6 E₂ E₄³ + 5/3 E₂ E₆² - 5/6 E₄² E₆
-  -- 4. Compute D(D F) by applying D_sub, D_add, D_mul to each term in F_aux
-  -- 5. Substitute Ramanujan identities: D E₂ = (E₂² - E₄)/12, D E₄ = (E₂ E₄ - E₆)/3,
-  --    D E₆ = (E₂ E₆ - E₄²)/2
-  -- 6. Expand RHS definitions and verify algebraic equality with ring_nf
-  --
-  -- This is a known identity from the theory of modular forms. The algebraic
-  -- verification is lengthy but straightforward.
+  -- Holomorphicity setup
+  have hE₂ := E₂_holo'
+  have hE₄ := E₄.holo'
+  have hE₆ := E₆.holo'
+  have hE₂E₄ := MDifferentiable.mul hE₂ hE₄
+  have hE₂E₆ := MDifferentiable.mul hE₂ hE₆
+  have hE₄E₆ := MDifferentiable.mul hE₄ hE₆
+  have hE₄sq := MDifferentiable.mul hE₄ hE₄
+  have hE₆sq := MDifferentiable.mul hE₆ hE₆
+  have hE₂sq := MDifferentiable.mul hE₂ hE₂
+  have hE₂cu := MDifferentiable.mul hE₂ hE₂sq
+  have hE₄cu := MDifferentiable.mul hE₄ hE₄sq
+  have hE₂E₄_sub_E₆ := MDifferentiable.sub hE₂E₄ hE₆
+  have hF := F_holo'
+  have hDF := DF_holo'
+  -- Step 1: Expand serre_D 10 F
+  rw [serre_D_10_F]
+  -- Step 2: Expand serre_D 12 and simplify
+  unfold serre_D
+  -- Step 3: Replace D F using F_aux
+  rw [F_aux]
+  -- Now the goal involves D applied to the F_aux polynomial minus 5/6*E₂*F
+  -- Step 4: Apply D rules to expand
+  -- The polynomial is: 5/6 E₂³E₄² - 5/2 E₂²E₄E₆ + 5/6 E₂E₄³ + 5/3 E₂E₆² - 5/6 E₄²E₆ - 5/6 E₂F
+  -- D distributes over sums and differences, and D(cf) = c·D(f) for constants
+  -- Each product term requires the product rule and Ramanujan identities
+  -- Step 5: Expand definitions
+  simp only [F, Δ_fun, X₄₂]
+  -- Step 6: Work pointwise
+  ext z
+  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply]
+  -- The goal is an algebraic identity in D expressions evaluated at z
+  -- After applying D rules and Ramanujan identities, both sides are polynomials in E₂ z, E₄ z, E₆ z
+  -- Proof deferred: requires systematic D-rule expansion
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
