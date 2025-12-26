@@ -1638,43 +1638,34 @@ lemma F_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) F := by
   have hE₂E₄_sub_E₆ := MDifferentiable.sub hE₂E₄ E₆.holo'
   simp only [F, sq]; exact MDifferentiable.mul hE₂E₄_sub_E₆ hE₂E₄_sub_E₆
 
+/-- Helper: serre_D 10 F expanded. -/
+lemma serre_D_10_F : serre_D 10 F = D F - 5 * 6⁻¹ * E₂ * F := by
+  ext z
+  simp only [serre_D, smul_eq_mul, Pi.sub_apply, Pi.mul_apply]
+  -- 10 * 12⁻¹ = 5 * 6⁻¹
+  norm_num
+
+/-- Helper: Holomorphicity of D F. -/
+lemma DF_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (D F) := D_differentiable F_holo'
+
+/-- Helper: Holomorphicity of serre_D 10 F. -/
+lemma serre_D_10_F_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (serre_D 10 F) :=
+  serre_D_differentiable F_holo'
+
 /-- Modular linear differential equation satisfied by `F`. -/
 theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
   -- The modular linear differential equation for F = (E₂·E₄ - E₆)².
-  -- Proof strategy:
-  -- 1. Expand serre_D 10 F = D F - (5/6)·E₂·F using F_aux
-  -- 2. Apply serre_D 12 = D - E₂· to this
-  -- 3. Compute D(D F) using D rules applied to F_aux
-  -- 4. Apply Ramanujan identities to all D terms
-  -- 5. Combine with RHS = (5/6)·E₄·F + 172800·Δ_fun·X₄₂ where
-  --    Δ_fun = (E₄³ - E₆²)/1728 and X₄₂ = (E₄ - E₂²)/288
-  -- 6. Verify algebraic equality by ring_nf
+  -- Both sides expand to polynomials in E₂, E₄, E₆ via the Ramanujan identities.
   --
   -- The calculation is lengthy but purely algebraic after applying the
   -- Ramanujan identities: D(E₂) = (E₂² - E₄)/12, D(E₄) = (E₂·E₄ - E₆)/3,
   -- D(E₆) = (E₂·E₆ - E₄²)/2
-  -- Expand serre_D definitions
-  ext z
-  simp only [serre_D, smul_eq_mul, Pi.add_apply, Pi.mul_apply, Pi.sub_apply]
-  -- The LHS involves D (D F - (10/12) * E₂ * F) - E₂ * (D F - (10/12) * E₂ * F)
-  -- We'll substitute D F using F_aux and expand using D rules
-  have hDF := F_aux
-  -- Holomorphicity needed for D rules
-  have hE₂ := E₂_holo'
-  have hE₄ := E₄.holo'
-  have hE₆ := E₆.holo'
-  have hF := F_holo'
-  have hE₂F := MDifferentiable.mul hE₂ hF
-  -- D(E₂ * F) = E₂ * D F + D E₂ * F
-  have hD_E₂F : D (E₂ * F) = E₂ * D F + D E₂ * F := D_mul E₂ F hE₂ hF
-  -- Substitute Ramanujan identities
-  rw [ramanujan_E₂] at hD_E₂F
-  -- The rest requires computing D(D F) which is a long calculation
-  -- involving D_mul, D_sub, D_add applied to F_aux terms
-  -- and substituting ramanujan_E₂, ramanujan_E₄, ramanujan_E₆
   --
-  -- After full expansion, both LHS and RHS are degree-6 polynomials in E₂, E₄, E₆
-  -- that can be verified equal by ring_nf
+  -- The full algebraic verification requires computing D(D F) where F_aux gives D F,
+  -- then combining with the serre_D terms. This is a known identity from the
+  -- theory of modular forms.
+  --
+  -- Proof deferred: requires extensive D-rule applications and ring verification.
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
