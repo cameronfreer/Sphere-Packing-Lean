@@ -1653,6 +1653,28 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   -- The calculation is lengthy but purely algebraic after applying the
   -- Ramanujan identities: D(E₂) = (E₂² - E₄)/12, D(E₄) = (E₂·E₄ - E₆)/3,
   -- D(E₆) = (E₂·E₆ - E₄²)/2
+  -- Expand serre_D definitions
+  ext z
+  simp only [serre_D, smul_eq_mul, Pi.add_apply, Pi.mul_apply, Pi.sub_apply]
+  -- The LHS involves D (D F - (10/12) * E₂ * F) - E₂ * (D F - (10/12) * E₂ * F)
+  -- We'll substitute D F using F_aux and expand using D rules
+  have hDF := F_aux
+  -- Holomorphicity needed for D rules
+  have hE₂ := E₂_holo'
+  have hE₄ := E₄.holo'
+  have hE₆ := E₆.holo'
+  have hF := F_holo'
+  have hE₂F := MDifferentiable.mul hE₂ hF
+  -- D(E₂ * F) = E₂ * D F + D E₂ * F
+  have hD_E₂F : D (E₂ * F) = E₂ * D F + D E₂ * F := D_mul E₂ F hE₂ hF
+  -- Substitute Ramanujan identities
+  rw [ramanujan_E₂] at hD_E₂F
+  -- The rest requires computing D(D F) which is a long calculation
+  -- involving D_mul, D_sub, D_add applied to F_aux terms
+  -- and substituting ramanujan_E₂, ramanujan_E₄, ramanujan_E₆
+  --
+  -- After full expansion, both LHS and RHS are degree-6 polynomials in E₂, E₄, E₆
+  -- that can be verified equal by ring_nf
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
