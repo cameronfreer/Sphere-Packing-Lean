@@ -39,7 +39,7 @@ noncomputable section
 abbrev PosReal := {y : ℝ // 0 < y}
 
 /-- The filter comap of Subtype.val on PosReal at atTop is NeBot. -/
-lemma PosReal_comap_atTop_neBot :
+instance PosReal_comap_atTop_neBot :
     (Filter.comap Subtype.val (Filter.atTop : Filter ℝ)).NeBot (α := PosReal) := by
   rw [Filter.comap_neBot_iff]
   intro s hs

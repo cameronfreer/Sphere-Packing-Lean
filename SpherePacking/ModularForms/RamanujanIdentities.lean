@@ -90,8 +90,7 @@ theorem ramanujan_E₂' : serre_D 1 E₂ = - 12⁻¹ * E₄.toFun := by
       convert hlim_c using 1
       ext y
       exact heq y
-    -- By uniqueness of limits
-    haveI : (Filter.comap Subtype.val Filter.atTop).NeBot := PosReal_comap_atTop_neBot
+    -- By uniqueness of limits (instance PosReal_comap_atTop_neBot provides NeBot)
     exact tendsto_nhds_unique hlim_eq hlim_serre
   -- Now substitute c = -1/12
   ext z
@@ -164,8 +163,7 @@ theorem ramanujan_E₄' : serre_D 4 E₄.toFun = - 3⁻¹ * E₆.toFun := by
       convert hlim_c using 1
       ext y
       exact heq y
-    -- By uniqueness of limits: -1/3 = c
-    haveI := PosReal_comap_atTop_neBot
+    -- By uniqueness of limits: -1/3 = c (instance PosReal_comap_atTop_neBot provides NeBot)
     exact (tendsto_nhds_unique hlim_serre hlim_eq).symm
   ext z
   rw [hfun z, hc_val]
@@ -259,8 +257,7 @@ theorem ramanujan_E₆' : serre_D 6 E₆.toFun = - 2⁻¹ * E₄.toFun * E₄.to
       convert hlim_c using 1
       ext y
       exact heq y
-    -- By uniqueness of limits: -1/2 = c
-    haveI := PosReal_comap_atTop_neBot
+    -- By uniqueness of limits: -1/2 = c (instance PosReal_comap_atTop_neBot provides NeBot)
     exact (tendsto_nhds_unique hlim_serre hlim_eq).symm
   ext z
   rw [hfun z, hc_val]
