@@ -457,7 +457,7 @@ lemma serre_D_E₄_tendsto_at_infinity :
       D E₄.toFun (iMulPosReal y) -
         (4 : ℂ) * 12⁻¹ * E₂ (iMulPosReal y) * E₄.toFun (iMulPosReal y) := by
     intro y
-    simp only [serre_D, Pi.sub_apply]
+    simp only [serre_D]
   simp_rw [hserre]
   have hD : Filter.Tendsto (fun y : PosReal => D E₄.toFun (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) :=
@@ -483,7 +483,7 @@ lemma serre_D_E₆_tendsto_at_infinity :
       D E₆.toFun (iMulPosReal y) -
         (6 : ℂ) * 12⁻¹ * E₂ (iMulPosReal y) * E₆.toFun (iMulPosReal y) := by
     intro y
-    simp only [serre_D, Pi.sub_apply]
+    simp only [serre_D]
   simp_rw [hserre]
   have hD : Filter.Tendsto (fun y : PosReal => D E₆.toFun (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) := by
@@ -534,7 +534,7 @@ lemma serre_D_E₂_tendsto_at_infinity :
   have hserre : ∀ y : PosReal, serre_D 1 E₂ (iMulPosReal y) =
       D E₂ (iMulPosReal y) - 1 * 12⁻¹ * E₂ (iMulPosReal y) * E₂ (iMulPosReal y) := by
     intro y
-    simp only [serre_D, Pi.sub_apply, Pi.mul_apply]
+    simp only [serre_D]
   simp_rw [hserre]
   have hD : Filter.Tendsto (fun y : PosReal => D E₂ (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) :=

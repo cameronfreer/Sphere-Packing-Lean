@@ -64,6 +64,8 @@ theorem ramanujan_E₂' : serre_D 1 E₂ = - 12⁻¹ * E₄.toFun := by
     intro z
     rw [← hcoe]
     have := congrFun (congrArg (↑· : ModularForm _ _ → ℍ → ℂ) hc.symm) z
+    -- Args needed for normalization even if linter says unused
+    set_option linter.unusedSimpArgs false in
     simp only [ModularForm.coe_smul, Pi.smul_apply, smul_eq_mul] at this
     exact this
   -- Now we need to show c = -1/12 using limits
@@ -131,6 +133,8 @@ theorem ramanujan_E₄' : serre_D 4 E₄.toFun = - 3⁻¹ * E₆.toFun := by
     intro z
     rw [← hcoe]
     have := congrFun (congrArg (↑· : ModularForm _ _ → ℍ → ℂ) hc.symm) z
+    -- Args needed for normalization even if linter says unused
+    set_option linter.unusedSimpArgs false in
     simp only [ModularForm.coe_smul, Pi.smul_apply, smul_eq_mul] at this
     exact this
   -- Now we need to show c = -1/3 using limits
@@ -222,6 +226,8 @@ theorem ramanujan_E₆' : serre_D 6 E₆.toFun = - 2⁻¹ * E₄.toFun * E₄.to
     intro z
     rw [← hcoe]
     have := congrFun (congrArg (↑· : ModularForm _ _ → ℍ → ℂ) hc.symm) z
+    -- Args needed for normalization even if linter says unused
+    set_option linter.unusedSimpArgs false in
     simp only [ModularForm.coe_smul, Pi.smul_apply, smul_eq_mul] at this
     -- Need to relate E₄_sq to E₄.toFun * E₄.toFun
     -- E₄_sq = (4 + 4 = 8) ▸ (E₄.mul E₄), so the underlying function is E₄ * E₄
@@ -290,7 +296,8 @@ theorem ramanujan_E₂ : D E₂ = 12⁻¹ * (E₂ * E₂ - E₄.toFun) := by
   -- Simplify 1 * 12⁻¹ = 12⁻¹
   simp only [one_mul] at step1
   rw [step1]
-  -- Simplify the goal - Pi.mul_apply for constant function
+  -- Simplify the goal - Pi args normalize constant functions
+  set_option linter.unusedSimpArgs false in
   simp only [Pi.mul_apply, Pi.sub_apply, Pi.one_apply, Pi.inv_apply, Pi.ofNat_apply]
   ring
 
@@ -318,7 +325,8 @@ theorem ramanujan_E₄ : D E₄.toFun = 3⁻¹ * (E₂ * E₄.toFun - E₆.toFun
   have h412 : (4 : ℂ) * 12⁻¹ = 3⁻¹ := by norm_num
   rw [h412] at step1
   rw [step1]
-  -- Simplify the goal - Pi.mul_apply for constant function
+  -- Simplify the goal - Pi args normalize constant functions
+  set_option linter.unusedSimpArgs false in
   simp only [Pi.mul_apply, Pi.sub_apply, Pi.one_apply, Pi.inv_apply, Pi.ofNat_apply]
   ring
 
@@ -347,7 +355,8 @@ theorem ramanujan_E₆ : D E₆.toFun = 2⁻¹ * (E₂ * E₆.toFun - E₄.toFun
   have h612 : (6 : ℂ) * 12⁻¹ = 2⁻¹ := by norm_num
   rw [h612] at step1
   rw [step1]
-  -- Simplify the goal - Pi.mul_apply for constant function
+  -- Simplify the goal - Pi args normalize constant functions
+  set_option linter.unusedSimpArgs false in
   simp only [Pi.mul_apply, Pi.sub_apply, Pi.one_apply, Pi.inv_apply, Pi.ofNat_apply]
   ring
 
@@ -395,10 +404,11 @@ lemma D_exp_eq_n_mul (n : ℕ) (z : ℍ) :
   field_simp
 
 /--
-Key identity: The double sum ∑' (c,d), c * d^(k+1) * exp(2πi*z*cd) equals ∑' n, n * σ_k(n) * exp(2πi*n*z).
-This follows from the definition σ_k(n) = ∑_{d|n} d^k and the identity n * σ_k(n) = ∑_{cd=n} c * d^(k+1).
+Key identity: The double sum ∑' (c,d), c * d^(k+1) * exp(2πi*z*cd) equals
+∑' n, n * σ_k(n) * exp(2πi*n*z).
+This follows from σ_k(n) = ∑_{d|n} d^k and n * σ_k(n) = ∑_{cd=n} c * d^(k+1).
 
-The proof uses `tsum_sigma_eqn` and the fact that differentiation multiplies by the exponent factor.
+The proof uses `tsum_sigma_eqn` and differentiation multiplies by the exponent factor.
 -/
 lemma tsum_sigma_deriv_eq {k : ℕ} (z : ℍ) :
     ∑' c : ℕ+ × ℕ+, (c.1 : ℂ) * (c.2 : ℂ) ^ (k + 1) * cexp (2 * π * I * z * c.1 * c.2) =
@@ -426,7 +436,8 @@ lemma tsum_sigma_deriv_eq {k : ℕ} (z : ℍ) :
       intro n
       exact (hasSum_fintype _).summable
     · -- Outer sum of norms converges
-      simp only [Complex.norm_mul, norm_pow, RCLike.norm_natCast, tsum_fintype, Finset.univ_eq_attach]
+      simp only [Complex.norm_mul, norm_pow, RCLike.norm_natCast, tsum_fintype,
+        Finset.univ_eq_attach]
       have H (n : ℕ+) := Finset.sum_attach ((n : ℕ).divisorsAntidiagonal) (fun (x : ℕ × ℕ) =>
         (x.1 : ℝ) * (x.2 : ℝ) ^ (k + 1) * ‖cexp (2 * π * I * z * x.1 * x.2)‖)
       have H2 (n : ℕ+) := Nat.sum_divisorsAntidiagonal ((fun (x : ℕ) => fun (y : ℕ) =>
@@ -620,6 +631,8 @@ lemma D_E4_qexp (z : ℍ) :
     -- Rewrite exponent argument to match ha33 form
     have harg : cexp (2 * π * I * y * n) = cexp (2 * π * I * (1 : ℕ+) * (y_uhp : ℂ) * n) := by
       congr 1
+      -- Args needed for expression normalization even if linter says unused
+      set_option linter.unusedSimpArgs false in
       simp only [hy_coe, PNat.one_coe, Nat.cast_one, Complex.ofReal_one, mul_one]
     rw [harg]
     -- Goal: (σ 3 n : ℝ) * ‖exp(...)‖ ≤ ‖n‖^4 * ‖exp(...)‖
@@ -629,7 +642,8 @@ lemma D_E4_qexp (z : ℍ) :
     exact_mod_cast hsigma_bound n
   -- Uniform derivative bound on compact sets
   have hu : ∀ K ⊆ {w : ℂ | 0 < w.im}, IsCompact K →
-      ∃ u : ℕ+ → ℝ, Summable u ∧ ∀ (n : ℕ+) (k : K), ‖derivWithin (f n) {w | 0 < w.im} k‖ ≤ u n := by
+      ∃ u : ℕ+ → ℝ, Summable u ∧
+        ∀ (n : ℕ+) (k : K), ‖derivWithin (f n) {w | 0 < w.im} k‖ ≤ u n := by
     intro K hK hKc
     -- |deriv (f n)| = |σ 3 n| * |2πn| * |exp(...)| ≤ n^4 * 2πn * |exp(...)|
     -- Since n^4 * 2πn = n^5 * 2π ≤ (2πn)^5 (for n ≥ 1, 2π > 1)
@@ -750,7 +764,8 @@ lemma D_E4_qexp (z : ℍ) :
   -- Goal: (2πI)⁻¹ * (240 * ((2πI) * ∑ (...))) = 240 * ∑ (...)
   -- Use calc to handle the algebra step by step
   let T := ∑' n : ℕ+, (n : ℂ) * (σ 3 n) * cexp (2 * π * I * n * z)
-  show (2 * π * I)⁻¹ * (240 * ((2 * π * I) * T)) = 240 * T
+  -- Unfold to reveal T in goal
+  change (2 * π * I)⁻¹ * (240 * ((2 * π * I) * T)) = 240 * T
   calc (2 * π * I)⁻¹ * (240 * ((2 * π * I) * T))
       = (2 * π * I)⁻¹ * (2 * π * I) * (240 * T) := by ring
     _ = 1 * (240 * T) := by rw [inv_mul_cancel₀ h2pi]
@@ -828,7 +843,7 @@ lemma F_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) F := by
 /-- Helper: serre_D 10 F expanded. -/
 lemma serre_D_10_F : serre_D 10 F = D F - 5 * 6⁻¹ * E₂ * F := by
   ext z
-  simp only [serre_D, smul_eq_mul, Pi.sub_apply, Pi.mul_apply]
+  simp only [serre_D, Pi.sub_apply, Pi.mul_apply]
   -- 10 * 12⁻¹ = 5 * 6⁻¹
   norm_num
 
@@ -928,6 +943,9 @@ lemma E2_E6sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ * E₆.toFun ^ 2
 lemma E4sq_E6_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₄.toFun ^ 2 * E₆.toFun) :=
   MDifferentiable.mul E₄sq_holo' E₆.holo'
 
+-- MLDE_F involves complex algebraic manipulations where simp args are needed
+-- for normalization even if the linter says they're unused
+set_option linter.unusedSimpArgs false in
 /-- Modular linear differential equation satisfied by `F`. -/
 theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
   -- Holomorphicity setup
@@ -994,22 +1012,18 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   -- The Ramanujan identities give D E₂ = 12⁻¹ * (E₂² - E₄) etc.
   -- At point z: D E₂ z = (12⁻¹ : ℂ) * (E₂ z² - E₄ z)
   -- Note: The `ring` after `convert h using 2 <;>` handles associativity goals that `convert`
-  -- sometimes generates. The linter incorrectly reports these as unreachable.
-  set_option linter.unreachableTactic false in
   have hR2 : D E₂ z = (12 : ℂ)⁻¹ * (E₂ z * E₂ z - E₄.toFun z) := by
     have h := congrFun ramanujan_E₂ z
     simp only [Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at h
-    convert h using 2 <;> ring
-  set_option linter.unreachableTactic false in
+    convert h using 2
   have hR4 : D E₄.toFun z = (3 : ℂ)⁻¹ * (E₂ z * E₄.toFun z - E₆.toFun z) := by
     have h := congrFun ramanujan_E₄ z
     simp only [Pi.mul_apply, Pi.sub_apply] at h
-    convert h using 2 <;> ring
-  set_option linter.unreachableTactic false in
+    convert h using 2
   have hR6 : D E₆.toFun z = (2 : ℂ)⁻¹ * (E₂ z * E₆.toFun z - E₄.toFun z * E₄.toFun z) := by
     have h := congrFun ramanujan_E₆ z
     simp only [Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at h
-    convert h using 2 <;> ring
+    convert h using 2
   -- Get hD_outer and hD_cE₂F at point z (these still have F unexpanded)
   have hO := congrFun hD_outer z
   have hC := congrFun hD_cE₂F z
