@@ -1720,6 +1720,27 @@ lemma DDF_aux : D (D F) = D (5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2
     + 5 * 3⁻¹ * E₂ * E₆.toFun ^ 2
     - 5 * 6⁻¹ * E₄.toFun^2 * E₆.toFun) := by rw [F_aux]
 
+/-- Holomorphicity of E₂³ E₄². -/
+lemma E2cu_E4sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ ^ 3 * E₄.toFun ^ 2) :=
+  MDifferentiable.mul E₂cu_holo' E₄sq_holo'
+
+/-- Holomorphicity of E₂² E₄ E₆. -/
+lemma E2sq_E4_E6_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ ^ 2 * E₄.toFun * E₆.toFun) := by
+  have h1 := MDifferentiable.mul E₂sq_holo' E₄.holo'
+  exact MDifferentiable.mul h1 E₆.holo'
+
+/-- Holomorphicity of E₂ E₄³. -/
+lemma E2_E4cu_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ * E₄.toFun ^ 3) :=
+  MDifferentiable.mul E₂_holo' E₄cu_holo'
+
+/-- Holomorphicity of E₂ E₆². -/
+lemma E2_E6sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ * E₆.toFun ^ 2) :=
+  MDifferentiable.mul E₂_holo' E₆sq_holo'
+
+/-- Holomorphicity of E₄² E₆. -/
+lemma E4sq_E6_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₄.toFun ^ 2 * E₆.toFun) :=
+  MDifferentiable.mul E₄sq_holo' E₆.holo'
+
 /-- Modular linear differential equation satisfied by `F`. -/
 theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
   -- Holomorphicity setup
@@ -1779,31 +1800,104 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   -- The coefficients are:
   --   172800 = 600 * 288 and Δ = 1728⁻¹(E₄³ - E₆²), X₄₂ = 288⁻¹(E₄ - E₂²)
   --   So 172800 * 1728⁻¹ * 288⁻¹ = 600/1728 = 25/72
-  -- The algebraic identity is verified by direct computation in a CAS or by ring
-  simp only [F, Δ_fun, X₄₂]
+  -- Work at function level first, then go pointwise
   ext z
   simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul]
   -- Evaluate function-level identities at z
-  have hR2 := congrFun ramanujan_E₂ z
-  have hR4 := congrFun ramanujan_E₄ z
-  have hR6 := congrFun ramanujan_E₆ z
-  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul] at hR2 hR4 hR6
-  -- Get hD_outer and hD_cE₂F at point z
+  -- The Ramanujan identities give D E₂ = 12⁻¹ * (E₂² - E₄) etc.
+  -- At point z: D E₂ z = (12⁻¹ : ℂ) * (E₂ z² - E₄ z)
+  have hR2 : D E₂ z = (12 : ℂ)⁻¹ * (E₂ z * E₂ z - E₄.toFun z) := by
+    have h := congrFun ramanujan_E₂ z
+    simp only [Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at h
+    convert h using 2 <;> ring
+  have hR4 : D E₄.toFun z = (3 : ℂ)⁻¹ * (E₂ z * E₄.toFun z - E₆.toFun z) := by
+    have h := congrFun ramanujan_E₄ z
+    simp only [Pi.mul_apply, Pi.sub_apply] at h
+    convert h using 2 <;> ring
+  have hR6 : D E₆.toFun z = (2 : ℂ)⁻¹ * (E₂ z * E₆.toFun z - E₄.toFun z * E₄.toFun z) := by
+    have h := congrFun ramanujan_E₆ z
+    simp only [Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at h
+    convert h using 2 <;> ring
+  -- Get hD_outer and hD_cE₂F at point z (these still have F unexpanded)
   have hO := congrFun hD_outer z
   have hC := congrFun hD_cE₂F z
   simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul] at hO hC
   -- Expand D F using F_aux
   have hDF_z := congrFun F_aux z
   simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul] at hDF_z
-  -- The key is that after all these substitutions and using Ramanujan identities,
-  -- both sides reduce to the same polynomial in E₂ z, E₄ z, E₆ z
-  -- Substitute Ramanujan identities to eliminate all D terms
-  simp only [hR2, hR4, hR6, hDF_z, Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at hO hC ⊢
-  -- The goal after simp and ring_nf should be a polynomial identity
-  -- The sorry represents the final algebraic verification that both sides equal
-  -- This is a degree-6 polynomial identity in E₂(z), E₄(z), E₆(z) that could be
-  -- verified by a computer algebra system or polyrith
-  sorry
+  -- Expand D(D F) z using the helper lemmas
+  -- First get the D-rules for each monomial in F_aux at point z
+  have hD1 := congrFun D_E2cu_E4sq z
+  have hD2 := congrFun D_E2sq_E4_E6 z
+  have hD3 := congrFun D_E2_E4cu z
+  have hD4 := congrFun D_E2_E6sq z
+  have hD5 := congrFun D_E4sq_E6 z
+  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at hD1 hD2 hD3 hD4 hD5
+  -- D(D F) = D(F_aux) and F_aux is a linear combination of the monomials
+  -- Set up smul-mul conversions
+  have hsmul1 : (5 * 6⁻¹ : ℂ) • (E₂ ^ 3 * E₄.toFun ^ 2) = 5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2 := by
+    ext w; simp [smul_eq_mul]; ring
+  have hsmul2 : (5 * 2⁻¹ : ℂ) • (E₂ ^ 2 * E₄.toFun * E₆.toFun) =
+      5 * 2⁻¹ * E₂ ^ 2 * E₄.toFun * E₆.toFun := by ext w; simp [smul_eq_mul]; ring
+  have hsmul3 : (5 * 6⁻¹ : ℂ) • (E₂ * E₄.toFun ^ 3) = 5 * 6⁻¹ * E₂ * E₄.toFun ^ 3 := by
+    ext w; simp [smul_eq_mul]; ring
+  have hsmul4 : (5 * 3⁻¹ : ℂ) • (E₂ * E₆.toFun ^ 2) = 5 * 3⁻¹ * E₂ * E₆.toFun ^ 2 := by
+    ext w; simp [smul_eq_mul]; ring
+  have hsmul5 : (5 * 6⁻¹ : ℂ) • (E₄.toFun ^ 2 * E₆.toFun) = 5 * 6⁻¹ * E₄.toFun ^ 2 * E₆.toFun := by
+    ext w; simp [smul_eq_mul]; ring
+  have hs1 := E2cu_E4sq_holo'.const_smul (5 * 6⁻¹ : ℂ)
+  have hs2 := E2sq_E4_E6_holo'.const_smul (5 * 2⁻¹ : ℂ)
+  have hs3 := E2_E4cu_holo'.const_smul (5 * 6⁻¹ : ℂ)
+  have hs4 := E2_E6sq_holo'.const_smul (5 * 3⁻¹ : ℂ)
+  have hs5 := E4sq_E6_holo'.const_smul (5 * 6⁻¹ : ℂ)
+  have hDDF_eq : D (D F) = (5 * 6⁻¹ : ℂ) • D (E₂ ^ 3 * E₄.toFun ^ 2)
+      - (5 * 2⁻¹ : ℂ) • D (E₂ ^ 2 * E₄.toFun * E₆.toFun)
+      + (5 * 6⁻¹ : ℂ) • D (E₂ * E₄.toFun ^ 3)
+      + (5 * 3⁻¹ : ℂ) • D (E₂ * E₆.toFun ^ 2)
+      - (5 * 6⁻¹ : ℂ) • D (E₄.toFun ^ 2 * E₆.toFun) := by
+    rw [F_aux, ← hsmul1, ← hsmul2, ← hsmul3, ← hsmul4, ← hsmul5]
+    simp only [D_sub _ _ (MDifferentiable.add (MDifferentiable.add
+        (MDifferentiable.sub hs1 hs2) hs3) hs4) hs5,
+      D_add _ _ (MDifferentiable.add (MDifferentiable.sub hs1 hs2) hs3) hs4,
+      D_add _ _ (MDifferentiable.sub hs1 hs2) hs3,
+      D_sub _ _ hs1 hs2,
+      D_smul _ _ E2cu_E4sq_holo', D_smul _ _ E2sq_E4_E6_holo',
+      D_smul _ _ E2_E4cu_holo', D_smul _ _ E2_E6sq_holo', D_smul _ _ E4sq_E6_holo']
+  have hDDF_z := congrFun hDDF_eq z
+  simp only [Pi.add_apply, Pi.sub_apply, smul_eq_mul] at hDDF_z
+  -- Rewrite goal using hO and hC first, before any simplification
+  rw [hO, hC]
+  -- Expand smul applications: (c • f) z = c * f z
+  simp only [Pi.smul_apply, smul_eq_mul] at hDDF_z ⊢
+  -- Now substitute all D terms
+  simp only [hDDF_z, hD1, hD2, hD3, hD4, hD5, hDF_z, hR2, hR4, hR6]
+  -- Expand F, Δ_fun, X₄₂
+  simp only [F, Δ_fun, X₄₂, Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply]
+  -- The goal now has terms like "5 z" which are just "5" (constant function applied to z)
+  -- Use simp to normalize numeric constants
+  simp only [show (5 : ℍ → ℂ) z = 5 from rfl, show (2 : ℍ → ℂ) z = 2 from rfl,
+             show (3 : ℍ → ℂ) z = 3 from rfl, show (6 : ℍ → ℂ) z = 6 from rfl,
+             show (12 : ℍ → ℂ) z = 12 from rfl, show (72 : ℍ → ℂ) z = 72 from rfl,
+             show (288 : ℍ → ℂ) z = 288 from rfl, show (1728 : ℍ → ℂ) z = 1728 from rfl,
+             show (172800 : ℍ → ℂ) z = 172800 from rfl,
+             show (2⁻¹ : ℍ → ℂ) z = 2⁻¹ from rfl, show (3⁻¹ : ℍ → ℂ) z = 3⁻¹ from rfl,
+             show (6⁻¹ : ℍ → ℂ) z = 6⁻¹ from rfl, show (12⁻¹ : ℍ → ℂ) z = 12⁻¹ from rfl,
+             show (72⁻¹ : ℍ → ℂ) z = 72⁻¹ from rfl, show (288⁻¹ : ℍ → ℂ) z = 288⁻¹ from rfl,
+             show (1728⁻¹ : ℍ → ℂ) z = 1728⁻¹ from rfl]
+  -- Use "name the atoms" trick to help ring
+  set e2 := E₂ z with he2
+  set e4 := E₄.toFun z with he4
+  set e6 := E₆.toFun z with he6
+  -- Clear denominators and verify polynomial identity
+  have h2    : (2    : ℂ) ≠ 0 := by norm_num
+  have h3    : (3    : ℂ) ≠ 0 := by norm_num
+  have h6    : (6    : ℂ) ≠ 0 := by norm_num
+  have h12   : (12   : ℂ) ≠ 0 := by norm_num
+  have h72   : (72   : ℂ) ≠ 0 := by norm_num
+  have h288  : (288  : ℂ) ≠ 0 := by norm_num
+  have h1728 : (1728 : ℂ) ≠ 0 := by norm_num
+  field_simp [h2, h3, h6, h12, h72, h288, h1728]
+  ring
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
   by
