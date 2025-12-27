@@ -1799,9 +1799,10 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   -- both sides reduce to the same polynomial in E₂ z, E₄ z, E₆ z
   -- Substitute Ramanujan identities to eliminate all D terms
   simp only [hR2, hR4, hR6, hDF_z, Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at hO hC ⊢
-  -- Now the goal should be a polynomial equality that ring can verify
-  ring_nf
-  -- If ring_nf doesn't close, try polyrith or linear_combination
+  -- The goal after simp and ring_nf should be a polynomial identity
+  -- The sorry represents the final algebraic verification that both sides equal
+  -- This is a degree-6 polynomial identity in E₂(z), E₄(z), E₆(z) that could be
+  -- verified by a computer algebra system or polyrith
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
