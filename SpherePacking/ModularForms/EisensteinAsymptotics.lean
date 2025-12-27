@@ -65,11 +65,9 @@ For z = iy with y large, consider the ball B(z, y/2) in ℂ.
 - f is bounded by M for Im ≥ A (from IsBoundedAtImInfty)
 - By Cauchy: |deriv(f ∘ ofComplex)(z)| ≤ M / (y/2) = 2M/y
 - D f = (2πi)⁻¹ * deriv(...), so |D f(z)| ≤ M/(πy) → 0 -/
-lemma D_tendsto_zero_of_tendsto_const {f : ℍ → ℂ} {L : ℂ}
+lemma D_tendsto_zero_of_tendsto_const {f : ℍ → ℂ}
     (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f)
-    (hbdd : IsBoundedAtImInfty f)
-    (_hlim : Filter.Tendsto (fun y : PosReal => f (iMulPosReal y))
-      (Filter.comap Subtype.val Filter.atTop) (nhds L)) :
+    (hbdd : IsBoundedAtImInfty f) :
     Filter.Tendsto (fun y : PosReal => D f (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) := by
   rw [isBoundedAtImInfty_iff] at hbdd
@@ -461,7 +459,7 @@ lemma serre_D_E₄_tendsto_at_infinity :
   simp_rw [hserre]
   have hD : Filter.Tendsto (fun y : PosReal => D E₄.toFun (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) :=
-    D_tendsto_zero_of_tendsto_const E₄.holo' E₄_isBoundedAtImInfty E₄_tendsto_one_at_infinity
+    D_tendsto_zero_of_tendsto_const E₄.holo' E₄_isBoundedAtImInfty
   have hE₂ := E₂_tendsto_one_at_infinity
   have hE₄ := E₄_tendsto_one_at_infinity
   have hlim : (0 : ℂ) - (4 : ℂ) * 12⁻¹ * 1 * 1 = -(1/3 : ℂ) := by norm_num
@@ -486,10 +484,8 @@ lemma serre_D_E₆_tendsto_at_infinity :
     simp only [serre_D]
   simp_rw [hserre]
   have hD : Filter.Tendsto (fun y : PosReal => D E₆.toFun (iMulPosReal y))
-      (Filter.comap Subtype.val Filter.atTop) (nhds 0) := by
-    apply D_tendsto_zero_of_tendsto_const E₆.holo'
-    · exact E₆_isBoundedAtImInfty
-    · exact E₆_tendsto_one_at_infinity
+      (Filter.comap Subtype.val Filter.atTop) (nhds 0) :=
+    D_tendsto_zero_of_tendsto_const E₆.holo' E₆_isBoundedAtImInfty
   have hE₂ := E₂_tendsto_one_at_infinity
   have hE₆ := E₆_tendsto_one_at_infinity
   have hlim : (0 : ℂ) - (6 : ℂ) * 12⁻¹ * 1 * 1 = -(1/2 : ℂ) := by norm_num
@@ -538,7 +534,7 @@ lemma serre_D_E₂_tendsto_at_infinity :
   simp_rw [hserre]
   have hD : Filter.Tendsto (fun y : PosReal => D E₂ (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) :=
-    D_tendsto_zero_of_tendsto_const E₂_holo' E₂_isBoundedAtImInfty E₂_tendsto_one_at_infinity
+    D_tendsto_zero_of_tendsto_const E₂_holo' E₂_isBoundedAtImInfty
   have hE₂ := E₂_tendsto_one_at_infinity
   have hlim : (0 : ℂ) - (1 : ℂ) * 12⁻¹ * 1 * 1 = -(1/12 : ℂ) := by norm_num
   rw [← hlim]
