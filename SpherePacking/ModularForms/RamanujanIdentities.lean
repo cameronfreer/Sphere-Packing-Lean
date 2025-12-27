@@ -1783,21 +1783,25 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   simp only [F, Δ_fun, X₄₂]
   ext z
   simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul]
-  -- Use congrFun on function-level identities
-  have h1 := congrFun D_E2cu_E4sq z
-  have h2 := congrFun D_E2sq_E4_E6 z
-  have h3 := congrFun D_E2_E4cu z
-  have h4 := congrFun D_E2_E6sq z
-  have h5 := congrFun D_E4sq_E6 z
+  -- Evaluate function-level identities at z
   have hR2 := congrFun ramanujan_E₂ z
   have hR4 := congrFun ramanujan_E₄ z
   have hR6 := congrFun ramanujan_E₆ z
-  have hOuter := congrFun hD_outer z
-  have hcE₂F := congrFun hD_cE₂F z
-  -- Both sides are degree-6 polynomials in E₂ z, E₄ z, E₆ z
-  -- After substitution, this is verified by ring
-  -- The sorry here indicates that the algebraic computation is correct but
-  -- the proof term is too large for direct verification in Lean
+  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul] at hR2 hR4 hR6
+  -- Get hD_outer and hD_cE₂F at point z
+  have hO := congrFun hD_outer z
+  have hC := congrFun hD_cE₂F z
+  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul] at hO hC
+  -- Expand D F using F_aux
+  have hDF_z := congrFun F_aux z
+  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply, smul_eq_mul] at hDF_z
+  -- The key is that after all these substitutions and using Ramanujan identities,
+  -- both sides reduce to the same polynomial in E₂ z, E₄ z, E₆ z
+  -- Substitute Ramanujan identities to eliminate all D terms
+  simp only [hR2, hR4, hR6, hDF_z, Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at hO hC ⊢
+  -- Now the goal should be a polynomial equality that ring can verify
+  ring_nf
+  -- If ring_nf doesn't close, try polyrith or linear_combination
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
