@@ -135,14 +135,9 @@ lemma serre_D_E₂_slash_invariant (γ : SL(2, ℤ)) :
   rw [hE₂slash_fun]
   simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
   have hD_lin : D (E₂ - α • D₂ γ) z = D E₂ z - α * D (D₂ γ) z := by
-    have hαD₂ : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (α • D₂ γ) := (MDifferentiable_D₂ γ).const_smul α
-    have hsub := D_sub E₂ (α • D₂ γ) E₂_holo' hαD₂
-    have hsmul := D_smul α (D₂ γ) (MDifferentiable_D₂ γ)
-    calc D (E₂ - α • D₂ γ) z
-      _ = (D E₂ - D (α • D₂ γ)) z := by rw [hsub]
-      _ = D E₂ z - D (α • D₂ γ) z := by simp only [Pi.sub_apply]
-      _ = D E₂ z - (α • D (D₂ γ)) z := by rw [hsmul]
-      _ = D E₂ z - α * D (D₂ γ) z := by simp only [Pi.smul_apply, smul_eq_mul]
+    have hαD₂ := (MDifferentiable_D₂ γ).const_smul α
+    simp only [D_sub E₂ _ E₂_holo' hαD₂, D_smul α _ (MDifferentiable_D₂ γ),
+               Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
   have hDd : D (D₂ γ) z = -(γ 1 0 : ℂ)^2 / (denom γ z)^2 := D_D₂ γ z
   have hd_sq : D₂ γ z * D₂ γ z = -4 * π^2 * (γ 1 0 : ℂ)^2 / (denom γ z)^2 := by
     have hden_ne : denom γ z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
