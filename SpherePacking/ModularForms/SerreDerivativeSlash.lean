@@ -38,34 +38,19 @@ noncomputable section
 lemma D_D₂ (γ : SL(2, ℤ)) (z : ℍ) :
     D (D₂ γ) z = - (γ 1 0 : ℂ)^2 / (denom γ z)^2 := by
   unfold D
-  set c : ℂ := (γ 1 0 : ℂ) with hc_def
-  have hz_denom_ne : denom γ z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
+  set c : ℂ := (γ 1 0 : ℂ)
+  have hz_ne : denom γ z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
+  -- Rewrite D₂ as 2πIc / denom via EventuallyEq
   have hcomp : deriv ((D₂ γ) ∘ ofComplex) z =
       deriv (fun w => (2 * π * I * c) / (denom γ w)) z := by
     apply Filter.EventuallyEq.deriv_eq
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.im_pos] with w hw
-    simp only [Function.comp_apply, ofComplex_apply_of_im_pos hw, D₂, coe_mk_subtype, ← hc_def]
-  rw [hcomp]
-  have hdiv_eq : (fun w => (2 * π * I * c) / (denom γ w)) =
-      (fun w => (2 * π * I * c) * (denom γ w)^(-1 : ℤ)) := by
-    ext w
-    simp only [zpow_neg_one, div_eq_mul_inv]
-  rw [hdiv_eq]
-  have hdiff_denom_inv : DifferentiableAt ℂ (fun w => (denom γ w)^(-1 : ℤ)) z := by
-    apply DifferentiableAt.zpow (differentiableAt_denom γ z) (Or.inl hz_denom_ne)
-  have hderiv_const_mul : deriv (fun w => (2 * π * I * c) * (denom γ w)^(-1 : ℤ)) z =
-      (2 * π * I * c) * deriv (fun w => (denom γ w)^(-1 : ℤ)) z := by
-    exact deriv_const_mul (2 * π * I * c) hdiff_denom_inv
-  rw [hderiv_const_mul]
-  have hderiv_zpow := deriv_denom_zpow γ 1 (z : ℂ) hz_denom_ne
-  -- The simp args neg_neg and zpow_one normalize the expression for subsequent rw
-  set_option linter.unusedSimpArgs false in
-  simp only [Int.reduceNeg, neg_neg, zpow_one] at hderiv_zpow
-  rw [hderiv_zpow]
-  have h2piI_ne : (2 * π * I : ℂ) ≠ 0 := by
-    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero,
-      or_self, not_false_eq_true]
-  simp only [Int.reduceNeg, Int.reduceSub, hc_def]
+    simp only [comp_apply, ofComplex_apply_of_im_pos hw, D₂, coe_mk_subtype]; rfl
+  -- Rewrite div as mul zpow⁻¹, apply deriv_const_mul and deriv_denom_zpow
+  simp_rw [hcomp, div_eq_mul_inv, ← zpow_neg_one,
+    deriv_const_mul _ (.zpow (differentiableAt_denom γ z) (.inl hz_ne)),
+    deriv_denom_zpow γ 1 (z : ℂ) hz_ne]
+  simp only [Int.reduceNeg, Int.reduceSub, zpow_neg_one]
   field_simp
   ring
 

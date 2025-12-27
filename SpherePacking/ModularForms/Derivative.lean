@@ -984,8 +984,7 @@ theorem antiSerreDerPos {F : ℍ → ℂ} {k : ℤ} (hFdiff : MDifferentiable �
     -- At t_star, serre_D k F = D F (since F = 0 there)
     have hserre_eq_D : (serre_D k F).resToImagAxis t_star = (D F).resToImagAxis t_star := by
       unfold serre_D
-      simp only [Pi.sub_apply, Pi.mul_apply,
-        Function.resToImagAxis_apply, ResToImagAxis, ht_star_pos, ↓reduceDIte]
+      simp only [Function.resToImagAxis_apply, ResToImagAxis, ht_star_pos, ↓reduceDIte]
       have hF_zero : F ⟨I * t_star, by simp [ht_star_pos]⟩ = 0 := by
         have := hF_t_star_eq
         simp only [Function.resToImagAxis_apply, ResToImagAxis, ht_star_pos, ↓reduceDIte] at this
@@ -1033,10 +1032,6 @@ theorem antiSerreDerPos {F : ℍ → ℂ} {k : ℤ} (hFdiff : MDifferentiable �
         refine ⟨⟨le_of_lt (lt_of_le_of_lt ht_star_mem.1 hs_gt), le_of_lt hs_lt⟩, h_not_pos_s⟩
       have : s ≤ t_star := le_csSup hZ_bddAbove hs_in_Z
       linarith
-    -- g is differentiable at t_star
-    have hg_diff : DifferentiableAt ℝ g t_star := by
-      simp only [hg_def]
-      exact Complex.reCLM.differentiable.differentiableAt.comp t_star hFdiff_at
     -- By definition of derivative: f'(a) < 0 means f(a + ε) < f(a) for small ε > 0
     have h_decrease : ∃ ε > 0, ε < t₀ - t_star ∧ g (t_star + ε) < g t_star := by
       have hδ' : 0 < t₀ - t_star := by linarith
