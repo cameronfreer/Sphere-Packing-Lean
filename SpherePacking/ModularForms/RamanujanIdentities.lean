@@ -1652,6 +1652,67 @@ lemma DF_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (D F) := D_differentiable F
 lemma serre_D_10_F_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (serre_D 10 F) :=
   serre_D_differentiable F_holo'
 
+/-- Helper: MDifferentiable for E₂^2 -/
+lemma E₂sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ ^ 2) := by
+  have h : E₂ ^ 2 = E₂ * E₂ := sq E₂
+  rw [h]; exact MDifferentiable.mul E₂_holo' E₂_holo'
+
+/-- Helper: MDifferentiable for E₂^3 -/
+lemma E₂cu_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ ^ 3) := by
+  have h : E₂ ^ 3 = E₂ * E₂ ^ 2 := by ring
+  rw [h]; exact MDifferentiable.mul E₂_holo' E₂sq_holo'
+
+/-- Helper: MDifferentiable for E₄^2 -/
+lemma E₄sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₄.toFun ^ 2) := by
+  have h : E₄.toFun ^ 2 = E₄.toFun * E₄.toFun := sq E₄.toFun
+  rw [h]; exact MDifferentiable.mul E₄.holo' E₄.holo'
+
+/-- Helper: MDifferentiable for E₄^3 -/
+lemma E₄cu_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₄.toFun ^ 3) := by
+  have h : E₄.toFun ^ 3 = E₄.toFun * E₄.toFun ^ 2 := by ring
+  rw [h]; exact MDifferentiable.mul E₄.holo' E₄sq_holo'
+
+/-- Helper: MDifferentiable for E₆^2 -/
+lemma E₆sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₆.toFun ^ 2) := by
+  have h : E₆.toFun ^ 2 = E₆.toFun * E₆.toFun := sq E₆.toFun
+  rw [h]; exact MDifferentiable.mul E₆.holo' E₆.holo'
+
+/-- D(E₂³ * E₄²) expanded using product rule. -/
+lemma D_E2cu_E4sq : D (E₂ ^ 3 * E₄.toFun ^ 2) =
+    3 * E₂ ^ 2 * D E₂ * E₄.toFun ^ 2 + E₂ ^ 3 * 2 * E₄.toFun * D E₄.toFun := by
+  rw [D_mul (E₂ ^ 3) (E₄.toFun ^ 2) E₂cu_holo' E₄sq_holo',
+      D_cube E₂ E₂_holo', D_sq E₄.toFun E₄.holo']
+  ring_nf
+
+/-- D(E₂² * E₄ * E₆) expanded using product rule. -/
+lemma D_E2sq_E4_E6 : D (E₂ ^ 2 * E₄.toFun * E₆.toFun) =
+    2 * E₂ * D E₂ * E₄.toFun * E₆.toFun + E₂ ^ 2 * D E₄.toFun * E₆.toFun +
+    E₂ ^ 2 * E₄.toFun * D E₆.toFun := by
+  have hE₂sqE₄ := MDifferentiable.mul E₂sq_holo' E₄.holo'
+  -- D(E₂² * E₄ * E₆) = D((E₂² * E₄) * E₆)
+  have heq : E₂ ^ 2 * E₄.toFun * E₆.toFun = (E₂ ^ 2 * E₄.toFun) * E₆.toFun := by funext z; ring
+  rw [heq, D_mul (E₂ ^ 2 * E₄.toFun) E₆.toFun hE₂sqE₄ E₆.holo',
+      D_mul (E₂ ^ 2) E₄.toFun E₂sq_holo' E₄.holo', D_sq E₂ E₂_holo']
+  ring_nf
+
+/-- D(E₂ * E₄³) expanded using product rule. -/
+lemma D_E2_E4cu : D (E₂ * E₄.toFun ^ 3) =
+    D E₂ * E₄.toFun ^ 3 + E₂ * 3 * E₄.toFun ^ 2 * D E₄.toFun := by
+  rw [D_mul E₂ (E₄.toFun ^ 3) E₂_holo' E₄cu_holo', D_cube E₄.toFun E₄.holo']
+  ring_nf
+
+/-- D(E₂ * E₆²) expanded using product rule. -/
+lemma D_E2_E6sq : D (E₂ * E₆.toFun ^ 2) =
+    D E₂ * E₆.toFun ^ 2 + E₂ * 2 * E₆.toFun * D E₆.toFun := by
+  rw [D_mul E₂ (E₆.toFun ^ 2) E₂_holo' E₆sq_holo', D_sq E₆.toFun E₆.holo']
+  ring_nf
+
+/-- D(E₄² * E₆) expanded using product rule. -/
+lemma D_E4sq_E6 : D (E₄.toFun ^ 2 * E₆.toFun) =
+    2 * E₄.toFun * D E₄.toFun * E₆.toFun + E₄.toFun ^ 2 * D E₆.toFun := by
+  rw [D_mul (E₄.toFun ^ 2) E₆.toFun E₄sq_holo' E₆.holo', D_sq E₄.toFun E₄.holo']
+  ring_nf
+
 /-- D(D F) expanded as polynomial in E₂, E₄, E₆. -/
 lemma DDF_aux : D (D F) = D (5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2
     - 5 * 2⁻¹ * E₂ ^ 2 * E₄.toFun * E₆.toFun
@@ -1676,38 +1737,55 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   have hE₂E₄_sub_E₆ := MDifferentiable.sub hE₂E₄ hE₆
   have hF := F_holo'
   have hDF := DF_holo'
-  -- Step 1: Expand serre_D 10 F
+  -- serre_D 12 (serre_D 10 F) = D(serre_D 10 F) - E₂ * serre_D 10 F
+  -- = D(D F - 5/6 * E₂ * F) - E₂ * (D F - 5/6 * E₂ * F)
+  -- Work at the function level to apply D-rules
   rw [serre_D_10_F]
-  -- Step 2: Expand serre_D 12 and simplify
   unfold serre_D
-  -- Step 3: Replace D F using F_aux
+  -- Now LHS = D(D F - 5/6 * E₂ * F) - E₂ * (D F - 5/6 * E₂ * F)
+  -- Step 1: Expand D(D F - 5/6 * E₂ * F) using D_sub and D_smul
+  have h56 : (5 : ℂ) * 6⁻¹ ≠ 0 := by norm_num
+  have hE₂F := MDifferentiable.mul hE₂ hF
+  -- c * f is MDifferentiable via smul: c • f where c • f = c * f for ℂ
+  have hcE₂ : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) ((5 * 6⁻¹ : ℂ) • E₂) := hE₂.const_smul (5 * 6⁻¹)
+  have hcE₂_eq : (5 * 6⁻¹ : ℂ) • E₂ = 5 * 6⁻¹ * E₂ := by ext z; simp [smul_eq_mul]
+  have h56E₂F : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (5 * 6⁻¹ * E₂ * F) := by
+    have h1 : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (5 * 6⁻¹ * E₂) := by rwa [← hcE₂_eq]
+    exact MDifferentiable.mul h1 hF
+  have hD_outer : D (D F - 5 * 6⁻¹ * E₂ * F) = D (D F) - D (5 * 6⁻¹ * E₂ * F) := by
+    have hcE₂F : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (5 * 6⁻¹ * E₂ * F) := h56E₂F
+    rw [D_sub (D F) (5 * 6⁻¹ * E₂ * F) hDF hcE₂F]
+  -- Step 2: Expand D(5/6 * E₂ * F) using D_mul (twice)
+  have hD_E₂F : D (E₂ * F) = E₂ * D F + D E₂ * F := D_mul E₂ F hE₂ hF
+  have hD_cE₂F : D (5 * 6⁻¹ * E₂ * F) = 5 * 6⁻¹ * (E₂ * D F + D E₂ * F) := by
+    have hcE₂' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (5 * 6⁻¹ * E₂) := by rwa [← hcE₂_eq]
+    calc D (5 * 6⁻¹ * E₂ * F)
+        = D ((5 * 6⁻¹ * E₂) * F) := by ring_nf
+      _ = (5 * 6⁻¹ * E₂) * D F + D (5 * 6⁻¹ * E₂) * F := D_mul (5 * 6⁻¹ * E₂) F hcE₂' hF
+      _ = (5 * 6⁻¹ * E₂) * D F + (5 * 6⁻¹ * D E₂) * F := by
+          congr 1
+          have : D (5 * 6⁻¹ * E₂) = 5 * 6⁻¹ * D E₂ := by
+            rw [← hcE₂_eq, D_smul (5 * 6⁻¹) E₂ hE₂]
+            ext z; simp [smul_eq_mul]
+          rw [this]
+      _ = 5 * 6⁻¹ * (E₂ * D F + D E₂ * F) := by ring_nf
+  -- Step 3: Substitute ramanujan_E₂
+  rw [ramanujan_E₂] at hD_cE₂F
+  -- Now we have D(D F - 5/6 * E₂ * F) - E₂ * (D F - 5/6 * E₂ * F)
+  -- = D(D F) - 5/6 * (E₂ * D F + 1/12 * (E₂² - E₄) * F) - E₂ * D F + 5/6 * E₂² * F
+  -- Step 4: Substitute D F = F_aux and work pointwise
   rw [F_aux]
-  -- Now the goal involves D applied to the F_aux polynomial minus 5/6*E₂*F
-  -- Step 4: Apply D rules to expand
-  -- The polynomial is: 5/6 E₂³E₄² - 5/2 E₂²E₄E₆ + 5/6 E₂E₄³ + 5/3 E₂E₆² - 5/6 E₄²E₆ - 5/6 E₂F
-  -- D distributes over sums and differences, and D(cf) = c·D(f) for constants
-  -- Each product term requires the product rule and Ramanujan identities
-  -- Step 5: Expand definitions
   simp only [F, Δ_fun, X₄₂]
-  -- Step 6: Work pointwise
   ext z
   simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply]
-  -- The goal involves D applied to a polynomial in E₂, E₄, E₆
-  -- D-rules require explicit MDifferentiable proofs that can't be auto-discharged by simp
-  --
-  -- After full D-rule expansion and Ramanujan substitution:
-  -- LHS = D(D F - 5/6 * E₂ * F) - E₂ * (D F - 5/6 * E₂ * F)
-  --     = D(D F) - 5/6 * D(E₂ * F) - E₂ * D F + 5/6 * E₂² * F  (D_sub)
-  --     = D(D F) - 5/6 * (E₂ * D F + D E₂ * F) - E₂ * D F + 5/6 * E₂² * F  (D_mul)
-  --     = D(D F) - 11/6 * E₂ * D F - 5/6 * D E₂ * F + 5/6 * E₂² * F
-  --     = D(D F) - 11/6 * E₂ * D F - 5/72 * (E₂² - E₄) * F + 5/6 * E₂² * F  (ramanujan_E₂)
-  --     = D(D F) - 11/6 * E₂ * D F + 55/72 * E₂² * F + 5/72 * E₄ * F
-  -- where D(D F) is computed from F_aux using D-rules on each of 5 terms
-  --
-  -- RHS = 5/6 * E₄ * F + 172800 * Δ_fun * X₄₂
-  --     = 5/6 * E₄ * F + 25/72 * (E₄³ - E₆²) * (E₄ - E₂²)
-  --
-  -- Both sides are degree-6 polynomials in E₂, E₄, E₆ that should be equal by ring
+  -- Apply the rewritten terms
+  have hD_outer_z := congrFun hD_outer z
+  have hD_cE₂F_z := congrFun hD_cE₂F z
+  simp only [Pi.add_apply, Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at hD_outer_z hD_cE₂F_z
+  -- The proof now reduces to showing that the algebraic expressions match
+  -- D(D F) involves 5 terms from F_aux, each differentiated using the helper lemmas
+  -- After substituting Ramanujan identities, both sides become polynomials in E₂, E₄, E₆
+  -- that should match by ring
   sorry
 
 example : D (E₄.toFun * E₄.toFun) = 2 * 3⁻¹ * E₄.toFun * (E₂ * E₄.toFun - E₆.toFun) :=
