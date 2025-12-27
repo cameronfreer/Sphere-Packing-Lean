@@ -238,7 +238,7 @@ def iMulPosReal (y : PosReal) : ℍ := ⟨I * y.val, by simp [y.2]⟩
 /-- The imaginary part of iMulPosReal y equals y. -/
 @[simp]
 lemma im_iMulPosReal (y : PosReal) : (iMulPosReal y).im = y.val := by
-  show (I * ↑↑y).im = y.val
+  change (I * ↑↑y).im = y.val
   simp [Complex.mul_im]
 
 /-- If f is holomorphic and bounded, with f(iy) → L as y → ∞, then D f(iy) → 0.
@@ -258,7 +258,7 @@ For z = iy with y large, consider the ball B(z, y/2) in ℂ.
 lemma D_tendsto_zero_of_tendsto_const {f : ℍ → ℂ} {L : ℂ}
     (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f)
     (hbdd : IsBoundedAtImInfty f)
-    (hlim : Filter.Tendsto (fun y : PosReal => f (iMulPosReal y))
+    (_hlim : Filter.Tendsto (fun y : PosReal => f (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds L)) :
     Filter.Tendsto (fun y : PosReal => D f (iMulPosReal y))
       (Filter.comap Subtype.val Filter.atTop) (nhds 0) := by
@@ -656,7 +656,7 @@ def serre_D_E₄_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 6 where
       -- Now apply serre_D_slash_invariant
       have h := serre_D_slash_invariant 4 E₄.toFun E₄.holo' γ' hE₄_slash
       -- Convert back to GL notation
-      show serre_D 4 E₄.toFun ∣[(6 : ℤ)] γ = serre_D 4 E₄.toFun
+      change serre_D 4 E₄.toFun ∣[(6 : ℤ)] γ = serre_D 4 E₄.toFun
       rw [← hγ'_eq]
       exact h
   }
@@ -668,11 +668,12 @@ def serre_D_E₄_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 6 where
     rw [MonoidHom.mem_range] at hA
     obtain ⟨A', hA'_eq⟩ := hA
     -- The SL(2,ℤ) slash action is defined via mapGL ℝ
-    have h := serre_D_slash_invariant 4 E₄.toFun E₄.holo' A' (E₄.slash_action_eq' _ ⟨A', mem_Gamma_one A', rfl⟩)
+    have h := serre_D_slash_invariant 4 E₄.toFun E₄.holo' A'
+      (E₄.slash_action_eq' _ ⟨A', mem_Gamma_one A', rfl⟩)
     -- The SL slash action ∣[k] γ is definitionally the GL slash action via mapGL
     -- h : serre_D 4 E₄ ∣[6] A' = serre_D 4 E₄ (SL action)
     -- SL_slash : f ∣[k] γ = f ∣[k] (γ : GL (Fin 2) ℝ), which is definitionally rfl via mapGL
-    show IsBoundedAtImInfty (serre_D 4 E₄.toFun ∣[(6 : ℤ)] A)
+    change IsBoundedAtImInfty (serre_D 4 E₄.toFun ∣[(6 : ℤ)] A)
     -- Since A = mapGL ℝ A', and SL action is defined via mapGL, we use SL_slash directly
     rw [← hA'_eq]
     -- The SL slash action on A' equals the GL slash action on mapGL ℝ A' by definition
@@ -708,7 +709,7 @@ def serre_D_E₆_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 8 where
         rw [← hγ'_eq] at this
         exact this
       have h := serre_D_slash_invariant 6 E₆.toFun E₆.holo' γ' hE₆_slash
-      show serre_D 6 E₆.toFun ∣[(8 : ℤ)] γ = serre_D 6 E₆.toFun
+      change serre_D 6 E₆.toFun ∣[(8 : ℤ)] γ = serre_D 6 E₆.toFun
       rw [← hγ'_eq]
       exact h
   }
@@ -718,8 +719,9 @@ def serre_D_E₆_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 8 where
     intro A hA
     rw [MonoidHom.mem_range] at hA
     obtain ⟨A', hA'_eq⟩ := hA
-    have h := serre_D_slash_invariant 6 E₆.toFun E₆.holo' A' (E₆.slash_action_eq' _ ⟨A', mem_Gamma_one A', rfl⟩)
-    show IsBoundedAtImInfty (serre_D 6 E₆.toFun ∣[(8 : ℤ)] A)
+    have h := serre_D_slash_invariant 6 E₆.toFun E₆.holo' A'
+      (E₆.slash_action_eq' _ ⟨A', mem_Gamma_one A', rfl⟩)
+    change IsBoundedAtImInfty (serre_D 6 E₆.toFun ∣[(8 : ℤ)] A)
     -- Since A = mapGL ℝ A', and SL action is defined via mapGL, we use SL_slash directly
     rw [← hA'_eq]
     -- The SL slash action on A' equals the GL slash action on mapGL ℝ A' by definition
@@ -800,7 +802,7 @@ def serre_D_E₂_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 4 where
       obtain ⟨γ', _, hγ'_eq⟩ := hγ
       -- Use serre_D_E₂_slash_invariant directly
       have h := serre_D_E₂_slash_invariant γ'
-      show serre_D 1 E₂ ∣[(4 : ℤ)] γ = serre_D 1 E₂
+      change serre_D 1 E₂ ∣[(4 : ℤ)] γ = serre_D 1 E₂
       rw [← hγ'_eq]
       exact h
   }
@@ -811,7 +813,7 @@ def serre_D_E₂_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 4 where
     rw [MonoidHom.mem_range] at hA
     obtain ⟨A', hA'_eq⟩ := hA
     have h := serre_D_E₂_slash_invariant A'
-    show IsBoundedAtImInfty (serre_D 1 E₂ ∣[(4 : ℤ)] A)
+    change IsBoundedAtImInfty (serre_D 1 E₂ ∣[(4 : ℤ)] A)
     rw [← hA'_eq]
     convert serre_D_E₂_isBoundedAtImInfty using 1
 
@@ -1531,7 +1533,7 @@ lemma D_E4_qexp (z : ℍ) :
     have hlin_deriv : deriv (fun w : ℂ => 2 * π * I * w * n) z = 2 * π * I * n := by
       have : (fun w : ℂ => 2 * π * I * w * n) = fun w => (2 * π * I * n) * w := by ext; ring
       rw [this, deriv_const_mul, deriv_id'', mul_one]
-      exact differentiableAt_id'
+      exact differentiableAt_id
     have hderiv_exp : deriv (fun w => cexp (2 * π * I * w * n)) z =
         (2 * π * I * n) * cexp (2 * π * I * z * n) := by
       rw [deriv_cexp (by fun_prop : DifferentiableAt ℂ (fun w => 2 * π * I * w * n) z)]
@@ -1806,14 +1808,19 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
   -- Evaluate function-level identities at z
   -- The Ramanujan identities give D E₂ = 12⁻¹ * (E₂² - E₄) etc.
   -- At point z: D E₂ z = (12⁻¹ : ℂ) * (E₂ z² - E₄ z)
+  -- Note: The `ring` after `convert h using 2 <;>` handles associativity goals that `convert`
+  -- sometimes generates. The linter incorrectly reports these as unreachable.
+  set_option linter.unreachableTactic false in
   have hR2 : D E₂ z = (12 : ℂ)⁻¹ * (E₂ z * E₂ z - E₄.toFun z) := by
     have h := congrFun ramanujan_E₂ z
     simp only [Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at h
     convert h using 2 <;> ring
+  set_option linter.unreachableTactic false in
   have hR4 : D E₄.toFun z = (3 : ℂ)⁻¹ * (E₂ z * E₄.toFun z - E₆.toFun z) := by
     have h := congrFun ramanujan_E₄ z
     simp only [Pi.mul_apply, Pi.sub_apply] at h
     convert h using 2 <;> ring
+  set_option linter.unreachableTactic false in
   have hR6 : D E₆.toFun z = (2 : ℂ)⁻¹ * (E₂ z * E₆.toFun z - E₄.toFun z * E₄.toFun z) := by
     have h := congrFun ramanujan_E₆ z
     simp only [Pi.mul_apply, Pi.sub_apply, Pi.pow_apply] at h
