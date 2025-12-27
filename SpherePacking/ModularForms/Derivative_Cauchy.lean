@@ -14,6 +14,10 @@ of holomorphic functions on the upper half plane.
   to `DiffContOnCl` on disks in ℂ contained in the upper half plane.
 * `closedBall_iMul_subset_upperHalfPlane`: Geometric lemma showing `closedBall (I*y) (y/2)`
   is contained in the upper half plane.
+* `norm_D_le_of_sphere_bound`: Cauchy estimate for D-derivative: if f is holomorphic on a
+  disk and bounded by M on the sphere, then `‖D f z‖ ≤ M / (2πr)`.
+* `D_isBoundedAtImInfty_of_bounded`: D-derivative is bounded at infinity for bounded
+  holomorphic functions.
 
 -/
 
@@ -88,19 +92,33 @@ lemma closedBall_center_subset_upperHalfPlane (z : ℍ) :
 
 /-! ## Cauchy Estimates -/
 
-/-- The D-derivative is bounded at infinity for bounded holomorphic functions.
-Uses Cauchy estimate: |f'(z)| ≤ M/r for f bounded by M on a disk of radius r.
+/-- Cauchy estimate for the D-derivative: if `f ∘ ofComplex` is holomorphic on a disk of radius `r`
+around `z` and bounded by `M` on the boundary sphere, then `‖D f z‖ ≤ M / (2πr)`.
 
-**Proof strategy:**
-For y large (y ≥ 2*max(A,0) + 1), consider ball(z, z.im/2):
-- The ball is in the upper half plane (closedBall_center_subset_upperHalfPlane)
-- All points have Im ≥ z.im/2 > max(A,0) ≥ A
-- So f is bounded by M on the ball
-- Build DiffContOnCl via diffContOnCl_comp_ofComplex_of_mdifferentiable
-- Apply norm_deriv_le_of_forall_mem_sphere_norm_le
-- Get |deriv| ≤ M/(z.im/2) = 2M/z.im
-- |D f| = |deriv|/(2π) ≤ M/(π·z.im) ≤ M/π
--/
+This is the core estimate used by `D_isBoundedAtImInfty_of_bounded`. -/
+lemma norm_D_le_of_sphere_bound {f : ℍ → ℂ} {z : ℍ} {r M : ℝ}
+    (hr : 0 < r)
+    (hDiff : DiffContOnCl ℂ (f ∘ ofComplex) (ball (z : ℂ) r))
+    (hbdd : ∀ w ∈ sphere (z : ℂ) r, ‖(f ∘ ofComplex) w‖ ≤ M) :
+    ‖D f z‖ ≤ M / (2 * π * r) := by
+  have hderiv_bound : ‖deriv (f ∘ ofComplex) z‖ ≤ M / r :=
+    Complex.norm_deriv_le_of_forall_mem_sphere_norm_le hr hDiff hbdd
+  have h2piI_norm : ‖(2 * π * I : ℂ)⁻¹‖ = (2 * π)⁻¹ := by
+    rw [norm_inv, norm_mul, norm_mul, Complex.norm_ofNat, Complex.norm_I, mul_one]
+    simp only [Complex.norm_real, Real.norm_eq_abs, abs_of_pos Real.pi_pos]
+  calc ‖D f z‖
+    _ = ‖(2 * π * I)⁻¹ * deriv (f ∘ ofComplex) z‖ := rfl
+    _ = ‖(2 * π * I)⁻¹‖ * ‖deriv (f ∘ ofComplex) z‖ := norm_mul _ _
+    _ = (2 * π)⁻¹ * ‖deriv (f ∘ ofComplex) z‖ := by rw [h2piI_norm]
+    _ ≤ (2 * π)⁻¹ * (M / r) := by
+        apply mul_le_mul_of_nonneg_left hderiv_bound (inv_nonneg.mpr (by positivity))
+    _ = M / (2 * π * r) := by ring
+
+/-- The D-derivative is bounded at infinity for bounded holomorphic functions.
+
+For y large (y ≥ 2*max(A,0) + 1), we use a ball of radius z.im/2 around z.
+The ball lies in the upper half plane, f is bounded by M on it, and
+`norm_D_le_of_sphere_bound` gives ‖D f z‖ ≤ M/(π·z.im) ≤ M/π. -/
 lemma D_isBoundedAtImInfty_of_bounded {f : ℍ → ℂ}
     (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f)
     (hbdd : IsBoundedAtImInfty f) :
@@ -109,63 +127,37 @@ lemma D_isBoundedAtImInfty_of_bounded {f : ℍ → ℂ}
   obtain ⟨M, A, hMA⟩ := hbdd
   use M / π, 2 * max A 0 + 1
   intro z hz
-  have hz_im_pos : 0 < z.im := z.im_pos
   have hz_large : z.im > 2 * max A 0 := by linarith
   have hz_half_gt_A : z.im / 2 > max A 0 := by linarith
-  -- Build DiffContOnCl
+  have hR_pos : 0 < z.im / 2 := by linarith [z.im_pos]
+  -- Build DiffContOnCl on ball(z, z.im/2)
   have hclosed := closedBall_center_subset_upperHalfPlane z
-  have hDiff : DiffContOnCl ℂ (f ∘ ofComplex) (Metric.ball (z : ℂ) (z.im / 2)) :=
+  have hDiff : DiffContOnCl ℂ (f ∘ ofComplex) (ball (z : ℂ) (z.im / 2)) :=
     diffContOnCl_comp_ofComplex_of_mdifferentiable hf hclosed
-  -- f is bounded by M on the sphere
-  have hR_pos : 0 < z.im / 2 := by linarith
-  have hf_bdd_sphere : ∀ w ∈ Metric.sphere (z : ℂ) (z.im / 2), ‖(f ∘ ofComplex) w‖ ≤ M := by
+  -- f is bounded by M on the sphere (all points have Im > A)
+  have hf_bdd_sphere : ∀ w ∈ sphere (z : ℂ) (z.im / 2), ‖(f ∘ ofComplex) w‖ ≤ M := by
     intro w hw
-    have hw_mem_closed : w ∈ Metric.closedBall (z : ℂ) (z.im / 2) :=
-      Metric.sphere_subset_closedBall hw
-    have hw_im_pos : 0 < w.im := hclosed hw_mem_closed
+    have hw_im_pos : 0 < w.im := hclosed (sphere_subset_closedBall hw)
+    have hdist : dist w z = z.im / 2 := mem_sphere.mp hw
+    have habs : |w.im - z.im| ≤ z.im / 2 := by
+      calc |w.im - z.im| = |(w - z).im| := by simp [Complex.sub_im]
+        _ ≤ ‖w - z‖ := abs_im_le_norm _
+        _ = dist w z := (dist_eq_norm _ _).symm
+        _ = z.im / 2 := hdist
     have hw_im_ge_A : A ≤ w.im := by
-      have hdist : dist w z = z.im / 2 := Metric.mem_sphere.mp hw
-      have habs : |w.im - z.im| ≤ z.im / 2 := by
-        calc |w.im - z.im|
-          _ = |(w - z).im| := by simp [Complex.sub_im]
-          _ ≤ ‖w - z‖ := abs_im_le_norm _
-          _ = dist w z := (dist_eq_norm _ _).symm
-          _ = z.im / 2 := hdist
       have hlower : z.im / 2 ≤ w.im := by linarith [(abs_le.mp habs).1]
-      have hA_lt : A < w.im := calc A ≤ max A 0 := le_max_left _ _
-        _ < z.im / 2 := hz_half_gt_A
-        _ ≤ w.im := hlower
-      linarith
+      linarith [le_max_left A 0]
     simp only [Function.comp_apply, ofComplex_apply_of_im_pos hw_im_pos]
     exact hMA ⟨w, hw_im_pos⟩ hw_im_ge_A
-  -- Apply Cauchy estimate
-  have hderiv_bound : ‖deriv (f ∘ ofComplex) z‖ ≤ M / (z.im / 2) :=
-    Complex.norm_deriv_le_of_forall_mem_sphere_norm_le hR_pos hDiff hf_bdd_sphere
-  -- D f = (2πi)⁻¹ * deriv
-  have hD_eq : D f z = (2 * π * I)⁻¹ * deriv (f ∘ ofComplex) z := rfl
-  rw [hD_eq]
-  have h2piI_norm : ‖(2 * π * I : ℂ)⁻¹‖ = (2 * π)⁻¹ := by
-    rw [norm_inv, norm_mul, norm_mul, Complex.norm_ofNat, Complex.norm_I, mul_one]
-    simp only [Complex.norm_real, Real.norm_eq_abs, abs_of_pos Real.pi_pos]
-  have hmax_nonneg : 0 ≤ max A 0 := le_max_right _ _
-  have hz_im_ge_1 : 1 ≤ z.im := by linarith
-  -- M bounds norms, so M ≥ 0
-  have hA_le_max : A ≤ max A 0 := le_max_left _ _
-  have hM_nonneg : 0 ≤ M := by
-    have hA_le_z : A ≤ z.im := by linarith
-    have hsome := hMA z hA_le_z
-    exact le_trans (norm_nonneg _) hsome
-  calc ‖(2 * π * I)⁻¹ * deriv (f ∘ ofComplex) z‖
-    _ = ‖(2 * π * I)⁻¹‖ * ‖deriv (f ∘ ofComplex) z‖ := norm_mul _ _
-    _ = (2 * π)⁻¹ * ‖deriv (f ∘ ofComplex) z‖ := by rw [h2piI_norm]
-    _ ≤ (2 * π)⁻¹ * (M / (z.im / 2)) := by
-        apply mul_le_mul_of_nonneg_left hderiv_bound
-        exact inv_nonneg.mpr (by positivity)
-    _ = (2 * π)⁻¹ * (2 * M / z.im) := by ring_nf
+  -- Apply Cauchy estimate and bound by M/π
+  have hD_bound := norm_D_le_of_sphere_bound hR_pos hDiff hf_bdd_sphere
+  have hz_im_ge_1 : 1 ≤ z.im := by linarith [le_max_right A 0]
+  have hM_nonneg : 0 ≤ M := le_trans (norm_nonneg _) (hMA z (by linarith [le_max_left A 0]))
+  calc ‖D f z‖ ≤ M / (2 * π * (z.im / 2)) := hD_bound
     _ = M / (π * z.im) := by ring
     _ ≤ M / (π * 1) := by
-        apply div_le_div_of_nonneg_left hM_nonneg (by positivity : 0 < π * 1)
-        apply mul_le_mul_of_nonneg_left hz_im_ge_1 (le_of_lt Real.pi_pos)
+        apply div_le_div_of_nonneg_left hM_nonneg (by positivity)
+        exact mul_le_mul_of_nonneg_left hz_im_ge_1 (le_of_lt Real.pi_pos)
     _ = M / π := by ring
 
 end
