@@ -392,19 +392,12 @@ lemma f₂_tendsto_atImInfty : Tendsto f₂ atImInfty (𝓝 0) := by
   have hH₂ := H₂_tendsto_atImInfty
   have hH₄ := H₄_tendsto_atImInfty
   have hD_H₂ := D_tendsto_zero_of_tendsto_const H₂_SIF_MDifferentiable hH₂
-  -- serre_D 2 H₂ → -(2/12)*0 = 0
   have h_serre_H₂ : Tendsto (serre_D 2 H₂) atImInfty (𝓝 0) := by
     simpa using serre_D_tendsto_of_tendsto hD_H₂ hH₂
-  -- H₂ + 2*H₄ → 0 + 2*1 = 2, H₂ * (H₂ + 2*H₄) → 0 * 2 = 0
-  have h_sum : Tendsto (fun z => H₂ z + 2 * H₄ z) atImInfty (𝓝 2) := by
-    simpa using hH₂.add (hH₄.const_mul 2)
   have h_prod : Tendsto (fun z => H₂ z * (H₂ z + 2 * H₄ z)) atImInfty (𝓝 0) := by
-    simpa using hH₂.mul h_sum
-  have h_scaled : Tendsto (fun z => (1/6 : ℂ) * (H₂ z * (H₂ z + 2 * H₄ z)))
-      atImInfty (𝓝 0) := by
-    simpa using h_prod.const_mul (1/6 : ℂ)
-  have h_final := h_serre_H₂.sub h_scaled
-  simp only [sub_zero] at h_final
+    simpa using hH₂.mul (hH₂.add (hH₄.const_mul 2))
+  have h_final := h_serre_H₂.sub (h_prod.const_mul (1/6 : ℂ))
+  simp only [mul_zero, sub_zero] at h_final
   convert h_final using 1
 
 /-- f₄ tends to 0 at infinity.
@@ -416,36 +409,17 @@ lemma f₄_tendsto_atImInfty : Tendsto f₄ atImInfty (𝓝 0) := by
   have hH₂ := H₂_tendsto_atImInfty
   have hH₄ := H₄_tendsto_atImInfty
   have hD_H₄ := D_tendsto_zero_of_tendsto_const H₄_SIF_MDifferentiable hH₄
-  -- serre_D 2 H₄ → -(2/12)*1 = -1/6
   have h_serre_H₄ : Tendsto (serre_D 2 H₄) atImInfty (𝓝 (-(1/6 : ℂ))) := by
-    convert serre_D_tendsto_of_tendsto hD_H₄ hH₄ using 2
-    norm_num
-  -- H₄ * (2*H₂ + H₄) → 1 * (0 + 1) = 1
-  have h_2H₂ : Tendsto (fun z => (2 : ℂ) * H₂ z) atImInfty (𝓝 0) := by
-    have := hH₂.const_mul (2 : ℂ)
-    simp only [mul_zero] at this
-    exact this
+    convert serre_D_tendsto_of_tendsto hD_H₄ hH₄ using 2; norm_num
   have h_sum : Tendsto (fun z => 2 * H₂ z + H₄ z) atImInfty (𝓝 1) := by
-    have := h_2H₂.add hH₄
-    simp only [zero_add] at this
-    exact this
+    simpa using (hH₂.const_mul 2).add hH₄
   have h_prod : Tendsto (fun z => H₄ z * (2 * H₂ z + H₄ z)) atImInfty (𝓝 1) := by
-    have := hH₄.mul h_sum
-    simp only [one_mul] at this
-    exact this
-  -- (1/6) * H₄ * (2*H₂ + H₄) → 1/6
-  have h_scaled : Tendsto (fun z => (1/6 : ℂ) * (H₄ z * (2 * H₂ z + H₄ z))) atImInfty
-      (𝓝 (1/6 : ℂ)) := by
-    have := h_prod.const_mul (1/6 : ℂ)
-    simp only [mul_one] at this
-    convert this using 1
-  -- f₄ → -1/6 + 1/6 = 0
-  have h_eq : f₄ =
-      fun z => serre_D 2 H₄ z + (1/6 : ℂ) * (H₄ z * (2 * H₂ z + H₄ z)) := rfl
-  rw [h_eq]
+    simpa using hH₄.mul h_sum
+  have h_scaled : Tendsto (fun z => (1/6 : ℂ) * (H₄ z * (2 * H₂ z + H₄ z)))
+      atImInfty (𝓝 (1/6 : ℂ)) := by simpa using h_prod.const_mul (1/6 : ℂ)
   have h_final := h_serre_H₄.add h_scaled
+  simp only [neg_add_cancel] at h_final
   convert h_final using 1
-  norm_num
 
 /-- theta_g tends to 0 at infinity.
 theta_g = (2H₂ + H₄)f₂ + (H₂ + 2H₄)f₄.
@@ -455,18 +429,16 @@ lemma theta_g_tendsto_atImInfty : Tendsto theta_g atImInfty (𝓝 0) := by
   have hH₄ := H₄_tendsto_atImInfty
   have hf₂ := f₂_tendsto_atImInfty
   have hf₄ := f₄_tendsto_atImInfty
-  -- 2*H₂ + H₄ → 0 + 1 = 1, H₂ + 2*H₄ → 0 + 2 = 2
   have h_coef1 : Tendsto (fun z => 2 * H₂ z + H₄ z) atImInfty (𝓝 1) := by
     simpa using (hH₂.const_mul 2).add hH₄
   have h_coef2 : Tendsto (fun z => H₂ z + 2 * H₄ z) atImInfty (𝓝 2) := by
     simpa using hH₂.add (hH₄.const_mul 2)
-  -- (2H₂ + H₄) * f₂ → 1 * 0 = 0, (H₂ + 2H₄) * f₄ → 2 * 0 = 0
   have h_term1 : Tendsto (fun z => (2 * H₂ z + H₄ z) * f₂ z) atImInfty (𝓝 0) := by
     simpa using h_coef1.mul hf₂
   have h_term2 : Tendsto (fun z => (H₂ z + 2 * H₄ z) * f₄ z) atImInfty (𝓝 0) := by
     simpa using h_coef2.mul hf₄
-  have hsum : Tendsto (fun z => (2 * H₂ z + H₄ z) * f₂ z + (H₂ z + 2 * H₄ z) * f₄ z)
-      atImInfty (𝓝 0) := by simpa using h_term1.add h_term2
+  have hsum := h_term1.add h_term2
+  simp only [add_zero] at hsum
   convert hsum using 1
 
 /-- theta_h tends to 0 at infinity.
@@ -474,12 +446,9 @@ theta_h = f₂² + f₂f₄ + f₄² → 0 + 0 + 0 = 0 as f₂, f₄ → 0. -/
 lemma theta_h_tendsto_atImInfty : Tendsto theta_h atImInfty (𝓝 0) := by
   have hf₂ := f₂_tendsto_atImInfty
   have hf₄ := f₄_tendsto_atImInfty
-  have h_f₂_sq : Tendsto (fun z => f₂ z ^ 2) atImInfty (𝓝 0) := by
-    simpa [sq] using hf₂.mul hf₂
-  have h_f₄_sq : Tendsto (fun z => f₄ z ^ 2) atImInfty (𝓝 0) := by
-    simpa [sq] using hf₄.mul hf₄
-  have h_f₂f₄ : Tendsto (fun z => f₂ z * f₄ z) atImInfty (𝓝 0) := by
-    simpa using hf₂.mul hf₄
+  have h_f₂_sq : Tendsto (fun z => f₂ z ^ 2) atImInfty (𝓝 0) := by simpa [sq] using hf₂.mul hf₂
+  have h_f₄_sq : Tendsto (fun z => f₄ z ^ 2) atImInfty (𝓝 0) := by simpa [sq] using hf₄.mul hf₄
+  have h_f₂f₄ : Tendsto (fun z => f₂ z * f₄ z) atImInfty (𝓝 0) := by simpa using hf₂.mul hf₄
   have hsum := (h_f₂_sq.add h_f₂f₄).add h_f₄_sq
   simp only [add_zero] at hsum
   convert hsum using 1
