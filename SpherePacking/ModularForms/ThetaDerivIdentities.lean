@@ -620,90 +620,40 @@ that force f₂ = f₄ = 0. -/
 lemma f₂_eq_zero : f₂ = 0 := by
   have hg := theta_g_eq_zero
   have hh := theta_h_eq_zero
-  -- From g = 0 and h = 0, derive f₂ = 0
-  -- Strategy: Show f₄ = 0, then f₂ = 0 follows from theta_h = f₂² = 0
-  --
-  -- Algebraic analysis:
-  -- theta_g = (2H₂ + H₄)f₂ + (H₂ + 2H₄)f₄ = 0
-  -- theta_h = f₂² + f₂f₄ + f₄² = 0
-  --
-  -- Let A = 2H₂ + H₄ and B = H₂ + 2H₄.
-  -- From theta_g = 0: Af₂ + Bf₄ = 0, so f₂ = -(B/A)f₄ where A ≠ 0.
-  --
-  -- Substituting into theta_h = 0:
-  -- (B/A)²f₄² - (B/A)f₄² + f₄² = 0
-  -- f₄²(B² - AB + A²)/A² = 0
-  --
-  -- Computation: A² - AB + B² = 3(H₂² + H₂H₄ + H₄²)
-  -- At infinity: H₂ → 0, H₄ → 1, so A² - AB + B² → 3 ≠ 0
-  -- Hence A² - AB + B² is not identically zero.
-  --
-  -- Since f₄² * (nonzero analytic) = 0, we must have f₄ = 0.
-  -- Then from theta_h = f₂² = 0, we get f₂ = 0.
-  --
-  -- First show f₄ = 0:
+  -- Show f₄ = 0 first, then f₂ = 0 follows from theta_h = f₂² = 0
   suffices hf₄ : f₄ = 0 by
     funext z
-    have hz : theta_h z = 0 := congrFun hh z
-    have hf₄z : f₄ z = 0 := congrFun hf₄ z
-    simp only [theta_h, hf₄z, mul_zero, add_zero, Pi.zero_apply,
-               zero_pow (by norm_num : 2 ≠ 0)] at hz ⊢
-    exact sq_eq_zero_iff.mp hz
-  -- Proof that f₄ = 0 using identity principle (mul_eq_zero_iff)
-  -- ================================================================
-  -- From theta_g = Af₂ + Bf₄ = 0 where A = 2H₂ + H₄, B = H₂ + 2H₄:
-  --   A·f₂ = -B·f₄
-  --
-  -- Multiply theta_h = f₂² + f₂f₄ + f₄² by A²:
-  --   A²θₕ = A²f₂² + A²f₂f₄ + A²f₄²
-  --        = (Af₂)² + (Af₂)(Af₄) + A²f₄²
-  --        = (Bf₄)² + (-Bf₄)(Af₄) + A²f₄²
-  --        = f₄²(A² - AB + B²)
-  --
-  -- Compute: A² - AB + B² = 3(H₂² + H₂H₄ + H₄²)
-  -- Since θₕ = 0: f₄² · 3(H₂² + H₂H₄ + H₄²) = 0
-  -- At ∞: H₂ → 0, H₄ → 1, so H₂² + H₂H₄ + H₄² → 1 ≠ 0
-  -- By mul_eq_zero_iff: f₄² = 0, hence f₄ = 0
-  --
-  -- From f₄_sq_mul_eq and theta_h = 0: f₄² * (3 * H_sum_sq) = 0 as functions
+    have hz := congrFun hh z
+    simp only [theta_h, congrFun hf₄ z, mul_zero, add_zero, Pi.zero_apply,
+               zero_pow (by norm_num : 2 ≠ 0), sq_eq_zero_iff] at hz ⊢
+    exact hz
+  -- From f₄_sq_mul_eq and theta_h = 0: f₄² * (3 * H_sum_sq) = 0
   have h_f₄_sq_3H : f₄ ^ 2 * (fun z => 3 * H_sum_sq z) = 0 := by
     ext z
     simp only [Pi.mul_apply, Pi.pow_apply, Pi.zero_apply]
-    have hg_z : theta_g z = 0 := congrFun hg z
     have hh_z : theta_h z = 0 := congrFun hh z
     calc f₄ z ^ 2 * (3 * H_sum_sq z)
-        = (2 * H₂ z + H₄ z) ^ 2 * theta_h z := f₄_sq_mul_eq z hg_z
+        = (2 * H₂ z + H₄ z) ^ 2 * theta_h z := f₄_sq_mul_eq z (congrFun hg z)
       _ = _ := by rw [hh_z, mul_zero]
   -- f₄² is MDifferentiable
   have f₄_sq_MDiff : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (f₄ ^ 2) := by
-    have heq : f₄ ^ 2 = f₄ * f₄ := by ext z; simp only [Pi.mul_apply, Pi.pow_apply, sq]
-    rw [heq]; exact f₄_MDifferentiable.mul f₄_MDifferentiable
-  -- Apply mul_eq_zero_iff: f₄² * (3 * H_sum_sq) = 0 → f₄² = 0 ∨ (3 * H_sum_sq) = 0
-  have h_or : f₄ ^ 2 = 0 ∨ (fun z => 3 * H_sum_sq z) = 0 := by
-    rw [← UpperHalfPlane.mul_eq_zero_iff f₄_sq_MDiff three_H_sum_sq_MDifferentiable]
-    exact h_f₄_sq_3H
-  -- Since 3 * H_sum_sq ≠ 0, we have f₄² = 0
-  have h_f₄_sq_zero : f₄ ^ 2 = 0 := h_or.resolve_right three_H_sum_sq_ne_zero
-  -- From f₄² = f₄ * f₄ = 0, by mul_eq_zero_iff: f₄ = 0
-  have h_f₄_mul : f₄ * f₄ = 0 := by
-    convert h_f₄_sq_zero using 1; ext z; exact (sq (f₄ z)).symm
+    simpa [sq] using f₄_MDifferentiable.mul f₄_MDifferentiable
+  -- By mul_eq_zero_iff: f₄² = 0 (since 3 * H_sum_sq ≠ 0)
+  have h_f₄_sq_zero : f₄ ^ 2 = 0 :=
+    ((UpperHalfPlane.mul_eq_zero_iff f₄_sq_MDiff three_H_sum_sq_MDifferentiable).mp h_f₄_sq_3H
+      ).resolve_right three_H_sum_sq_ne_zero
+  -- From f₄² = f₄ * f₄ = 0: f₄ = 0
+  have h_f₄_mul : f₄ * f₄ = 0 := by convert h_f₄_sq_zero using 1; ext z; exact (sq (f₄ z)).symm
   exact (UpperHalfPlane.mul_eq_zero_iff f₄_MDifferentiable f₄_MDifferentiable).mp h_f₄_mul
     |>.elim id id
 
 /-- From f₂ = 0 and h = 0, deduce f₄ = 0 -/
 lemma f₄_eq_zero : f₄ = 0 := by
-  -- From h = f₂² + f₂f₄ + f₄² = 0 and f₂ = 0:
-  -- f₄² = 0 → f₄ = 0
-  have h_eq := theta_h_eq_zero
-  have f₂_eq := f₂_eq_zero
   funext z
-  -- theta_h z = f₂ z ^ 2 + f₂ z * f₄ z + f₄ z ^ 2 = 0
-  -- With f₂ z = 0, this gives f₄ z ^ 2 = 0
-  have hz : theta_h z = 0 := congrFun h_eq z
-  have hf₂z : f₂ z = 0 := congrFun f₂_eq z
-  simp only [theta_h, hf₂z, zero_pow (by norm_num : 2 ≠ 0), zero_mul, add_zero, zero_add] at hz
-  simp only [Pi.zero_apply]
-  exact sq_eq_zero_iff.mp hz
+  have hz := congrFun theta_h_eq_zero z
+  simp only [theta_h, congrFun f₂_eq_zero z, zero_pow (by norm_num : 2 ≠ 0),
+             zero_mul, add_zero, zero_add, Pi.zero_apply, sq_eq_zero_iff] at hz ⊢
+  exact hz
 
 /-- From f₂ + f₄ = f₃ and both = 0, f₃ = 0 -/
 lemma f₃_eq_zero : f₃ = 0 := by
