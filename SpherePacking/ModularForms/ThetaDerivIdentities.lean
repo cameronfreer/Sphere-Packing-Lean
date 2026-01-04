@@ -523,46 +523,39 @@ noncomputable def H_sum_sq : ℍ → ℂ := fun z => H₂ z ^ 2 + H₂ z * H₄ 
 /-- H_sum_sq is MDifferentiable -/
 lemma H_sum_sq_MDifferentiable : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) H_sum_sq := by
   have h1 : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (fun z => H₂ z ^ 2) := by
-    have heq : (fun z => H₂ z ^ 2) = H₂ * H₂ := by ext z; simp only [Pi.mul_apply, sq]
-    rw [heq]; exact H₂_SIF_MDifferentiable.mul H₂_SIF_MDifferentiable
-  have h2 : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (fun z => H₂ z * H₄ z) :=
-    H₂_SIF_MDifferentiable.mul H₄_SIF_MDifferentiable
+    simpa [sq] using H₂_SIF_MDifferentiable.mul H₂_SIF_MDifferentiable
+  have h2 := H₂_SIF_MDifferentiable.mul H₄_SIF_MDifferentiable
   have h3 : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (fun z => H₄ z ^ 2) := by
-    have heq : (fun z => H₄ z ^ 2) = H₄ * H₄ := by ext z; simp only [Pi.mul_apply, sq]
-    rw [heq]; exact H₄_SIF_MDifferentiable.mul H₄_SIF_MDifferentiable
+    simpa [sq] using H₄_SIF_MDifferentiable.mul H₄_SIF_MDifferentiable
   exact (h1.add h2).add h3
 
 /-- H_sum_sq → 1 at infinity -/
 lemma H_sum_sq_tendsto : Tendsto H_sum_sq atImInfty (𝓝 1) := by
-  have h_H₂_lim : Tendsto H₂ atImInfty (𝓝 0) := H₂_tendsto_atImInfty
-  have h_H₄_lim : Tendsto H₄ atImInfty (𝓝 1) := H₄_tendsto_atImInfty
+  have h_H₂_lim := H₂_tendsto_atImInfty
+  have h_H₄_lim := H₄_tendsto_atImInfty
   have h1 : Tendsto (fun z => H₂ z ^ 2) atImInfty (𝓝 0) := by
-    simpa [zero_pow two_ne_zero] using h_H₂_lim.pow 2
+    simpa [sq] using h_H₂_lim.mul h_H₂_lim
   have h2 : Tendsto (fun z => H₂ z * H₄ z) atImInfty (𝓝 0) := by
-    simpa [zero_mul] using h_H₂_lim.mul h_H₄_lim
+    simpa using h_H₂_lim.mul h_H₄_lim
   have h3 : Tendsto (fun z => H₄ z ^ 2) atImInfty (𝓝 1) := by
-    simpa [one_pow] using h_H₄_lim.pow 2
+    simpa [sq] using h_H₄_lim.mul h_H₄_lim
   have hsum := (h1.add h2).add h3
   simp only [zero_add, add_zero] at hsum
   exact hsum
 
 /-- H_sum_sq ≠ 0 (since it tends to 1 ≠ 0) -/
 lemma H_sum_sq_ne_zero : H_sum_sq ≠ 0 := by
-  intro h_eq_zero
-  have h_tendsto := H_sum_sq_tendsto
-  rw [h_eq_zero] at h_tendsto
-  have : (0 : ℂ) = 1 := tendsto_nhds_unique tendsto_const_nhds h_tendsto
-  norm_num at this
+  intro h
+  have h_limit := H_sum_sq_tendsto
+  rw [h] at h_limit
+  exact one_ne_zero (tendsto_nhds_unique tendsto_const_nhds h_limit).symm
 
 /-- 3 * H_sum_sq ≠ 0 -/
 lemma three_H_sum_sq_ne_zero : (fun z => 3 * H_sum_sq z) ≠ 0 := by
   intro h
   apply H_sum_sq_ne_zero
-  ext z
-  have hz := congrFun h z
-  simp only [Pi.zero_apply] at hz
-  have h3 : (3 : ℂ) ≠ 0 := by norm_num
-  exact (mul_eq_zero.mp hz).resolve_left h3
+  funext z
+  exact (mul_eq_zero.mp (congrFun h z)).resolve_left (by norm_num)
 
 /-- 3 * H_sum_sq is MDifferentiable -/
 lemma three_H_sum_sq_MDifferentiable :
