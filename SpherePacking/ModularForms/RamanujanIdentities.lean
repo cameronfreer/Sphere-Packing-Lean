@@ -589,7 +589,6 @@ lemma D_E2_E6sq : D (E₂ * E₆.toFun ^ 2) =
 lemma D_E4sq_E6 : D (E₄.toFun ^ 2 * E₆.toFun) =
     2 * E₄.toFun * D E₄.toFun * E₆.toFun + E₄.toFun ^ 2 * D E₆.toFun := by
   rw [D_mul (E₄.toFun ^ 2) E₆.toFun E₄sq_holo' E₆.holo', D_sq E₄.toFun E₄.holo']
-  ring_nf
 
 /-- D(D F) expanded as polynomial in E₂, E₄, E₆. -/
 lemma DDF_aux : D (D F) = D (5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2
@@ -658,18 +657,16 @@ theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 17280
     have hcE₂F : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (5 * 6⁻¹ * E₂ * F) := h56E₂F
     rw [D_sub (D F) (5 * 6⁻¹ * E₂ * F) hDF hcE₂F]
   -- Step 2: Expand D(5/6 * E₂ * F) using D_mul (twice)
-  have hD_E₂F : D (E₂ * F) = E₂ * D F + D E₂ * F := D_mul E₂ F hE₂ hF
+  have hD_E₂F : D (E₂ * F) = D E₂ * F + E₂ * D F := D_mul E₂ F hE₂ hF
   have hD_cE₂F : D (5 * 6⁻¹ * E₂ * F) = 5 * 6⁻¹ * (E₂ * D F + D E₂ * F) := by
     have hcE₂' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (5 * 6⁻¹ * E₂) := by rwa [← hcE₂_eq]
+    have hD_smul : D (5 * 6⁻¹ * E₂) = 5 * 6⁻¹ * D E₂ := by
+      rw [← hcE₂_eq, D_smul (5 * 6⁻¹) E₂ hE₂]
+      ext z; simp [smul_eq_mul]
     calc D (5 * 6⁻¹ * E₂ * F)
         = D ((5 * 6⁻¹ * E₂) * F) := by ring_nf
-      _ = (5 * 6⁻¹ * E₂) * D F + D (5 * 6⁻¹ * E₂) * F := D_mul (5 * 6⁻¹ * E₂) F hcE₂' hF
-      _ = (5 * 6⁻¹ * E₂) * D F + (5 * 6⁻¹ * D E₂) * F := by
-          congr 1
-          have : D (5 * 6⁻¹ * E₂) = 5 * 6⁻¹ * D E₂ := by
-            rw [← hcE₂_eq, D_smul (5 * 6⁻¹) E₂ hE₂]
-            ext z; simp [smul_eq_mul]
-          rw [this]
+      _ = D (5 * 6⁻¹ * E₂) * F + (5 * 6⁻¹ * E₂) * D F := D_mul (5 * 6⁻¹ * E₂) F hcE₂' hF
+      _ = (5 * 6⁻¹ * D E₂) * F + (5 * 6⁻¹ * E₂) * D F := by rw [hD_smul]
       _ = 5 * 6⁻¹ * (E₂ * D F + D E₂ * F) := by ring_nf
   -- Step 3: Substitute ramanujan_E₂
   rw [ramanujan_E₂] at hD_cE₂F
