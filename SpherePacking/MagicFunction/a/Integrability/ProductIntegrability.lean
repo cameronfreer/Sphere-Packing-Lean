@@ -14,17 +14,21 @@ import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
 /-!
-# Contour Segment Integrands and Their Integrability
+# Product Integrability for Contour Segment Integrands
 
 This file defines the integrand functions I₁_integrand through I₆_integrand for the
 contour integral components in the magic function decomposition, and proves they are
-integrable on V × (contour parameter).
+integrable on V × (contour parameter) where V = ℝ⁸.
+
+## Main definitions
+
+- `I₁_integrand` through `I₆_integrand` : Integrands on V × ℝ
 
 ## Main results
 
-- `I₁_integrand_integrable` through `I₆_integrand_integrable`
+- `I₁_integrand_integrable` through `I₆_integrand_integrable` : Product integrability
 
-See `Fubini.lean` for the Fubini swap lemmas that use these results.
+See `MagicFunction/Fubini.lean` for the Fubini swap lemmas that use these results.
 -/
 
 open MeasureTheory Complex Real Set intervalIntegral

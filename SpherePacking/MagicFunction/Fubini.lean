@@ -4,12 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Sphere Packing Contributors
 -/
 
-import SpherePacking.MagicFunction.Segments
+import SpherePacking.MagicFunction.a.Integrability.ProductIntegrability
 
 /-!
 # Fubini Swap Lemmas for Contour Integrals
 
-This file uses the integrability results from `Segments.lean` to prove Fubini-type
+This file uses the integrability results from `ProductIntegrability.lean` to prove Fubini-type
 swap lemmas: ∫_{ℝ⁸} ∫_{contour} = ∫_{contour} ∫_{ℝ⁸}.
 
 ## Main results
