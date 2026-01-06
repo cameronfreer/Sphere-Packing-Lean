@@ -88,42 +88,43 @@ Realenss, positivity and essential positivity are closed under the addition and 
 theorem ResToImagAxis.Real.add {F G : ℍ → ℂ} (hF : ResToImagAxis.Real F)
     (hG : ResToImagAxis.Real G) : ResToImagAxis.Real (F + G) := fun t ht => by
   have hFreal := hF t ht; have hGreal := hG t ht
-  simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal hGreal
-  simp [ResToImagAxis, ht, hFreal, hGreal]
+  simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal hGreal ⊢
+  simp [hFreal, hGreal]
 
 theorem ResToImagAxis.Real.mul {F G : ℍ → ℂ} (hF : ResToImagAxis.Real F)
     (hG : ResToImagAxis.Real G) : ResToImagAxis.Real (F * G) := fun t ht => by
   have hFreal := hF t ht; have hGreal := hG t ht
-  simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal hGreal
-  simp [ResToImagAxis, ht, hFreal, hGreal]
+  simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal hGreal ⊢
+  simp [hFreal, hGreal]
 
 theorem ResToImagAxis.Real.hmul {F : ℍ → ℂ} {c : ℝ} (hF : ResToImagAxis.Real F) :
     ResToImagAxis.Real (c • F) := fun t ht => by
   have hFreal := hF t ht
-  simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal
-  simp [ResToImagAxis, ht, hFreal]
+  simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal ⊢
+  simp [hFreal]
 
 theorem ResToImagAxis.Pos.add {F G : ℍ → ℂ} (hF : ResToImagAxis.Pos F)
     (hG : ResToImagAxis.Pos G) : ResToImagAxis.Pos (F + G) :=
   ⟨Real.add hF.1 hG.1, fun t ht ↦ by
     have hFpos := hF.2 t ht; have hGpos := hG.2 t ht
-    simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFpos hGpos
-    simp [ResToImagAxis, ht, add_pos hFpos hGpos]⟩
+    simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFpos hGpos ⊢
+    exact add_pos hFpos hGpos⟩
 
 theorem ResToImagAxis.Pos.mul {F G : ℍ → ℂ} (hF : ResToImagAxis.Pos F)
     (hG : ResToImagAxis.Pos G) : ResToImagAxis.Pos (F * G) :=
   ⟨Real.mul hF.1 hG.1, fun t ht ↦ by
     have hFreal := hF.1 t ht; have hGreal := hG.1 t ht
     have hFpos := hF.2 t ht; have hGpos := hG.2 t ht
-    simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFreal hGreal hFpos hGpos
-    simp [ResToImagAxis, ht, hFreal, hGreal, mul_pos hFpos hGpos]⟩
+    simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte]
+      at hFreal hGreal hFpos hGpos ⊢
+    simp [hFreal, hGreal, mul_pos hFpos hGpos]⟩
 
 theorem ResToImagAxis.Pos.hmul {F : ℍ → ℂ} {c : ℝ} (hF : ResToImagAxis.Pos F)
     (hc : 0 < c) : ResToImagAxis.Pos (fun z => c * F z) :=
   ⟨Real.hmul hF.1, fun t ht ↦ by
     have hFpos := hF.2 t ht
-    simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFpos
-    simp [ResToImagAxis, ht, mul_pos hc hFpos]⟩
+    simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte] at hFpos ⊢
+    simp [mul_pos hc hFpos]⟩
 
 theorem ResToImagAxis.EventuallyPos.add {F G : ℍ → ℂ}
     (hF : ResToImagAxis.EventuallyPos F) (hG : ResToImagAxis.EventuallyPos G) :
