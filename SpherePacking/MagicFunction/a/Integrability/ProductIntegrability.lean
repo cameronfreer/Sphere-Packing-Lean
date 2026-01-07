@@ -975,5 +975,96 @@ theorem I₃_integrand_integrable :
 
 end CuspApproachingSegments
 
+/-! ## Equivalence with Φⱼ Functions
+
+These lemmas connect the `Iⱼ_integrand` functions defined in this file to the `Φⱼ` functions
+from `Basic.lean`. This allows Fubini.lean to state results in terms of `Φⱼ`.
+-/
+
+section Equivalence
+
+open MagicFunction.a.RealIntegrands MagicFunction.a.ComplexIntegrands
+
+/-- For t ∈ [0,1], I₂_integrand (x, t) equals Φ₂ (‖x‖²) t.
+
+The proof expands both sides and uses:
+- z₂' t = -1 + t + I when t ∈ [0,1], so (z₂' t) + 1 = t + I
+- πI‖x‖²(-1+t+I) = -πI‖x‖² + πI‖x‖²t + πI²‖x‖² = -πI‖x‖² + πI‖x‖²t - π‖x‖² (using I² = -1)
+-/
+lemma I₂_integrand_eq_Φ₂ (x : V) (t : ℝ) (ht : t ∈ Icc 0 1) :
+    I₂_integrand (x, t) = Φ₂ (‖x‖^2) t := by
+  -- Both sides expand to φ₀''(-1/(t+I)) * (t+I)² * cexp(-πI‖x‖²) * cexp(πI‖x‖²t) * cexp(-π‖x‖²)
+  -- vs φ₀''(-1/(t+I)) * (t+I)² * cexp(πI‖x‖²(-1+t+I))
+  -- The exponentials are equal by I² = -1 and exp_add.
+  sorry
+
+/-- For t ∈ [0,1], I₄_integrand (x, t) equals Φ₄ (‖x‖²) t.
+
+The proof expands both sides and uses:
+- z₄' t = 1 - t + I when t ∈ [0,1], so (z₄' t) - 1 = -t + I
+- πI‖x‖²(1-t+I) = πI‖x‖² - πI‖x‖²t + πI²‖x‖² = πI‖x‖² - πI‖x‖²t - π‖x‖² (using I² = -1)
+-/
+lemma I₄_integrand_eq_Φ₄ (x : V) (t : ℝ) (ht : t ∈ Icc 0 1) :
+    I₄_integrand (x, t) = Φ₄ (‖x‖^2) t := by
+  -- Both sides expand to -φ₀''(-1/(-t+I)) * (-t+I)² * cexp(πI‖x‖²) * cexp(-πI‖x‖²t) * cexp(-π‖x‖²)
+  -- vs -φ₀''(-1/(-t+I)) * (-t+I)² * cexp(πI‖x‖²(1-t+I))
+  -- The exponentials are equal by I² = -1 and exp_add.
+  sorry
+
+/-- For t ∈ (0,1], I₁_integrand (x, t) equals Φ₁ (‖x‖²) t.
+
+The proof expands both sides and uses:
+- z₁' t = -1 + I*t when t ∈ [0,1], so (z₁' t) + 1 = I*t
+- (I*t)² = -t², so I * (-t²) = -I * t²
+- πI‖x‖²(-1 + I*t) = -πI‖x‖² + πI²‖x‖²t = -πI‖x‖² - π‖x‖²t (using I² = -1)
+-/
+lemma I₁_integrand_eq_Φ₁ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
+    I₁_integrand (x, t) = Φ₁ (‖x‖^2) t := by
+  -- Both sides expand to -I * φ₀''(-1/(I*t)) * t² * cexp(-πI‖x‖²) * cexp(-π‖x‖²t)
+  -- vs I * φ₀''(-1/(I*t)) * (I*t)² * cexp(πI‖x‖²(-1+I*t))
+  -- Using (I*t)² = -t² and exponential identity with I² = -1.
+  sorry
+
+/-- For t ∈ (0,1], I₃_integrand (x, t) equals Φ₃ (‖x‖²) t.
+
+The proof expands both sides and uses:
+- z₃' t = 1 + I*t when t ∈ [0,1], so (z₃' t) - 1 = I*t
+- (I*t)² = -t², so I * (-t²) = -I * t²
+- πI‖x‖²(1 + I*t) = πI‖x‖² + πI²‖x‖²t = πI‖x‖² - π‖x‖²t (using I² = -1)
+-/
+lemma I₃_integrand_eq_Φ₃ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
+    I₃_integrand (x, t) = Φ₃ (‖x‖^2) t := by
+  -- Both sides expand to -I * φ₀''(-1/(I*t)) * t² * cexp(πI‖x‖²) * cexp(-π‖x‖²t)
+  -- vs -I * φ₀''(-1/(I*t)) * t² * cexp(πI‖x‖²(1+I*t))
+  -- The exponentials are equal by I² = -1.
+  sorry
+
+/-- For t ∈ (0,1], I₅_integrand (x, t) equals Φ₅ (‖x‖²) t.
+
+The proof expands both sides and uses:
+- z₅' t = I*t when t ∈ [0,1]
+- (I*t)² = -t², so I * (-t²) = -I * t²
+- πI‖x‖²(I*t) = πI²‖x‖²t = -π‖x‖²t (using I² = -1)
+-/
+lemma I₅_integrand_eq_Φ₅ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
+    I₅_integrand (x, t) = Φ₅ (‖x‖^2) t := by
+  -- Both sides expand to -I * φ₀''(-1/(I*t)) * t² * cexp(-π‖x‖²t)
+  -- which follows from I² = -1.
+  sorry
+
+/-- For t ∈ [1,∞), I₆_integrand (x, t) equals Φ₆ (‖x‖²) t.
+
+The proof expands both sides and uses:
+- z₆' t = I*t when t ∈ [1,∞)
+- πI‖x‖²(I*t) = πI²‖x‖²t = -π‖x‖²t (using I² = -1)
+-/
+lemma I₆_integrand_eq_Φ₆ (x : V) (t : ℝ) (ht : t ∈ Ici 1) :
+    I₆_integrand (x, t) = Φ₆ (‖x‖^2) t := by
+  -- Both sides expand to I * φ₀''(I*t) * cexp(-π‖x‖²t)
+  -- which follows from I² = -1.
+  sorry
+
+end Equivalence
+
 end
 

@@ -27,6 +27,7 @@ open MeasureTheory Complex Real Set intervalIntegral
 local notation "V" => EuclideanSpace ℝ (Fin 8)
 
 open MagicFunction.Parametrisations MagicFunction.a.RealIntegrals MagicFunction.a.RadialFunctions
+open MagicFunction.a.RealIntegrands MagicFunction.a.ComplexIntegrands
 
 noncomputable section
 
@@ -142,6 +143,75 @@ theorem I₆_integral_swap :
   exact MeasureTheory.integral_integral_swap I₆_integrand_integrable
 
 end FubiniSwap
+
+/-! ## Connection to Φⱼ Notation
+
+The `Iⱼ_integrand` functions are equivalent to `Φⱼ` from `Basic.lean`:
+`Iⱼ_integrand (x, t) = Φⱼ (‖x‖²) t` for t in the appropriate domain.
+
+These alternate formulations express the Fubini results using the Φⱼ notation
+from PR #237.
+-/
+
+section PhiNotation
+
+/-- Fubini for I₂ in Φ₂ notation: ∫ x, I₂ x = ∫ t ∈ [0,1], ∫ x, Φ₂ (‖x‖²) t. -/
+theorem I₂_integral_swap_Φ :
+    ∫ x : V, I₂ x = ∫ t in Icc (0 : ℝ) 1, ∫ x : V, Φ₂ (‖x‖^2) t := by
+  rw [I₂_integral_swap]
+  apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Icc
+  refine ae_of_all _ fun t ht => ?_
+  congr 1 with x
+  exact I₂_integrand_eq_Φ₂ x t ht
+
+/-- Fubini for I₄ in Φ₄ notation: ∫ x, I₄ x = ∫ t ∈ [0,1], ∫ x, Φ₄ (‖x‖²) t. -/
+theorem I₄_integral_swap_Φ :
+    ∫ x : V, I₄ x = ∫ t in Icc (0 : ℝ) 1, ∫ x : V, Φ₄ (‖x‖^2) t := by
+  rw [I₄_integral_swap]
+  apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Icc
+  refine ae_of_all _ fun t ht => ?_
+  congr 1 with x
+  exact I₄_integrand_eq_Φ₄ x t ht
+
+/-- Fubini for I₁ in Φ₁ notation: ∫ x, I₁ x = ∫ t ∈ (0,1], ∫ x, Φ₁ (‖x‖²) t. -/
+theorem I₁_integral_swap_Φ :
+    ∫ x : V, I₁ x = ∫ t in Ioc (0 : ℝ) 1, ∫ x : V, Φ₁ (‖x‖^2) t := by
+  rw [I₁_integral_swap]
+  apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ioc
+  refine ae_of_all _ fun t ht => ?_
+  congr 1 with x
+  exact I₁_integrand_eq_Φ₁ x t ht
+
+/-- Fubini for I₃ in Φ₃ notation: ∫ x, I₃ x = ∫ t ∈ (0,1], ∫ x, Φ₃ (‖x‖²) t. -/
+theorem I₃_integral_swap_Φ :
+    ∫ x : V, I₃ x = ∫ t in Ioc (0 : ℝ) 1, ∫ x : V, Φ₃ (‖x‖^2) t := by
+  rw [I₃_integral_swap]
+  apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ioc
+  refine ae_of_all _ fun t ht => ?_
+  congr 1 with x
+  exact I₃_integrand_eq_Φ₃ x t ht
+
+/-- Fubini for I₅ in Φ₅ notation: ∫ x, I₅ x = -2 * ∫ t ∈ (0,1], ∫ x, Φ₅ (‖x‖²) t. -/
+theorem I₅_integral_swap_Φ :
+    ∫ x : V, I₅ x = -2 * ∫ t in Ioc (0 : ℝ) 1, ∫ x : V, Φ₅ (‖x‖^2) t := by
+  rw [I₅_integral_swap]
+  congr 1
+  apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ioc
+  refine ae_of_all _ fun t ht => ?_
+  congr 1 with x
+  exact I₅_integrand_eq_Φ₅ x t ht
+
+/-- Fubini for I₆ in Φ₆ notation: ∫ x, I₆ x = 2 * ∫ t ∈ [1,∞), ∫ x, Φ₆ (‖x‖²) t. -/
+theorem I₆_integral_swap_Φ :
+    ∫ x : V, I₆ x = 2 * ∫ t in Ici (1 : ℝ), ∫ x : V, Φ₆ (‖x‖^2) t := by
+  rw [I₆_integral_swap]
+  congr 1
+  apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ici
+  refine ae_of_all _ fun t ht => ?_
+  congr 1 with x
+  exact I₆_integrand_eq_Φ₆ x t ht
+
+end PhiNotation
 
 /-! ## Basic Integrability
 
