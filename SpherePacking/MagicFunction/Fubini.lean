@@ -104,25 +104,25 @@ lemma I₆_eq_integral (x : V) :
 theorem I₁_integral_swap :
     ∫ x : V, I₁ x = ∫ t in Ioc (0 : ℝ) 1, ∫ x : V, I₁_integrand (x, t) := by
   simp_rw [I₁_eq_integral]
-  exact MeasureTheory.integral_integral_swap I₁_integrand_integrable
+  exact MeasureTheory.integral_integral_swap Φ₁_prod_integrable
 
 /-- Fubini for I₂: swap ∫_{ℝ⁸} and ∫_{[0,1]} -/
 theorem I₂_integral_swap :
     ∫ x : V, I₂ x = ∫ t in Icc (0 : ℝ) 1, ∫ x : V, I₂_integrand (x, t) := by
   simp_rw [I₂_eq_integral]
-  exact MeasureTheory.integral_integral_swap I₂_integrand_integrable
+  exact MeasureTheory.integral_integral_swap Φ₂_prod_integrable
 
 /-- Fubini for I₃: swap ∫_{ℝ⁸} and ∫_{(0,1]} -/
 theorem I₃_integral_swap :
     ∫ x : V, I₃ x = ∫ t in Ioc (0 : ℝ) 1, ∫ x : V, I₃_integrand (x, t) := by
   simp_rw [I₃_eq_integral]
-  exact MeasureTheory.integral_integral_swap I₃_integrand_integrable
+  exact MeasureTheory.integral_integral_swap Φ₃_prod_integrable
 
 /-- Fubini for I₄: swap ∫_{ℝ⁸} and ∫_{[0,1]} -/
 theorem I₄_integral_swap :
     ∫ x : V, I₄ x = ∫ t in Icc (0 : ℝ) 1, ∫ x : V, I₄_integrand (x, t) := by
   simp_rw [I₄_eq_integral]
-  exact MeasureTheory.integral_integral_swap I₄_integrand_integrable
+  exact MeasureTheory.integral_integral_swap Φ₄_prod_integrable
 
 /-- Fubini for I₅: swap ∫_{ℝ⁸} and ∫_{(0,1]}
 Note: includes factor of -2 from I₅ definition. -/
@@ -131,7 +131,7 @@ theorem I₅_integral_swap :
   simp_rw [I₅_eq_integral]
   rw [MeasureTheory.integral_const_mul]
   congr 1
-  exact MeasureTheory.integral_integral_swap I₅_integrand_integrable
+  exact MeasureTheory.integral_integral_swap Φ₅_prod_integrable
 
 /-- Fubini for I₆: swap ∫_{ℝ⁸} and ∫_{[1,∞)}
 Note: includes factor of 2 from I₆ definition. -/
@@ -140,7 +140,7 @@ theorem I₆_integral_swap :
   simp_rw [I₆_eq_integral]
   rw [MeasureTheory.integral_const_mul]
   congr 1
-  exact MeasureTheory.integral_integral_swap I₆_integrand_integrable
+  exact MeasureTheory.integral_integral_swap Φ₆_prod_integrable
 
 end FubiniSwap
 

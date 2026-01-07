@@ -26,7 +26,7 @@ integrable on V × (contour parameter) where V = ℝ⁸.
 
 ## Main results
 
-- `I₁_integrand_integrable` through `I₆_integrand_integrable` : Product integrability
+- `Φ₁_prod_integrable` through `Φ₆_prod_integrable` : Product integrability
 
 See `MagicFunction/Fubini.lean` for the Fubini swap lemmas that use these results.
 -/
@@ -295,7 +295,7 @@ def I₄_integrand (p : V × ℝ) : ℂ :=
 
 /-- The I₂ integrand is continuous as a function V × ℝ → ℂ.
 Follows from: continuity of φ₀''(-1/(t+I)), polynomial in t, and cexp compositions. -/
-lemma I₂_integrand_continuous : Continuous I₂_integrand := by
+lemma Φ₂_prod_continuous : Continuous I₂_integrand := by
   unfold I₂_integrand
   -- Each factor is continuous in (x, t)
   have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (p.2 + I))) :=
@@ -313,7 +313,7 @@ lemma I₂_integrand_continuous : Continuous I₂_integrand := by
 
 /-- The norm of I₂_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
 Uses continuity of φ₀'' on [0,1] to get a uniform bound. -/
-lemma I₂_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
+lemma Φ₂_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     ‖I₂_integrand (x, t)‖ ≤ C * Real.exp (-π * ‖x‖^2) := by
   -- Get a bound on |φ₀''(-1/(t+I))| for t ∈ [0,1] using continuity
   -- Since φ₀''(-1/(t+I)) is continuous on the compact set [0,1], it's bounded
@@ -358,15 +358,15 @@ lemma I₂_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 
 /-- I₂ integrand is integrable on V × [0,1] (Class A segment).
 
 Proof: Continuous, bounded by C * exp(-π‖x‖²), and Gaussian is integrable on V. -/
-theorem I₂_integrand_integrable :
+theorem Φ₂_prod_integrable :
     Integrable I₂_integrand (volume.prod (volume.restrict (Icc 0 1))) := by
   -- Use Integrable.mono' with dominating function C * exp(-π‖x‖²) ∘ fst
-  obtain ⟨C, hC_pos, hC⟩ := I₂_integrand_norm_bound
+  obtain ⟨C, hC_pos, hC⟩ := Φ₂_prod_norm_bound
   -- The dominating function
   let g : V × ℝ → ℝ := fun p => C * Real.exp (-π * ‖p.1‖^2)
   -- Step 1: I₂_integrand is AEStronglyMeasurable (it's continuous)
   have h_meas : AEStronglyMeasurable I₂_integrand (volume.prod (volume.restrict (Icc 0 1))) :=
-    I₂_integrand_continuous.aestronglyMeasurable
+    Φ₂_prod_continuous.aestronglyMeasurable
   -- Step 2: The dominating function g is integrable on the product
   have h_g_int : Integrable g (volume.prod (volume.restrict (Icc 0 1))) := by
     -- g(x, t) = C * exp(-π‖x‖²) depends only on x
@@ -392,7 +392,7 @@ theorem I₂_integrand_integrable :
     -- For product measures, use ae_prod_iff_ae_ae with measurability of the bound set
     have h_meas_bound : MeasurableSet {p : V × ℝ | ‖I₂_integrand p‖ ≤ g p} := by
       apply measurableSet_le
-      · exact I₂_integrand_continuous.norm.measurable
+      · exact Φ₂_prod_continuous.norm.measurable
       · exact (continuous_const.mul (Real.continuous_exp.comp
           (continuous_const.mul ((continuous_norm.comp continuous_fst).pow 2)))).measurable
     rw [Measure.ae_prod_iff_ae_ae h_meas_bound]
@@ -403,7 +403,7 @@ theorem I₂_integrand_integrable :
   exact Integrable.mono' h_g_int h_meas h_bound
 
 /-- The I₄ integrand is continuous as a function V × ℝ → ℂ. -/
-lemma I₄_integrand_continuous : Continuous I₄_integrand := by
+lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
   unfold I₄_integrand
   have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (-p.2 + I))) :=
     continuous_φ₀''_I₄_param.comp continuous_snd
@@ -419,7 +419,7 @@ lemma I₄_integrand_continuous : Continuous I₄_integrand := by
   exact ((continuous_const.mul h1).mul h2).mul h3 |>.mul h4 |>.mul h5
 
 /-- The norm of I₄_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1]. -/
-lemma I₄_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
+lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     ‖I₄_integrand (x, t)‖ ≤ C * Real.exp (-π * ‖x‖^2) := by
   have h_bdd : BddAbove ((fun t : ℝ => ‖φ₀'' (-1 / (-t + I))‖) '' Icc (0 : ℝ) 1) :=
     IsCompact.bddAbove_image isCompact_Icc
@@ -453,12 +453,12 @@ lemma I₄_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 
 
 /-- I₄ integrand is integrable on V × [0,1] (Class A segment).
 Strategy: Same as I₂ - φ₀'' bounded via Im ≥ 1/2, Gaussian decay dominates. -/
-theorem I₄_integrand_integrable :
+theorem Φ₄_prod_integrable :
     Integrable I₄_integrand (volume.prod (volume.restrict (Icc 0 1))) := by
-  obtain ⟨C, hC_pos, hC⟩ := I₄_integrand_norm_bound
+  obtain ⟨C, hC_pos, hC⟩ := Φ₄_prod_norm_bound
   let g : V × ℝ → ℝ := fun p => C * Real.exp (-π * ‖p.1‖^2)
   have h_meas : AEStronglyMeasurable I₄_integrand (volume.prod (volume.restrict (Icc 0 1))) :=
-    I₄_integrand_continuous.aestronglyMeasurable
+    Φ₄_prod_continuous.aestronglyMeasurable
   have h_g_int : Integrable g (volume.prod (volume.restrict (Icc 0 1))) := by
     have h_fst : g = (fun p : V × ℝ => C * Real.exp (-π * ‖p.1‖^2)) := rfl
     rw [h_fst]
@@ -474,7 +474,7 @@ theorem I₄_integrand_integrable :
       exact ae_of_all _ (fun _ h => h)
     have h_meas_bound : MeasurableSet {p : V × ℝ | ‖I₄_integrand p‖ ≤ g p} := by
       apply measurableSet_le
-      · exact I₄_integrand_continuous.norm.measurable
+      · exact Φ₄_prod_continuous.norm.measurable
       · exact (continuous_const.mul (Real.continuous_exp.comp
           (continuous_const.mul ((continuous_norm.comp continuous_fst).pow 2)))).measurable
     rw [Measure.ae_prod_iff_ae_ae h_meas_bound]
@@ -576,7 +576,7 @@ lemma norm_φ₀''_I₆_bound : ∃ C₀ > 0, ∀ t : ℝ, 1 ≤ t →
 
 /-- The I₆ integrand is continuous on V × [1, ∞).
 This matches the blueprint's I₆ parametrization z = it for t ∈ [1,∞). -/
-lemma continuousOn_I₆_integrand :
+lemma Φ₆_prod_continuousOn :
     ContinuousOn I₆_integrand (Set.univ ×ˢ Set.Ici (1 : ℝ)) := by
   unfold I₆_integrand
   -- φ₀''(I * p.2) is ContinuousOn on univ ×ˢ Ici 1 via continuousOn_φ₀''_I₆_param
@@ -591,7 +591,7 @@ lemma continuousOn_I₆_integrand :
   exact (continuous_const.continuousOn.mul h1).mul h2.continuousOn
 
 /-- The norm of I₆_integrand is bounded by C * exp(-2πt) * exp(-π‖x‖²) for t ≥ 1. -/
-lemma I₆_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
+lemma Φ₆_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
     ‖I₆_integrand (x, t)‖ ≤ C * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_I₆_bound
   refine ⟨C₀, hC₀_pos, fun x t ht => ?_⟩
@@ -613,16 +613,16 @@ lemma I₆_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
 
 /-- I₆ integrand is integrable on V × [1,∞) (Class C tail).
 Strategy: φ₀ decay (Cor 7.5) + domination `e^{-πrt} ≤ e^{-πr}` for t ≥ 1. -/
-theorem I₆_integrand_integrable :
+theorem Φ₆_prod_integrable :
     Integrable I₆_integrand (volume.prod (volume.restrict (Ici 1))) := by
-  obtain ⟨C, hC_pos, hC⟩ := I₆_integrand_norm_bound
+  obtain ⟨C, hC_pos, hC⟩ := Φ₆_prod_norm_bound
   -- Dominating function: C * exp(-2πt) * exp(-π‖x‖²) = (C * exp(-π‖x‖²)) * exp(-2πt)
   let g : V × ℝ → ℝ := fun p => C * Real.exp (-2 * π * p.2) * Real.exp (-π * ‖p.1‖^2)
   -- Use ContinuousOn.aestronglyMeasurable with the restricted measure
   have h_meas : AEStronglyMeasurable I₆_integrand (volume.prod (volume.restrict (Ici 1))) := by
     have hmeas' : AEStronglyMeasurable I₆_integrand
         ((volume.prod volume).restrict (Set.univ ×ˢ Set.Ici (1 : ℝ))) :=
-      continuousOn_I₆_integrand.aestronglyMeasurable
+      Φ₆_prod_continuousOn.aestronglyMeasurable
         (MeasurableSet.univ.prod measurableSet_Ici)
     rw [volume_prod_restrict_eq]
     exact hmeas'
@@ -704,13 +704,13 @@ def I₅_integrand (p : V × ℝ) : ℂ :=
   -I * φ₀'' (-1 / (I * p.2)) * p.2 ^ 2 * cexp (-π * ‖p.1‖^2 * p.2)
 
 /-- I₁ integrand equals I₅ integrand times a unit-modulus phase factor. -/
-lemma I₁_integrand_eq_I₅_mul_phase (p : V × ℝ) :
+lemma Φ₁_prod_eq_Φ₅_mul_phase (p : V × ℝ) :
     I₁_integrand p = I₅_integrand p * cexp (-π * I * ‖p.1‖^2) := by
   simp only [I₁_integrand, I₅_integrand]
   ring
 
 /-- I₃ integrand equals I₅ integrand times a unit-modulus phase factor. -/
-lemma I₃_integrand_eq_I₅_mul_phase (p : V × ℝ) :
+lemma Φ₃_prod_eq_Φ₅_mul_phase (p : V × ℝ) :
     I₃_integrand p = I₅_integrand p * cexp (π * I * ‖p.1‖^2) := by
   simp only [I₃_integrand, I₅_integrand]
   ring
@@ -757,7 +757,7 @@ lemma continuousOn_φ₀''_cusp_path :
   simp only [Function.comp_apply, φ₀''_eq _ (h_im_pos x.val x.prop), path]
 
 /-- The I₅ integrand is continuous on V × (0, 1]. -/
-lemma continuousOn_I₅_integrand : ContinuousOn I₅_integrand (Set.univ ×ˢ Set.Ioc 0 1) := by
+lemma Φ₅_prod_continuousOn : ContinuousOn I₅_integrand (Set.univ ×ˢ Set.Ioc 0 1) := by
   unfold I₅_integrand
   refine ContinuousOn.mul ?_ ?_
   · refine ContinuousOn.mul ?_ ?_
@@ -785,7 +785,7 @@ lemma continuousOn_I₅_integrand : ContinuousOn I₅_integrand (Set.univ ×ˢ S
     exact h.continuousOn
 
 /-- I₅ integrand norm bound for Class B. -/
-lemma I₅_integrand_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 0 < t → t ≤ 1 →
+lemma Φ₅_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 0 < t → t ≤ 1 →
     ‖I₅_integrand (x, t)‖ ≤ C * Real.exp (-2 * π / t) * t ^ 2 * Real.exp (-π * ‖x‖^2 * t) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_cusp_bound
   refine ⟨C₀, hC₀_pos, fun x t ht ht' => ?_⟩
@@ -816,17 +816,17 @@ Route A strategy:
 3. Then t-integral: ∫₀¹ C * exp(-2π/t) * t^{-2} dt converges
 
 The super-exponential decay of exp(-2π/t) as t→0 dominates the polynomial t^{-2}. -/
-theorem I₅_integrand_integrable :
+theorem Φ₅_prod_integrable :
     Integrable I₅_integrand (volume.prod (volume.restrict (Ioc 0 1))) := by
-  -- Get the pointwise bound constant C from I₅_integrand_norm_bound
-  obtain ⟨C, hC_pos, hC_bound⟩ := I₅_integrand_norm_bound
+  -- Get the pointwise bound constant C from Φ₅_prod_norm_bound
+  obtain ⟨C, hC_pos, hC_bound⟩ := Φ₅_prod_norm_bound
   -- AEStronglyMeasurable is needed for integrable_prod_iff'
   have h_meas : AEStronglyMeasurable I₅_integrand
       (volume.prod (volume.restrict (Ioc 0 1))) := by
     -- Use ContinuousOn.aestronglyMeasurable with the restricted measure
     have hmeas' : AEStronglyMeasurable I₅_integrand
         ((volume.prod volume).restrict (Set.univ ×ˢ Set.Ioc (0 : ℝ) 1)) :=
-      continuousOn_I₅_integrand.aestronglyMeasurable
+      Φ₅_prod_continuousOn.aestronglyMeasurable
         (MeasurableSet.univ.prod measurableSet_Ioc)
     rw [volume_prod_restrict_eq]
     exact hmeas'
@@ -941,13 +941,13 @@ theorem I₅_integrand_integrable :
 
 /-- I₁ integrand is integrable on V × (0,1] (Class B segment).
 Follows from I₅ integrability since I₁ = I₅ * (unit-modulus phase). -/
-theorem I₁_integrand_integrable :
+theorem Φ₁_prod_integrable :
     Integrable I₁_integrand (volume.prod (volume.restrict (Ioc 0 1))) := by
   have h_eq : I₁_integrand = fun p => I₅_integrand p * cexp (-π * I * ‖p.1‖^2) := by
-    ext p; exact I₁_integrand_eq_I₅_mul_phase p
+    ext p; exact Φ₁_prod_eq_Φ₅_mul_phase p
   rw [h_eq]
   -- I₅ is integrable, and we multiply by a unit-modulus factor
-  have h_I₅ := I₅_integrand_integrable
+  have h_I₅ := Φ₅_prod_integrable
   -- ‖f*g‖ = ‖f‖*‖g‖ = ‖f‖*1 = ‖f‖
   apply Integrable.mono' h_I₅.norm
   · -- Measurability
@@ -960,12 +960,12 @@ theorem I₁_integrand_integrable :
 
 /-- I₃ integrand is integrable on V × (0,1] (Class B segment).
 Follows from I₅ integrability since I₃ = I₅ * (unit-modulus phase). -/
-theorem I₃_integrand_integrable :
+theorem Φ₃_prod_integrable :
     Integrable I₃_integrand (volume.prod (volume.restrict (Ioc 0 1))) := by
   have h_eq : I₃_integrand = fun p => I₅_integrand p * cexp (π * I * ‖p.1‖^2) := by
-    ext p; exact I₃_integrand_eq_I₅_mul_phase p
+    ext p; exact Φ₃_prod_eq_Φ₅_mul_phase p
   rw [h_eq]
-  have h_I₅ := I₅_integrand_integrable
+  have h_I₅ := Φ₅_prod_integrable
   apply Integrable.mono' h_I₅.norm
   · have h_cont : Continuous (fun p : V × ℝ => cexp (π * I * ‖p.1‖^2)) := by fun_prop
     exact h_I₅.aestronglyMeasurable.mul h_cont.aestronglyMeasurable
