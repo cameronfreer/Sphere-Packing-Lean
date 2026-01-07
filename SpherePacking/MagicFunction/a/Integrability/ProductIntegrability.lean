@@ -975,5 +975,150 @@ theorem I₃_integrand_integrable :
 
 end CuspApproachingSegments
 
+/-! ## Equivalence with Φⱼ Functions
+
+These lemmas connect the `Iⱼ_integrand` functions defined in this file to the `Φⱼ` functions
+from `Basic.lean`. This allows Fubini.lean to state results in terms of `Φⱼ`.
+-/
+
+section Equivalence
+
+open MagicFunction.a.RealIntegrands MagicFunction.a.ComplexIntegrands
+
+/-- For t ∈ [0,1], I₂_integrand (x, t) equals Φ₂ (‖x‖²) t.
+
+The exponential factor in Φ₂ is `cexp (π * I * r * z₂' t)` where z₂' t = -1 + t + I.
+This equals `cexp (π * I * r * (-1 + t + I))` = `cexp (-π*I*r + π*I*r*t + π*I²*r)`
+Using I² = -1: = `cexp (-π*I*r) * cexp (π*I*r*t) * cexp (-π*r)`, matching I₂_integrand. -/
+lemma I₂_integrand_eq_Φ₂ (x : V) (t : ℝ) (ht : t ∈ Icc 0 1) :
+    I₂_integrand (x, t) = Φ₂ (‖x‖^2) t := by
+  simp only [I₂_integrand, Φ₂, Φ₂', z₂'_eq_of_mem ht]
+  -- Exponential: π*I*r*(-1+t+I) = -π*I*r + π*I*r*t - π*r (using I² = -1)
+  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I)) =
+      cexp (-π * I * ↑(‖x‖ ^ 2)) * cexp (π * I * ↑(‖x‖ ^ 2) * ↑t) * cexp (-π * ↑(‖x‖ ^ 2)) := by
+    rw [← Complex.exp_add, ← Complex.exp_add]
+    congr 1
+    have hI : I * I = (-1 : ℂ) := I_mul_I
+    calc π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I)
+        = -π * I * ↑(‖x‖ ^ 2) + π * I * ↑(‖x‖ ^ 2) * ↑t + π * (I * I) * ↑(‖x‖ ^ 2) := by ring
+      _ = -π * I * ↑(‖x‖ ^ 2) + π * I * ↑(‖x‖ ^ 2) * ↑t + π * (-1) * ↑(‖x‖ ^ 2) := by rw [hI]
+      _ = -π * I * ↑(‖x‖ ^ 2) + π * I * ↑(‖x‖ ^ 2) * ↑t + -π * ↑(‖x‖ ^ 2) := by ring
+  rw [hexp]
+  simp only [ofReal_pow]
+  ring
+
+/-- For t ∈ [0,1], I₄_integrand (x, t) equals Φ₄ (‖x‖²) t. -/
+lemma I₄_integrand_eq_Φ₄ (x : V) (t : ℝ) (ht : t ∈ Icc 0 1) :
+    I₄_integrand (x, t) = Φ₄ (‖x‖^2) t := by
+  simp only [I₄_integrand, Φ₄, Φ₄', z₄'_eq_of_mem ht]
+  -- Exponential: π*I*r*(1-t+I) = π*I*r - π*I*r*t - π*r (using I² = -1)
+  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I)) =
+      cexp (π * I * ↑(‖x‖ ^ 2)) * cexp (-π * I * ↑(‖x‖ ^ 2) * ↑t) * cexp (-π * ↑(‖x‖ ^ 2)) := by
+    rw [← Complex.exp_add, ← Complex.exp_add]
+    congr 1
+    have hI : I * I = (-1 : ℂ) := I_mul_I
+    calc π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I)
+        = π * I * ↑(‖x‖ ^ 2) + (-π * I * ↑(‖x‖ ^ 2) * ↑t) + π * (I * I) * ↑(‖x‖ ^ 2) := by ring
+      _ = π * I * ↑(‖x‖ ^ 2) + (-π * I * ↑(‖x‖ ^ 2) * ↑t) + π * (-1) * ↑(‖x‖ ^ 2) := by rw [hI]
+      _ = π * I * ↑(‖x‖ ^ 2) + -π * I * ↑(‖x‖ ^ 2) * ↑t + -π * ↑(‖x‖ ^ 2) := by ring
+  rw [hexp]
+  simp only [ofReal_pow]
+  ring
+
+/-- For t ∈ (0,1], I₁_integrand (x, t) equals Φ₁ (‖x‖²) t.
+
+z₁' t = -1 + I*t, so (z₁' t + 1)² = (I*t)² = -t².
+The factor I * (I*t)² = I * (-t²) = -I * t² matches I₁_integrand's leading factor. -/
+lemma I₁_integrand_eq_Φ₁ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
+    I₁_integrand (x, t) = Φ₁ (‖x‖^2) t := by
+  have ht' : t ∈ Icc 0 1 := mem_Icc_of_Ioc ht
+  simp only [I₁_integrand, Φ₁, Φ₁', z₁'_eq_of_mem ht']
+  -- z₁' t + 1 = -1 + I*t + 1 = I*t, and (I*t)² = -t²
+  have h1 : ((-1 : ℂ) + I * ↑t + 1) = I * ↑t := by ring
+  have h2 : (I * ↑t : ℂ) ^ 2 = -(↑t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
+  rw [h1, h2]
+  -- Exponential: π*I*r*(-1+I*t) = -π*I*r - π*r*t (using I² = -1)
+  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (-1 + I * ↑t)) =
+      cexp (-π * I * ↑(‖x‖ ^ 2)) * cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
+    rw [← Complex.exp_add]
+    congr 1
+    have hI : I * I = (-1 : ℂ) := I_mul_I
+    calc π * I * ↑(‖x‖ ^ 2) * (-1 + I * ↑t)
+        = -π * I * ↑(‖x‖ ^ 2) + π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
+      _ = -π * I * ↑(‖x‖ ^ 2) + π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
+      _ = -π * I * ↑(‖x‖ ^ 2) + -π * ↑(‖x‖ ^ 2) * ↑t := by ring
+  rw [hexp]
+  simp only [ofReal_pow]
+  ring
+
+/-- For t ∈ (0,1], I₃_integrand (x, t) equals Φ₃ (‖x‖²) t.
+
+z₃' t = 1 + I*t, so (z₃' t - 1)² = (I*t)² = -t².
+The factor I * (I*t)² = I * (-t²) = -I * t² matches I₃_integrand's leading factor. -/
+lemma I₃_integrand_eq_Φ₃ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
+    I₃_integrand (x, t) = Φ₃ (‖x‖^2) t := by
+  have ht' : t ∈ Icc 0 1 := mem_Icc_of_Ioc ht
+  simp only [I₃_integrand, Φ₃, Φ₃', z₃'_eq_of_mem ht']
+  -- z₃' t - 1 = 1 + I*t - 1 = I*t, and (I*t)² = -t²
+  have h1 : ((1 : ℂ) + I * ↑t - 1) = I * ↑t := by ring
+  have h2 : (I * ↑t : ℂ) ^ 2 = -(↑t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
+  rw [h1, h2]
+  -- Exponential: π*I*r*(1+I*t) = π*I*r - π*r*t (using I² = -1)
+  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (1 + I * ↑t)) =
+      cexp (π * I * ↑(‖x‖ ^ 2)) * cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
+    rw [← Complex.exp_add]
+    congr 1
+    have hI : I * I = (-1 : ℂ) := I_mul_I
+    calc π * I * ↑(‖x‖ ^ 2) * (1 + I * ↑t)
+        = π * I * ↑(‖x‖ ^ 2) + π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
+      _ = π * I * ↑(‖x‖ ^ 2) + π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
+      _ = π * I * ↑(‖x‖ ^ 2) + -π * ↑(‖x‖ ^ 2) * ↑t := by ring
+  rw [hexp]
+  simp only [ofReal_pow]
+  ring
+
+/-- For t ∈ (0,1], I₅_integrand (x, t) equals Φ₅ (‖x‖²) t.
+
+z₅' t = I*t, so z₅' t² = (I*t)² = -t².
+The factor I * (I*t)² = -I * t² matches I₅_integrand's leading factor. -/
+lemma I₅_integrand_eq_Φ₅ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
+    I₅_integrand (x, t) = Φ₅ (‖x‖^2) t := by
+  have ht' : t ∈ Icc 0 1 := mem_Icc_of_Ioc ht
+  simp only [I₅_integrand, Φ₅, Φ₅', z₅'_eq_of_mem ht']
+  -- (I*t)² = -t²
+  have h1 : (I * ↑t : ℂ) ^ 2 = -(↑t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
+  rw [h1]
+  -- Exponential: π*I*r*(I*t) = -π*r*t (using I² = -1)
+  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (I * ↑t)) = cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
+    congr 1
+    have hI : I * I = (-1 : ℂ) := I_mul_I
+    calc π * I * ↑(‖x‖ ^ 2) * (I * ↑t)
+        = π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
+      _ = π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
+      _ = -π * ↑(‖x‖ ^ 2) * ↑t := by ring
+  rw [hexp]
+  simp only [ofReal_pow]
+  ring
+
+/-- For t ∈ [1,∞), I₆_integrand (x, t) equals Φ₆ (‖x‖²) t.
+
+z₆' t = I*t, so the exponential factor cexp(π*I*r*I*t) = cexp(-π*r*t). -/
+lemma I₆_integrand_eq_Φ₆ (x : V) (t : ℝ) (ht : t ∈ Ici 1) :
+    I₆_integrand (x, t) = Φ₆ (‖x‖^2) t := by
+  simp only [I₆_integrand, Φ₆, Φ₆', z₆'_eq_of_mem ht]
+  -- Exponential: π*I*r*(I*t) = -π*r*t (using I² = -1)
+  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (I * ↑t)) = cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
+    congr 1
+    have hI : I * I = (-1 : ℂ) := I_mul_I
+    calc π * I * ↑(‖x‖ ^ 2) * (I * ↑t)
+        = π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
+      _ = π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
+      _ = -π * ↑(‖x‖ ^ 2) * ↑t := by ring
+  rw [hexp]
+  simp only [ofReal_pow]
+  ring
+
+end Equivalence
+
 end
 
