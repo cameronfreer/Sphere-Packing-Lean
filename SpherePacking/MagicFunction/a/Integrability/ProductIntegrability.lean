@@ -36,6 +36,7 @@ open MeasureTheory Complex Real Set intervalIntegral
 local notation "V" => EuclideanSpace ℝ (Fin 8)
 
 open MagicFunction.Parametrisations MagicFunction.a.RealIntegrals MagicFunction.a.RadialFunctions
+open MagicFunction.a.RealIntegrands MagicFunction.a.ComplexIntegrands
 
 noncomputable section
 
