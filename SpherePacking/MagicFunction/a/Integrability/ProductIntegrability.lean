@@ -118,41 +118,43 @@ So `norm_φ₀_le` applies, giving uniform bounds on φ₀''.
 
 section HorizontalSegments
 
+/-- Core formula: Im(-1/(t + I)) = 1/(t² + 1) for any t ∈ ℝ. -/
+lemma im_neg_inv_t_add_I_eq (t : ℝ) : (-1 / (t + I)).im = 1 / (t^2 + 1) := by
+  have hns : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
+  simp [neg_div, inv_im, hns]
+
+/-- normSq(t + I) = t² + 1 for any t ∈ ℝ. -/
+lemma normSq_t_add_I (t : ℝ) : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
+
 /-- For t ∈ [0,1], Im(-1/(t + I)) ≥ 1/2. -/
 lemma im_neg_inv_t_add_I (t : ℝ) (ht : t ∈ Icc 0 1) : 1/2 ≤ (-1 / (t + I)).im := by
-  have h1 : (t + I) ≠ 0 := by simp [Complex.ext_iff]
-  have hns : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
-  have him : (t + I).im = 1 := by simp
-  simp only [neg_div, neg_im, one_div, inv_im, hns, him, neg_neg]
-  -- Goal: 2⁻¹ ≤ (t^2 + 1)⁻¹, i.e., t^2 + 1 ≤ 2
+  rw [im_neg_inv_t_add_I_eq]
   have ht2 : t^2 ≤ 1 := by nlinarith [ht.1, ht.2, sq_nonneg t]
-  have h_pos : 0 < t^2 + 1 := by positivity
-  rw [← one_div, ← one_div, one_div_le_one_div (by positivity) h_pos]
+  rw [one_div_le_one_div (by positivity) (by positivity : (0 : ℝ) < t^2 + 1)]
   linarith
 
-/-- For t ∈ [0,1], Im(-1/(-t + I)) ≥ 1/2. -/
+/-- For t ∈ [0,1], Im(-1/(-t + I)) ≥ 1/2. Same formula as im_neg_inv_t_add_I since (-t)² = t². -/
 lemma im_neg_inv_neg_t_add_I (t : ℝ) (ht : t ∈ Icc 0 1) : 1/2 ≤ (-1 / (-t + I)).im := by
-  have h1 : (-t + I) ≠ 0 := by simp [Complex.ext_iff]
   have hns : normSq (-t + I) = t^2 + 1 := by simp [normSq, sq]
-  have him : (-t + I).im = 1 := by simp
-  simp only [neg_div, neg_im, one_div, inv_im, hns, him, neg_neg]
-  -- Goal: 2⁻¹ ≤ (t^2 + 1)⁻¹, i.e., t^2 + 1 ≤ 2
+  simp only [neg_div, neg_im, one_div, inv_im, add_im, neg_im, ofReal_im, I_im, neg_neg, hns]
   have ht2 : t^2 ≤ 1 := by nlinarith [ht.1, ht.2, sq_nonneg t]
   have h_pos : 0 < t^2 + 1 := by positivity
-  rw [← one_div, ← one_div, one_div_le_one_div (by positivity) h_pos]
-  linarith
+  have h_ge : t^2 + 1 ≤ 2 := by linarith
+  calc 2⁻¹ = (2 : ℝ)⁻¹ := rfl
+    _ ≤ (t^2 + 1)⁻¹ := by rwa [inv_le_inv₀ (by positivity) h_pos]
+    _ = (-0 + 1) / (t^2 + 1) := by ring
 
 /-- For t ∈ [0,1], |(t + I)²| ≤ 2. -/
 lemma norm_sq_t_add_I_le (t : ℝ) (ht : t ∈ Icc 0 1) : ‖(t + I) ^ 2‖ ≤ 2 := by
-  rw [norm_pow, ← normSq_eq_norm_sq]
-  simp only [normSq_apply, add_re, ofReal_re, I_re, add_zero, add_im, ofReal_im, I_im, zero_add]
+  rw [norm_pow, ← normSq_eq_norm_sq, normSq_t_add_I]
   nlinarith [sq_nonneg t, ht.1, ht.2]
 
-/-- For t ∈ [0,1], |(-t + I)²| ≤ 2. -/
+/-- For t ∈ [0,1], |(-t + I)²| ≤ 2. Derived from norm_sq_t_add_I_le via (-t)² = t². -/
 lemma norm_sq_neg_t_add_I_le (t : ℝ) (ht : t ∈ Icc 0 1) : ‖(-t + I) ^ 2‖ ≤ 2 := by
-  rw [norm_pow, ← normSq_eq_norm_sq]
-  simp only [normSq_apply, add_re, neg_re, ofReal_re, I_re, add_zero, add_im, neg_im,
-    ofReal_im, I_im]
+  have h : (-t + I) ^ 2 = ((-t) + I) ^ 2 := by ring
+  rw [h, norm_pow, ← normSq_eq_norm_sq]
+  have hns : normSq ((-t) + I) = t^2 + 1 := by simp [normSq, sq]
+  rw [hns]
   nlinarith [sq_nonneg t, ht.1, ht.2]
 
 /-- For t ∈ [0,1], the positive imaginary part of -1/(t+I). -/
@@ -165,118 +167,103 @@ lemma im_neg_inv_neg_t_add_I_pos (t : ℝ) (ht : t ∈ Icc 0 1) : 0 < (-1 / (-t 
 
 /-- For any t ∈ ℝ, Im(-1/(t+I)) = 1/(t² + 1) > 0. -/
 lemma im_neg_inv_t_add_I_pos_general (t : ℝ) : 0 < (-1 / (t + I)).im := by
-  simp only [neg_div, neg_im, one_div, inv_im, add_im, ofReal_im, I_im, zero_add, neg_neg]
-  have hns : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
-  rw [hns]
+  rw [im_neg_inv_t_add_I_eq]
   positivity
 
 /-- The path t ↦ -1/(t+I) is continuous on ℝ. -/
 lemma continuous_neg_inv_t_add_I : Continuous (fun t : ℝ => -1 / (t + I)) := by
-  apply Continuous.div continuous_const
-  · exact continuous_ofReal.add continuous_const
-  · intro t h
-    have him : (t + I).im = 0 := by rw [h]; simp
-    simp only [add_im, ofReal_im, I_im, zero_add] at him
-    exact one_ne_zero him
+  refine Continuous.div continuous_const (continuous_ofReal.add continuous_const) ?_
+  intro t h
+  have him : (t + I).im = 0 := by rw [h]; simp
+  simp at him
 
-/-- The map t ↦ φ₀''(-1/(t+I)) is continuous.
-This follows from: (1) t ↦ -1/(t+I) is continuous, (2) for all t, Im(-1/(t+I)) > 0,
-(3) φ₀ is holomorphic on ℍ, hence continuous. -/
-lemma continuous_φ₀''_I₂_param : Continuous (fun t : ℝ => φ₀'' (-1 / (t + I))) := by
-  -- Factor through ℍ using the fact that Im > 0 for all t
-  have h_im_pos : ∀ t : ℝ, 0 < (-1 / (t + I)).im := im_neg_inv_t_add_I_pos_general
-  -- Lift the path to ℍ
-  have h_lift : Continuous (fun t : ℝ => (⟨-1 / (t + I), h_im_pos t⟩ : UpperHalfPlane)) :=
-    Continuous.subtype_mk continuous_neg_inv_t_add_I h_im_pos
-  -- Show φ₀'' equals φ₀ on the image (which is in UHP)
-  have h_eq : (fun t : ℝ => φ₀'' (-1 / (t + I))) =
-              (fun t : ℝ => φ₀ ⟨-1 / (t + I), h_im_pos t⟩) := by
-    ext t; rw [φ₀''_eq _ (h_im_pos t)]
-  rw [h_eq]
-  exact φ₀_continuous.comp h_lift
+/-- Generic helper: φ₀'' ∘ g is continuous when g is continuous and Im(g t) > 0 for all t. -/
+lemma continuous_φ₀''_comp {g : ℝ → ℂ} (hg : Continuous g) (h_im : ∀ t, 0 < (g t).im) :
+    Continuous (fun t => φ₀'' (g t)) := by
+  have h_lift : Continuous (fun t => (⟨g t, h_im t⟩ : UpperHalfPlane)) :=
+    Continuous.subtype_mk hg h_im
+  exact (φ₀_continuous.comp h_lift).congr fun t => (φ₀''_eq _ (h_im t)).symm
 
-/-- Bound on φ₀'' for I₂ segment: |φ₀''(-1/(t+I))| ≤ C₀ * e^{-π} for t ∈ [0,1).
-Uses `norm_φ₀_le` (Cor 7.5) with Im > 1/2.
-Note: At t=1, Im = 1/2 exactly, so we use [0,1) instead of [0,1]. -/
+/-- The map t ↦ φ₀''(-1/(t+I)) is continuous. -/
+lemma continuous_φ₀''_I₂_param : Continuous (fun t : ℝ => φ₀'' (-1 / (t + I))) :=
+  continuous_φ₀''_comp continuous_neg_inv_t_add_I im_neg_inv_t_add_I_pos_general
+
+/-- For t ∈ [0,1), Im(-1/(t+I)) > 1/2. Uses t² < 1 when t < 1. -/
+lemma im_neg_inv_t_add_I_gt_half (t : ℝ) (ht : t ∈ Ico 0 1) : 1/2 < (-1 / (t + I)).im := by
+  rw [im_neg_inv_t_add_I_eq]
+  have ht2 : t^2 < 1 := by nlinarith [sq_nonneg t, ht.1, ht.2]
+  have h_lt : t^2 + 1 < 2 := by linarith
+  exact (one_div_lt_one_div (by positivity) (by positivity : (0 : ℝ) < t^2 + 1)).mpr h_lt
+
+/-- Bound on φ₀'' for I₂/I₄ segments: given Im > 1/2, we get |φ₀''(z)| ≤ C₀ * e^{-π}. -/
+lemma norm_φ₀''_bound_of_im_gt_half {z : ℂ} (him_pos : 0 < z.im) (him_ge : 1 / 2 < z.im) :
+    ∃ C₀ > 0, ‖φ₀'' z‖ ≤ C₀ * Real.exp (-π) := by
+  obtain ⟨C₀, hC₀_pos, hC₀⟩ := MagicFunction.PolyFourierCoeffBound.norm_φ₀_le
+  refine ⟨C₀, hC₀_pos, ?_⟩
+  let w : UpperHalfPlane := ⟨z, him_pos⟩
+  rw [φ₀''_eq _ him_pos]
+  calc ‖φ₀ w‖ ≤ C₀ * Real.exp (-2 * π * w.im) := hC₀ w him_ge
+    _ ≤ C₀ * Real.exp (-π) := by
+        gcongr
+        have : 2 * π * w.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
+        linarith [Real.pi_pos]
+
+/-- Bound on φ₀'' for I₂ segment: |φ₀''(-1/(t+I))| ≤ C₀ * e^{-π} for t ∈ [0,1). -/
 lemma norm_φ₀''_I₂_bound_Ico : ∃ C₀ > 0, ∀ t : ℝ, t ∈ Ico 0 1 →
     ‖φ₀'' (-1 / (t + I))‖ ≤ C₀ * Real.exp (-π) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := MagicFunction.PolyFourierCoeffBound.norm_φ₀_le
   refine ⟨C₀, hC₀_pos, fun t ht => ?_⟩
-  have ht' : t ∈ Icc 0 1 := Ico_subset_Icc_self ht
-  have him_pos : 0 < (-1 / (t + I)).im := im_neg_inv_t_add_I_pos t ht'
-  have him_ge : 1/2 < (-1 / (t + I)).im := by
-    -- For t ∈ [0,1), Im = 1/(t²+1) > 1/2 since t² < 1
-    simp only [neg_div, neg_im, one_div, inv_im, add_im, ofReal_im, I_im, zero_add, neg_neg]
-    have hns : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
-    rw [hns]
-    have ht1 : t < 1 := ht.2
-    have ht2 : t^2 < 1 := by nlinarith [sq_nonneg t, ht.1]
-    have h_lt : t^2 + 1 < 2 := by linarith
-    exact (inv_lt_inv₀ (by norm_num : (0 : ℝ) < 2) (by positivity : (0 : ℝ) < t^2 + 1)).mpr h_lt
+  have him_pos := im_neg_inv_t_add_I_pos t (Ico_subset_Icc_self ht)
+  have him_ge := im_neg_inv_t_add_I_gt_half t ht
   let z : UpperHalfPlane := ⟨-1 / (t + I), him_pos⟩
-  have hz_im : z.im = (-1 / (t + I)).im := rfl
   rw [φ₀''_eq _ him_pos]
-  calc ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im) := hC₀ z (by rw [hz_im]; exact him_ge)
+  calc ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im) := hC₀ z him_ge
     _ ≤ C₀ * Real.exp (-π) := by
         gcongr
-        simp only [neg_mul, neg_le_neg_iff]
-        have him_ge' : 1/2 < z.im := by rw [hz_im]; exact him_ge
-        have : 2 * π * z.im > 2 * π * (1/2) := by
-          apply mul_lt_mul_of_pos_left him_ge'
-          norm_num [Real.pi_pos]
+        have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
         linarith [Real.pi_pos]
 
-/-- For any t ∈ ℝ, Im(-1/(-t+I)) = 1/(t² + 1) > 0. Derived from im_neg_inv_t_add_I_pos_general. -/
+/-- For any t ∈ ℝ, Im(-1/(-t+I)) = 1/(t² + 1) > 0. -/
 lemma im_neg_inv_neg_t_add_I_pos_general (t : ℝ) : 0 < (-1 / (-t + I)).im := by
-  convert im_neg_inv_t_add_I_pos_general (-t) using 2
-  simp only [ofReal_neg, ← sub_eq_add_neg, add_comm]
+  have hns : normSq (-t + I) = t^2 + 1 := by simp [normSq, sq]
+  simp only [neg_div, neg_im, one_div, inv_im, add_im, neg_im, ofReal_im, I_im, neg_neg, hns]
+  positivity
 
-/-- The path t ↦ -1/(-t+I) is continuous on ℝ. Derived from continuous_neg_inv_t_add_I. -/
+/-- The path t ↦ -1/(-t+I) is continuous on ℝ. -/
 lemma continuous_neg_inv_neg_t_add_I : Continuous (fun t : ℝ => -1 / (-t + I)) := by
-  have h : (fun t : ℝ => -1 / (-t + I)) = (fun t : ℝ => -1 / (t + I)) ∘ (fun t => -t) := by
-    ext t; simp only [Function.comp_apply, ofReal_neg, ← sub_eq_add_neg, add_comm]
-  rw [h]; exact continuous_neg_inv_t_add_I.comp continuous_neg
+  refine Continuous.div continuous_const (continuous_ofReal.neg.add continuous_const) ?_
+  intro t h
+  have him : (-t + I).im = 0 := by rw [h]; simp
+  simp at him
 
 /-- The map t ↦ φ₀''(-1/(-t+I)) is continuous. -/
-lemma continuous_φ₀''_I₄_param : Continuous (fun t : ℝ => φ₀'' (-1 / (-t + I))) := by
-  have h_im_pos : ∀ t : ℝ, 0 < (-1 / (-t + I)).im := im_neg_inv_neg_t_add_I_pos_general
-  have h_lift : Continuous (fun t : ℝ => (⟨-1 / (-t + I), h_im_pos t⟩ : UpperHalfPlane)) :=
-    Continuous.subtype_mk continuous_neg_inv_neg_t_add_I h_im_pos
-  have h_eq : (fun t : ℝ => φ₀'' (-1 / (-t + I))) =
-              (fun t : ℝ => φ₀ ⟨-1 / (-t + I), h_im_pos t⟩) := by
-    ext t; rw [φ₀''_eq _ (h_im_pos t)]
-  rw [h_eq]
-  exact φ₀_continuous.comp h_lift
+lemma continuous_φ₀''_I₄_param : Continuous (fun t : ℝ => φ₀'' (-1 / (-t + I))) :=
+  continuous_φ₀''_comp continuous_neg_inv_neg_t_add_I im_neg_inv_neg_t_add_I_pos_general
 
-/-- Bound on φ₀'' for I₄ segment: |φ₀''(-1/(-t+I))| ≤ C₀ * e^{-π} for t ∈ [0,1).
-Uses `norm_φ₀_le` (Cor 7.5) with Im > 1/2. -/
+/-- For t ∈ [0,1), Im(-1/(-t+I)) > 1/2. -/
+lemma im_neg_inv_neg_t_add_I_gt_half (t : ℝ) (ht : t ∈ Ico 0 1) : 1/2 < (-1 / (-t + I)).im := by
+  have hns : normSq (-t + I) = t^2 + 1 := by simp [normSq, sq]
+  simp only [neg_div, neg_im, one_div, inv_im, add_im, neg_im, ofReal_im, I_im, neg_neg, hns]
+  have ht2 : t^2 < 1 := by nlinarith [sq_nonneg t, ht.1, ht.2]
+  have h_lt : t^2 + 1 < 2 := by linarith
+  have h_pos : 0 < t^2 + 1 := by positivity
+  calc 2⁻¹ = (2 : ℝ)⁻¹ := rfl
+    _ < (t^2 + 1)⁻¹ := by rwa [inv_lt_inv₀ (by positivity) h_pos]
+    _ = (-0 + 1) / (t^2 + 1) := by ring
+
+/-- Bound on φ₀'' for I₄ segment: |φ₀''(-1/(-t+I))| ≤ C₀ * e^{-π} for t ∈ [0,1). -/
 lemma norm_φ₀''_I₄_bound_Ico : ∃ C₀ > 0, ∀ t : ℝ, t ∈ Ico 0 1 →
     ‖φ₀'' (-1 / (-t + I))‖ ≤ C₀ * Real.exp (-π) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := MagicFunction.PolyFourierCoeffBound.norm_φ₀_le
   refine ⟨C₀, hC₀_pos, fun t ht => ?_⟩
-  have ht' : t ∈ Icc 0 1 := Ico_subset_Icc_self ht
-  have him_pos : 0 < (-1 / (-t + I)).im := im_neg_inv_neg_t_add_I_pos t ht'
-  have him_ge : 1/2 < (-1 / (-t + I)).im := by
-    have hns : normSq (-t + I) = t^2 + 1 := by simp [normSq, sq]
-    have him_eq : (-1 / (-t + I)).im = 1 / (t^2 + 1) := by
-      simp only [neg_div, neg_im, one_div, inv_im, add_im, neg_im, ofReal_im, I_im, neg_neg, hns]
-      ring
-    rw [him_eq, one_div, one_div]
-    have ht1 : t < 1 := ht.2
-    have ht2 : t^2 < 1 := by nlinarith [sq_nonneg t, ht.1]
-    have h_lt : t^2 + 1 < 2 := by linarith
-    exact (inv_lt_inv₀ (by norm_num : (0 : ℝ) < 2) (by positivity : (0 : ℝ) < t^2 + 1)).mpr h_lt
+  have him_pos := im_neg_inv_neg_t_add_I_pos t (Ico_subset_Icc_self ht)
+  have him_ge := im_neg_inv_neg_t_add_I_gt_half t ht
   let z : UpperHalfPlane := ⟨-1 / (-t + I), him_pos⟩
-  have hz_im : z.im = (-1 / (-t + I)).im := rfl
   rw [φ₀''_eq _ him_pos]
-  calc ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im) := hC₀ z (by rw [hz_im]; exact him_ge)
+  calc ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im) := hC₀ z him_ge
     _ ≤ C₀ * Real.exp (-π) := by
         gcongr
-        simp only [neg_mul, neg_le_neg_iff]
-        have him_ge' : 1/2 < z.im := by rw [hz_im]; exact him_ge
-        have : 2 * π * z.im > 2 * π * (1/2) := by
-          apply mul_lt_mul_of_pos_left him_ge'
-          norm_num [Real.pi_pos]
+        have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
         linarith [Real.pi_pos]
 
 /-- The integrand for I₂ over V × [0,1]. Uses the canonical Φ₂ from Basic.lean. -/
@@ -285,8 +272,8 @@ def I₂_integrand (p : V × ℝ) : ℂ := Φ₂ (‖p.1‖^2) p.2
 /-- The integrand for I₄ over V × [0,1]. Uses the canonical Φ₄ from Basic.lean. -/
 def I₄_integrand (p : V × ℝ) : ℂ := Φ₄ (‖p.1‖^2) p.2
 
--- Increase heartbeats for the continuity proofs which involve heavy unification
 set_option maxHeartbeats 400000 in
+-- Heavy unification in continuity proof
 /-- The I₂ integrand is continuous as a function V × ℝ → ℂ.
 Follows from: continuity of φ₀''(-1/(t+I)), polynomial in t, and cexp compositions.
 
@@ -420,6 +407,7 @@ theorem Φ₂_prod_integrable :
   exact Integrable.mono' h_g_int h_meas h_bound
 
 set_option maxHeartbeats 400000 in
+-- Heavy unification in continuity proof
 /-- The I₄ integrand is continuous as a function V × ℝ → ℂ.
 Im(z₄' t) = 1 for all t (via IccExtend), so -1/(z₄' t - 1) has positive Im. -/
 lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
@@ -486,7 +474,8 @@ lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     calc ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖
         ≤ M * ‖(-↑t + I) ^ 2‖ := mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
       _ ≤ M * 2 := mul_le_mul_of_nonneg_left h_sq hM_nonneg
-  calc ‖(-1 : ℂ)‖ * (‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ * ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I))‖)
+  calc ‖(-1 : ℂ)‖ * (‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ *
+          ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I))‖)
       = 1 * (‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2)) := by
         rw [h_neg1, h_exp]
     _ = ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2) := by ring
@@ -776,8 +765,8 @@ lemma Φ₁_prod_eq_Φ₅_mul_phase {p : V × ℝ} (ht : p.2 ∈ Icc 0 1) :
     rw [← Complex.exp_add]; congr 1
     calc _ = -↑π * I * ↑(‖p.1‖^2) + ↑π * (I * I) * ↑(‖p.1‖^2) * ↑p.2 := by ring
       _ = _ := by rw [I_mul_I]; ring
-  have h_exp5 : cexp (↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2)) = cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by
-    convert cexp_pi_I_mul_I ↑(‖p.1‖^2) ↑p.2 using 2 <;> ring
+  have h_exp5 : cexp (↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2)) = cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) :=
+    cexp_pi_I_mul_I ↑(‖p.1‖^2) ↑p.2
   rw [h_exp1, h_exp5]; ring_nf; simp only [ofReal_pow]; rw [mul_right_comm]
 
 /-- I₃ integrand equals I₅ integrand times a unit-modulus phase factor (on the domain).
@@ -795,8 +784,8 @@ lemma Φ₃_prod_eq_Φ₅_mul_phase {p : V × ℝ} (ht : p.2 ∈ Icc 0 1) :
     rw [← Complex.exp_add]; congr 1
     calc _ = ↑π * I * ↑(‖p.1‖^2) + ↑π * (I * I) * ↑(‖p.1‖^2) * ↑p.2 := by ring
       _ = _ := by rw [I_mul_I]; ring
-  have h_exp5 : cexp (↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2)) = cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by
-    convert cexp_pi_I_mul_I ↑(‖p.1‖^2) ↑p.2 using 2 <;> ring
+  have h_exp5 : cexp (↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2)) = cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) :=
+    cexp_pi_I_mul_I ↑(‖p.1‖^2) ↑p.2
   rw [h_exp3, h_exp5]; ring_nf; simp only [ofReal_pow]
   rw [mul_right_comm]
 
@@ -1083,7 +1072,8 @@ theorem Φ₁_prod_integrable :
       rw [norm_mul, norm_phase_factor_I₁ p.1, mul_one]
   refine h_integrable.congr ?_
   -- Show f =ᶠ[ae μ] g by showing equality on the support set
-  refine Filter.eventually_of_mem (self_mem_ae_restrict (MeasurableSet.univ.prod measurableSet_Ioc)) ?_
+  refine Filter.eventually_of_mem
+    (self_mem_ae_restrict (MeasurableSet.univ.prod measurableSet_Ioc)) ?_
   intro ⟨x, t⟩ ⟨_, ht⟩
   exact (h_eq (x, t) ht).symm
 
@@ -1107,7 +1097,8 @@ theorem Φ₃_prod_integrable :
       rw [norm_mul, norm_phase_factor_I₃ p.1, mul_one]
   refine h_integrable.congr ?_
   -- Show f =ᶠ[ae μ] g by showing equality on the support set
-  refine Filter.eventually_of_mem (self_mem_ae_restrict (MeasurableSet.univ.prod measurableSet_Ioc)) ?_
+  refine Filter.eventually_of_mem
+    (self_mem_ae_restrict (MeasurableSet.univ.prod measurableSet_Ioc)) ?_
   intro ⟨x, t⟩ ⟨_, ht⟩
   exact (h_eq (x, t) ht).symm
 
