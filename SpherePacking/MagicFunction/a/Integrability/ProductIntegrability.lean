@@ -281,36 +281,67 @@ lemma norm_φ₀''_I₄_bound_Ico : ∃ C₀ > 0, ∀ t : ℝ, t ∈ Ico 0 1 →
           norm_num [Real.pi_pos]
         linarith [Real.pi_pos]
 
-/-- The integrand for I₂ over V × [0,1].
-Using the simplified form from `I₂'_eq`: integrand has factors
-`φ₀'' (-1 / (t + I)) * (t + I)² * e^{-πIr} * e^{πIrt} * e^{-πr}`. -/
-def I₂_integrand (p : V × ℝ) : ℂ :=
-  φ₀'' (-1 / (p.2 + I)) * (p.2 + I) ^ 2 *
-  cexp (-π * I * ‖p.1‖^2) * cexp (π * I * ‖p.1‖^2 * p.2) * cexp (-π * ‖p.1‖^2)
+/-- For ALL t ∈ ℝ, (z₂' t).im = 1. This is because z₂' uses IccExtend which clamps t to [0,1],
+and z₂ s = -1 + s + I has imaginary part 1 for all s ∈ [0,1]. -/
+lemma z₂'_im_eq_one (t : ℝ) : (z₂' t).im = 1 := by
+  simp only [z₂', IccExtend, Function.comp_apply, z₂, add_im, neg_im, one_im, neg_zero,
+    Subtype.coe_mk, ofReal_im, I_im, zero_add]
 
-/-- The integrand for I₄ over V × [0,1].
-Using the simplified form from `I₄'_eq`. -/
-def I₄_integrand (p : V × ℝ) : ℂ :=
-  -1 * φ₀'' (-1 / (-p.2 + I)) * (-p.2 + I) ^ 2 *
-  cexp (π * I * ‖p.1‖^2) * cexp (-π * I * ‖p.1‖^2 * p.2) * cexp (-π * ‖p.1‖^2)
+/-- For ALL t ∈ ℝ, (z₄' t).im = 1. This is because z₄' uses IccExtend which clamps t to [0,1],
+and z₄ s = 1 - s + I has imaginary part 1 for all s ∈ [0,1]. -/
+lemma z₄'_im_eq_one (t : ℝ) : (z₄' t).im = 1 := by
+  simp only [z₄', IccExtend, Function.comp_apply, z₄, add_im, one_im, sub_im, ofReal_im,
+    I_im, sub_zero, zero_add]
+
+/-- The integrand for I₂ over V × [0,1]. Uses the canonical Φ₂ from Basic.lean. -/
+def I₂_integrand (p : V × ℝ) : ℂ := Φ₂ (‖p.1‖^2) p.2
+
+/-- The integrand for I₄ over V × [0,1]. Uses the canonical Φ₄ from Basic.lean. -/
+def I₄_integrand (p : V × ℝ) : ℂ := Φ₄ (‖p.1‖^2) p.2
 
 /-- The I₂ integrand is continuous as a function V × ℝ → ℂ.
-Follows from: continuity of φ₀''(-1/(t+I)), polynomial in t, and cexp compositions. -/
+Follows from: continuity of φ₀''(-1/(t+I)), polynomial in t, and cexp compositions.
+
+Note: We unfold through Φ₂ to the explicit formula and use z₂'_add_one_eq to relate
+z₂' t + 1 to t + I (on [0,1]) or its IccExtend clamping (outside [0,1]). -/
 lemma Φ₂_prod_continuous : Continuous I₂_integrand := by
-  unfold I₂_integrand
-  -- Each factor is continuous in (x, t)
-  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (p.2 + I))) :=
-    continuous_φ₀''_I₂_param.comp continuous_snd
-  have h2 : Continuous (fun p : V × ℝ => (p.2 + I) ^ 2) :=
-    (continuous_ofReal.comp continuous_snd).add continuous_const |>.pow 2
-  have h3 : Continuous (fun p : V × ℝ => cexp (-π * I * ‖p.1‖^2)) :=
-    Complex.continuous_exp.comp (continuous_const.mul continuous_norm_sq_fst)
-  have h4 : Continuous (fun p : V × ℝ => cexp (π * I * ‖p.1‖^2 * p.2)) :=
-    Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
-      (continuous_ofReal.comp continuous_snd))
-  have h5 : Continuous (fun p : V × ℝ => cexp (-π * ‖p.1‖^2)) :=
-    Complex.continuous_exp.comp (continuous_const.mul continuous_norm_sq_fst)
-  exact ((h1.mul h2).mul h3).mul h4 |>.mul h5
+  -- Strategy: Show that I₂_integrand factors as composition of continuous functions
+  -- I₂_integrand p = Φ₂ (‖p.1‖²) p.2 = Φ₂' (‖p.1‖²) (z₂' p.2)
+  -- The key is that z₂' is continuous and φ₀'' is continuous on paths with Im > 0
+  unfold I₂_integrand Φ₂ Φ₂'
+  -- Each factor is continuous
+  have hz : Continuous z₂' := continuous_z₂'
+  -- Key: Im(z₂' t + 1) = 1 for all t (uses z₂'_im_eq_one)
+  have him_one : ∀ t : ℝ, (z₂' t + 1).im = 1 := fun t => by
+    rw [add_im, z₂'_im_eq_one t, one_im, add_zero]
+  -- Thus Im(-1/(z₂' t + 1)) > 0 for all t
+  have h_im : ∀ t : ℝ, 0 < (-1 / (z₂' t + 1)).im := fun t => by
+    simp only [neg_div, neg_im, one_div, inv_im, him_one, neg_neg]
+    have hns : 0 < normSq (z₂' t + 1) := by
+      apply normSq_pos.mpr
+      intro h; have : (z₂' t + 1).im = 0 := by rw [h]; simp
+      rw [him_one] at this; exact one_ne_zero this
+    positivity
+  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (z₂' p.2 + 1))) := by
+    -- Factor through ℍ since Im(-1/(z₂' t + 1)) > 0 for all t
+    have h_lift : Continuous (fun t : ℝ => (⟨-1 / (z₂' t + 1), h_im t⟩ : UpperHalfPlane)) := by
+      refine Continuous.subtype_mk ?_ _
+      apply Continuous.div continuous_const (hz.add continuous_const)
+      intro t h; have := h_im t
+      simp only [h, zero_im, div_zero, lt_self_iff_false] at this
+    have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₂' t + 1), h_im t⟩) :=
+      φ₀_continuous.comp h_lift
+    have h_eq : (fun p : V × ℝ => φ₀'' (-1 / (z₂' p.2 + 1))) =
+                (fun p => φ₀ ⟨-1 / (z₂' p.2 + 1), h_im p.2⟩) := by
+      ext p; exact φ₀''_eq _ (h_im p.2)
+    rw [h_eq]; exact h_cont.comp continuous_snd
+  have h2 : Continuous (fun p : V × ℝ => (z₂' p.2 + 1) ^ 2) :=
+    ((hz.comp continuous_snd).add continuous_const).pow 2
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * (‖p.1‖^2 : ℂ) * z₂' p.2)) := by
+    simp_rw [← ofReal_pow]
+    exact Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
+      (hz.comp continuous_snd))
+  exact (h1.mul h2).mul h3
 
 /-- The norm of I₂_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
 Uses continuity of φ₀'' on [0,1] to get a uniform bound. -/
@@ -321,39 +352,35 @@ lemma Φ₂_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
   have h_bdd : BddAbove ((fun t : ℝ => ‖φ₀'' (-1 / (t + I))‖) '' Icc (0 : ℝ) 1) :=
     IsCompact.bddAbove_image isCompact_Icc
       (continuous_norm.comp continuous_φ₀''_I₂_param).continuousOn
-  -- Get an upper bound M ≥ 0 such that all elements of the set are ≤ M
   obtain ⟨M, hM_nonneg, hM_le⟩ := h_bdd.exists_ge (0 : ℝ)
-  -- hM_le says: for all y in the image, y ≤ M
-  -- The bound constant: combine M with the |(t+I)²| ≤ 2 bound
   refine ⟨2 * (M + 1), by positivity, fun x t ht => ?_⟩
-  unfold I₂_integrand
-  rw [norm_mul, norm_mul, norm_mul, norm_mul]
-  -- |φ₀''(...)| ≤ M (the value is in the image set)
-  have h_φ : ‖φ₀'' (-1 / (t + I))‖ ≤ M := by
-    apply hM_le
-    exact ⟨t, ht, rfl⟩
+  -- Unfold I₂_integrand to Φ₂, then use z₂'_eq_of_mem for t ∈ [0,1]
+  simp only [I₂_integrand, Φ₂, Φ₂', z₂'_eq_of_mem ht]
+  -- Now goal is: ‖φ₀''(-1/((-1+t+I)+1)) * ((-1+t+I)+1)² * cexp(π*I*‖x‖²*(-1+t+I))‖ ≤ ...
+  -- Simplify: -1 + t + I + 1 = t + I
+  have h_simp : (-1 : ℂ) + ↑t + I + 1 = ↑t + I := by ring
+  simp only [h_simp]
+  rw [norm_mul, norm_mul]
+  -- |φ₀''(-1/(t+I))| ≤ M
+  have h_φ : ‖φ₀'' (-1 / (t + I))‖ ≤ M := by apply hM_le; exact ⟨t, ht, rfl⟩
   -- |(t + I)²| ≤ 2
-  have h_sq : ‖(t + I) ^ 2‖ ≤ 2 := norm_sq_t_add_I_le t ht
-  -- Phase factors have unit norm (use Complex.norm_exp_ofReal_mul_I)
-  have h_phase1 : ‖cexp (-π * I * ‖x‖^2)‖ = 1 := by
-    rw [show (-π * I * ‖x‖^2 : ℂ) = ↑(-π * ‖x‖^2) * I from by push_cast; ring]
-    exact Complex.norm_exp_ofReal_mul_I _
-  have h_phase2 : ‖cexp (π * I * ‖x‖^2 * t)‖ = 1 := by
-    rw [show (π * I * ‖x‖^2 * t : ℂ) = ↑(π * ‖x‖^2 * t) * I from by push_cast; ring]
-    exact Complex.norm_exp_ofReal_mul_I _
-  have h_gauss := norm_cexp_neg_pi_norm_sq x
-  -- Combine the bounds using explicit multiplication
-  have h1 : ‖φ₀'' (-1 / (t + I))‖ * ‖(t + I) ^ 2‖ ≤ M * 2 := by
-    calc ‖φ₀'' (-1 / (t + I))‖ * ‖(t + I) ^ 2‖
-        ≤ M * ‖(t + I) ^ 2‖ := by apply mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
-      _ ≤ M * 2 := by apply mul_le_mul_of_nonneg_left h_sq hM_nonneg
-  calc ‖φ₀'' (-1 / (t + I))‖ * ‖(t + I) ^ 2‖ * ‖cexp (-π * I * ‖x‖^2)‖ *
-       ‖cexp (π * I * ‖x‖^2 * t)‖ * ‖cexp ((-π : ℂ) * ‖x‖^2)‖
-       = ‖φ₀'' (-1 / (t + I))‖ * ‖(t + I) ^ 2‖ * 1 * 1 * Real.exp (-π * ‖x‖^2) := by
-         rw [h_phase1, h_phase2, h_gauss]
-    _ = ‖φ₀'' (-1 / (t + I))‖ * ‖(t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2) := by ring
-    _ ≤ M * 2 * Real.exp (-π * ‖x‖^2) := by
-         apply mul_le_mul_of_nonneg_right h1 (Real.exp_pos _).le
+  have h_sq : ‖(↑t + I) ^ 2‖ ≤ 2 := norm_sq_t_add_I_le t ht
+  -- Exponential factor: cexp(π*I*r*(-1+t+I)) where r = ‖x‖²
+  -- = cexp(-π*I*r) * cexp(π*I*r*t) * cexp(-π*r) by expanding -1+t+I and using I²=-1
+  have h_exp : ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I))‖ = Real.exp (-π * ‖x‖^2) := by
+    -- Expand and simplify the exponent
+    have h1 : (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I) : ℂ) =
+        (↑(π * ‖x‖^2 * (t - 1)) : ℂ) * I + (↑(-π * ‖x‖^2) : ℂ) := by
+      push_cast; ring
+    rw [h1, Complex.exp_add, Complex.norm_mul]
+    rw [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal]
+  have h1 : ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖ ≤ M * 2 := by
+    calc ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖
+        ≤ M * ‖(↑t + I) ^ 2‖ := mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
+      _ ≤ M * 2 := mul_le_mul_of_nonneg_left h_sq hM_nonneg
+  calc ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖ * ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I))‖
+      = ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2) := by rw [h_exp]
+    _ ≤ M * 2 * Real.exp (-π * ‖x‖^2) := mul_le_mul_of_nonneg_right h1 (Real.exp_pos _).le
     _ ≤ 2 * (M + 1) * Real.exp (-π * ‖x‖^2) := by nlinarith [Real.exp_pos (-π * ‖x‖^2), hM_nonneg]
 
 /-- I₂ integrand is integrable on V × [0,1] (Class A segment).
@@ -403,23 +430,44 @@ theorem Φ₂_prod_integrable :
     exact hC x t ht
   exact Integrable.mono' h_g_int h_meas h_bound
 
-/-- The I₄ integrand is continuous as a function V × ℝ → ℂ. -/
+/-- The I₄ integrand is continuous as a function V × ℝ → ℂ.
+Uses z₄'_im_eq_one to show Im(z₄' t) = 1 for all t, so -1/(z₄' t - 1) has positive Im. -/
 lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
-  unfold I₄_integrand
-  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (-p.2 + I))) :=
-    continuous_φ₀''_I₄_param.comp continuous_snd
-  have h2 : Continuous (fun p : V × ℝ => (-p.2 + I) ^ 2) :=
-    ((continuous_ofReal.comp continuous_snd).neg.add continuous_const).pow 2
-  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ‖p.1‖^2)) :=
-    Complex.continuous_exp.comp (continuous_const.mul continuous_norm_sq_fst)
-  have h4 : Continuous (fun p : V × ℝ => cexp (-π * I * ‖p.1‖^2 * p.2)) :=
-    Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
-      (continuous_ofReal.comp continuous_snd))
-  have h5 : Continuous (fun p : V × ℝ => cexp (-π * ‖p.1‖^2)) :=
-    Complex.continuous_exp.comp (continuous_const.mul continuous_norm_sq_fst)
-  exact ((continuous_const.mul h1).mul h2).mul h3 |>.mul h4 |>.mul h5
+  unfold I₄_integrand Φ₄ Φ₄'
+  have hz : Continuous z₄' := continuous_z₄'
+  -- Key: Im(z₄' t - 1) = 1 for all t (uses z₄'_im_eq_one)
+  have him_one : ∀ t : ℝ, (z₄' t - 1).im = 1 := fun t => by
+    rw [sub_im, z₄'_im_eq_one t, one_im, sub_zero]
+  -- Thus Im(-1/(z₄' t - 1)) > 0 for all t
+  have h_im : ∀ t : ℝ, 0 < (-1 / (z₄' t - 1)).im := fun t => by
+    simp only [neg_div, neg_im, one_div, inv_im, him_one, neg_neg]
+    have hns : 0 < normSq (z₄' t - 1) := by
+      apply normSq_pos.mpr
+      intro h; have : (z₄' t - 1).im = 0 := by rw [h]; simp
+      rw [him_one] at this; exact one_ne_zero this
+    positivity
+  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (z₄' p.2 - 1))) := by
+    have h_lift : Continuous (fun t : ℝ => (⟨-1 / (z₄' t - 1), h_im t⟩ : UpperHalfPlane)) := by
+      refine Continuous.subtype_mk ?_ _
+      apply Continuous.div continuous_const (hz.sub continuous_const)
+      intro t h; have := h_im t
+      simp only [h, zero_im, div_zero, lt_self_iff_false] at this
+    have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₄' t - 1), h_im t⟩) :=
+      φ₀_continuous.comp h_lift
+    have h_eq : (fun p : V × ℝ => φ₀'' (-1 / (z₄' p.2 - 1))) =
+                (fun p => φ₀ ⟨-1 / (z₄' p.2 - 1), h_im p.2⟩) := by
+      ext p; exact φ₀''_eq _ (h_im p.2)
+    rw [h_eq]; exact h_cont.comp continuous_snd
+  have h2 : Continuous (fun p : V × ℝ => (z₄' p.2 - 1) ^ 2) :=
+    ((hz.comp continuous_snd).sub continuous_const).pow 2
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * (‖p.1‖^2 : ℂ) * z₄' p.2)) := by
+    simp_rw [← ofReal_pow]
+    exact Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
+      (hz.comp continuous_snd))
+  exact (continuous_const.mul ((h1.mul h2).mul h3))
 
-/-- The norm of I₄_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1]. -/
+/-- The norm of I₄_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
+Uses z₄'_eq_of_mem to relate z₄' t to 1 - t + I for t ∈ [0,1]. -/
 lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     ‖I₄_integrand (x, t)‖ ≤ C * Real.exp (-π * ‖x‖^2) := by
   have h_bdd : BddAbove ((fun t : ℝ => ‖φ₀'' (-1 / (-t + I))‖) '' Icc (0 : ℝ) 1) :=
@@ -427,29 +475,31 @@ lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
       (continuous_norm.comp continuous_φ₀''_I₄_param).continuousOn
   obtain ⟨M, hM_nonneg, hM_le⟩ := h_bdd.exists_ge (0 : ℝ)
   refine ⟨2 * (M + 1), by positivity, fun x t ht => ?_⟩
-  unfold I₄_integrand
-  rw [norm_mul, norm_mul, norm_mul, norm_mul, norm_mul]
+  -- Unfold I₄_integrand through Φ₄ and use z₄'_eq_of_mem for t ∈ [0,1]
+  simp only [I₄_integrand, Φ₄, Φ₄', z₄'_eq_of_mem ht]
+  -- Now goal involves z₄' t = 1 - t + I, so z₄' t - 1 = -t + I
+  have h_simp : (1 : ℂ) - ↑t + I - 1 = -↑t + I := by ring
+  simp only [h_simp]
+  rw [norm_mul, norm_mul, norm_mul]
   have h_neg1 : ‖(-1 : ℂ)‖ = 1 := by simp
   have h_φ : ‖φ₀'' (-1 / (-t + I))‖ ≤ M := by apply hM_le; exact ⟨t, ht, rfl⟩
-  have h_sq : ‖(-t + I) ^ 2‖ ≤ 2 := norm_sq_neg_t_add_I_le t ht
-  have h_phase1 : ‖cexp (π * I * ‖x‖^2)‖ = 1 := by
-    rw [show (π * I * ‖x‖^2 : ℂ) = ↑(π * ‖x‖^2) * I from by push_cast; ring]
-    exact Complex.norm_exp_ofReal_mul_I _
-  have h_phase2 : ‖cexp (-π * I * ‖x‖^2 * t)‖ = 1 := by
-    rw [show (-π * I * ‖x‖^2 * t : ℂ) = ↑(-π * ‖x‖^2 * t) * I from by push_cast; ring]
-    exact Complex.norm_exp_ofReal_mul_I _
-  have h_gauss := norm_cexp_neg_pi_norm_sq x
-  have h1 : ‖φ₀'' (-1 / (-t + I))‖ * ‖(-t + I) ^ 2‖ ≤ M * 2 := by
-    calc ‖φ₀'' (-1 / (-t + I))‖ * ‖(-t + I) ^ 2‖
-        ≤ M * ‖(-t + I) ^ 2‖ := by apply mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
-      _ ≤ M * 2 := by apply mul_le_mul_of_nonneg_left h_sq hM_nonneg
-  calc ‖(-1 : ℂ)‖ * ‖φ₀'' (-1 / (-t + I))‖ * ‖(-t + I) ^ 2‖ * ‖cexp (π * I * ‖x‖^2)‖ *
-       ‖cexp (-π * I * ‖x‖^2 * t)‖ * ‖cexp ((-π : ℂ) * ‖x‖^2)‖
-       = 1 * ‖φ₀'' (-1 / (-t + I))‖ * ‖(-t + I) ^ 2‖ * 1 * 1 * Real.exp (-π * ‖x‖^2) := by
-         rw [h_neg1, h_phase1, h_phase2, h_gauss]
-    _ = ‖φ₀'' (-1 / (-t + I))‖ * ‖(-t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2) := by ring
-    _ ≤ M * 2 * Real.exp (-π * ‖x‖^2) := by
-         apply mul_le_mul_of_nonneg_right h1 (Real.exp_pos _).le
+  have h_sq : ‖(-↑t + I) ^ 2‖ ≤ 2 := norm_sq_neg_t_add_I_le t ht
+  -- Exponential factor: cexp(π*I*r*(1-t+I)) where r = ‖x‖²
+  have h_exp : ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I))‖ = Real.exp (-π * ‖x‖^2) := by
+    have h1 : (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I) : ℂ) =
+        (↑(π * ‖x‖^2 * (1 - t)) : ℂ) * I + (↑(-π * ‖x‖^2) : ℂ) := by
+      push_cast; ring
+    rw [h1, Complex.exp_add, Complex.norm_mul]
+    rw [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal]
+  have h1 : ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ ≤ M * 2 := by
+    calc ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖
+        ≤ M * ‖(-↑t + I) ^ 2‖ := mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
+      _ ≤ M * 2 := mul_le_mul_of_nonneg_left h_sq hM_nonneg
+  calc ‖(-1 : ℂ)‖ * (‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ * ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I))‖)
+      = 1 * (‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2)) := by
+        rw [h_neg1, h_exp]
+    _ = ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ * Real.exp (-π * ‖x‖^2) := by ring
+    _ ≤ M * 2 * Real.exp (-π * ‖x‖^2) := mul_le_mul_of_nonneg_right h1 (Real.exp_pos _).le
     _ ≤ 2 * (M + 1) * Real.exp (-π * ‖x‖^2) := by nlinarith [Real.exp_pos (-π * ‖x‖^2), hM_nonneg]
 
 /-- I₄ integrand is integrable on V × [0,1] (Class A segment).
@@ -495,10 +545,8 @@ Since Im(z) = t ≥ 1, `norm_φ₀_le` gives `|φ₀(z)| ≤ C₀·e^{-2πt}`.
 
 section ImaginaryRay
 
-/-- The integrand for I₆ over V × [1,∞).
-Using the simplified form from `I₆'_eq`: `I * φ₀''(it) * e^{-πrt}`. -/
-def I₆_integrand (p : V × ℝ) : ℂ :=
-  I * φ₀'' (I * p.2) * cexp (-π * ‖p.1‖^2 * p.2)
+/-- The integrand for I₆ over V × [1,∞). Uses the canonical Φ₆ from Basic.lean. -/
+def I₆_integrand (p : V × ℝ) : ℂ := Φ₆ (‖p.1‖^2) p.2
 
 /-- ContinuousOn for φ₀'' ∘ (I*·) on positive reals.
 This uses the homeomorphism between Ioi 0 and the positive subtype. -/
@@ -687,22 +735,14 @@ lemma norm_φ₀''_cusp_bound : ∃ C₀ > 0, ∀ t : ℝ, 0 < t → t ≤ 1 →
   convert h using 2
   rw [hz_im, mul_comm, ← div_eq_mul_inv]
 
-/-- The integrand for I₁ over V × (0,1].
-Using the simplified form from `I₁'_eq_Ioc`. -/
-def I₁_integrand (p : V × ℝ) : ℂ :=
-  -I * φ₀'' (-1 / (I * p.2)) * p.2 ^ 2 *
-  cexp (-π * I * ‖p.1‖^2) * cexp (-π * ‖p.1‖^2 * p.2)
+/-- The integrand for I₁ over V × (0,1]. Uses the canonical Φ₁ from Basic.lean. -/
+def I₁_integrand (p : V × ℝ) : ℂ := Φ₁ (‖p.1‖^2) p.2
 
-/-- The integrand for I₃ over V × (0,1].
-Using the simplified form from `I₃'_eq_Ioc`. -/
-def I₃_integrand (p : V × ℝ) : ℂ :=
-  -I * φ₀'' (-1 / (I * p.2)) * p.2 ^ 2 *
-  cexp (π * I * ‖p.1‖^2) * cexp (-π * ‖p.1‖^2 * p.2)
+/-- The integrand for I₃ over V × (0,1]. Uses the canonical Φ₃ from Basic.lean. -/
+def I₃_integrand (p : V × ℝ) : ℂ := Φ₃ (‖p.1‖^2) p.2
 
-/-- The integrand for I₅ over V × (0,1].
-Using the simplified form from `I₅'_eq_Ioc`. -/
-def I₅_integrand (p : V × ℝ) : ℂ :=
-  -I * φ₀'' (-1 / (I * p.2)) * p.2 ^ 2 * cexp (-π * ‖p.1‖^2 * p.2)
+/-- The integrand for I₅ over V × (0,1]. Uses the canonical Φ₅ from Basic.lean. -/
+def I₅_integrand (p : V × ℝ) : ℂ := Φ₅ (‖p.1‖^2) p.2
 
 /-- I₁ integrand equals I₅ integrand times a unit-modulus phase factor. -/
 lemma Φ₁_prod_eq_Φ₅_mul_phase (p : V × ℝ) :
@@ -975,151 +1015,6 @@ theorem Φ₃_prod_integrable :
     rw [norm_mul, norm_phase_factor_I₃ p.1, mul_one]
 
 end CuspApproachingSegments
-
-/-! ## Equivalence with Φⱼ Functions
-
-These lemmas connect the `Iⱼ_integrand` functions defined in this file to the `Φⱼ` functions
-from `Basic.lean`. This allows Fubini.lean to state results in terms of `Φⱼ`.
--/
-
-section Equivalence
-
-open MagicFunction.a.RealIntegrands MagicFunction.a.ComplexIntegrands
-
-/-- For t ∈ [0,1], I₂_integrand (x, t) equals Φ₂ (‖x‖²) t.
-
-The exponential factor in Φ₂ is `cexp (π * I * r * z₂' t)` where z₂' t = -1 + t + I.
-This equals `cexp (π * I * r * (-1 + t + I))` = `cexp (-π*I*r + π*I*r*t + π*I²*r)`
-Using I² = -1: = `cexp (-π*I*r) * cexp (π*I*r*t) * cexp (-π*r)`, matching I₂_integrand. -/
-lemma I₂_integrand_eq_Φ₂ (x : V) (t : ℝ) (ht : t ∈ Icc 0 1) :
-    I₂_integrand (x, t) = Φ₂ (‖x‖^2) t := by
-  simp only [I₂_integrand, Φ₂, Φ₂', z₂'_eq_of_mem ht]
-  -- Exponential: π*I*r*(-1+t+I) = -π*I*r + π*I*r*t - π*r (using I² = -1)
-  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I)) =
-      cexp (-π * I * ↑(‖x‖ ^ 2)) * cexp (π * I * ↑(‖x‖ ^ 2) * ↑t) * cexp (-π * ↑(‖x‖ ^ 2)) := by
-    rw [← Complex.exp_add, ← Complex.exp_add]
-    congr 1
-    have hI : I * I = (-1 : ℂ) := I_mul_I
-    calc π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I)
-        = -π * I * ↑(‖x‖ ^ 2) + π * I * ↑(‖x‖ ^ 2) * ↑t + π * (I * I) * ↑(‖x‖ ^ 2) := by ring
-      _ = -π * I * ↑(‖x‖ ^ 2) + π * I * ↑(‖x‖ ^ 2) * ↑t + π * (-1) * ↑(‖x‖ ^ 2) := by rw [hI]
-      _ = -π * I * ↑(‖x‖ ^ 2) + π * I * ↑(‖x‖ ^ 2) * ↑t + -π * ↑(‖x‖ ^ 2) := by ring
-  rw [hexp]
-  simp only [ofReal_pow]
-  ring
-
-/-- For t ∈ [0,1], I₄_integrand (x, t) equals Φ₄ (‖x‖²) t. -/
-lemma I₄_integrand_eq_Φ₄ (x : V) (t : ℝ) (ht : t ∈ Icc 0 1) :
-    I₄_integrand (x, t) = Φ₄ (‖x‖^2) t := by
-  simp only [I₄_integrand, Φ₄, Φ₄', z₄'_eq_of_mem ht]
-  -- Exponential: π*I*r*(1-t+I) = π*I*r - π*I*r*t - π*r (using I² = -1)
-  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I)) =
-      cexp (π * I * ↑(‖x‖ ^ 2)) * cexp (-π * I * ↑(‖x‖ ^ 2) * ↑t) * cexp (-π * ↑(‖x‖ ^ 2)) := by
-    rw [← Complex.exp_add, ← Complex.exp_add]
-    congr 1
-    have hI : I * I = (-1 : ℂ) := I_mul_I
-    calc π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I)
-        = π * I * ↑(‖x‖ ^ 2) + (-π * I * ↑(‖x‖ ^ 2) * ↑t) + π * (I * I) * ↑(‖x‖ ^ 2) := by ring
-      _ = π * I * ↑(‖x‖ ^ 2) + (-π * I * ↑(‖x‖ ^ 2) * ↑t) + π * (-1) * ↑(‖x‖ ^ 2) := by rw [hI]
-      _ = π * I * ↑(‖x‖ ^ 2) + -π * I * ↑(‖x‖ ^ 2) * ↑t + -π * ↑(‖x‖ ^ 2) := by ring
-  rw [hexp]
-  simp only [ofReal_pow]
-  ring
-
-/-- For t ∈ (0,1], I₁_integrand (x, t) equals Φ₁ (‖x‖²) t.
-
-z₁' t = -1 + I*t, so (z₁' t + 1)² = (I*t)² = -t².
-The factor I * (I*t)² = I * (-t²) = -I * t² matches I₁_integrand's leading factor. -/
-lemma I₁_integrand_eq_Φ₁ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
-    I₁_integrand (x, t) = Φ₁ (‖x‖^2) t := by
-  have ht' : t ∈ Icc 0 1 := mem_Icc_of_Ioc ht
-  simp only [I₁_integrand, Φ₁, Φ₁', z₁'_eq_of_mem ht']
-  -- z₁' t + 1 = -1 + I*t + 1 = I*t, and (I*t)² = -t²
-  have h1 : ((-1 : ℂ) + I * ↑t + 1) = I * ↑t := by ring
-  have h2 : (I * ↑t : ℂ) ^ 2 = -(↑t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
-  rw [h1, h2]
-  -- Exponential: π*I*r*(-1+I*t) = -π*I*r - π*r*t (using I² = -1)
-  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (-1 + I * ↑t)) =
-      cexp (-π * I * ↑(‖x‖ ^ 2)) * cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
-    rw [← Complex.exp_add]
-    congr 1
-    have hI : I * I = (-1 : ℂ) := I_mul_I
-    calc π * I * ↑(‖x‖ ^ 2) * (-1 + I * ↑t)
-        = -π * I * ↑(‖x‖ ^ 2) + π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
-      _ = -π * I * ↑(‖x‖ ^ 2) + π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
-      _ = -π * I * ↑(‖x‖ ^ 2) + -π * ↑(‖x‖ ^ 2) * ↑t := by ring
-  rw [hexp]
-  simp only [ofReal_pow]
-  ring
-
-/-- For t ∈ (0,1], I₃_integrand (x, t) equals Φ₃ (‖x‖²) t.
-
-z₃' t = 1 + I*t, so (z₃' t - 1)² = (I*t)² = -t².
-The factor I * (I*t)² = I * (-t²) = -I * t² matches I₃_integrand's leading factor. -/
-lemma I₃_integrand_eq_Φ₃ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
-    I₃_integrand (x, t) = Φ₃ (‖x‖^2) t := by
-  have ht' : t ∈ Icc 0 1 := mem_Icc_of_Ioc ht
-  simp only [I₃_integrand, Φ₃, Φ₃', z₃'_eq_of_mem ht']
-  -- z₃' t - 1 = 1 + I*t - 1 = I*t, and (I*t)² = -t²
-  have h1 : ((1 : ℂ) + I * ↑t - 1) = I * ↑t := by ring
-  have h2 : (I * ↑t : ℂ) ^ 2 = -(↑t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
-  rw [h1, h2]
-  -- Exponential: π*I*r*(1+I*t) = π*I*r - π*r*t (using I² = -1)
-  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (1 + I * ↑t)) =
-      cexp (π * I * ↑(‖x‖ ^ 2)) * cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
-    rw [← Complex.exp_add]
-    congr 1
-    have hI : I * I = (-1 : ℂ) := I_mul_I
-    calc π * I * ↑(‖x‖ ^ 2) * (1 + I * ↑t)
-        = π * I * ↑(‖x‖ ^ 2) + π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
-      _ = π * I * ↑(‖x‖ ^ 2) + π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
-      _ = π * I * ↑(‖x‖ ^ 2) + -π * ↑(‖x‖ ^ 2) * ↑t := by ring
-  rw [hexp]
-  simp only [ofReal_pow]
-  ring
-
-/-- For t ∈ (0,1], I₅_integrand (x, t) equals Φ₅ (‖x‖²) t.
-
-z₅' t = I*t, so z₅' t² = (I*t)² = -t².
-The factor I * (I*t)² = -I * t² matches I₅_integrand's leading factor. -/
-lemma I₅_integrand_eq_Φ₅ (x : V) (t : ℝ) (ht : t ∈ Ioc 0 1) :
-    I₅_integrand (x, t) = Φ₅ (‖x‖^2) t := by
-  have ht' : t ∈ Icc 0 1 := mem_Icc_of_Ioc ht
-  simp only [I₅_integrand, Φ₅, Φ₅', z₅'_eq_of_mem ht']
-  -- (I*t)² = -t²
-  have h1 : (I * ↑t : ℂ) ^ 2 = -(↑t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
-  rw [h1]
-  -- Exponential: π*I*r*(I*t) = -π*r*t (using I² = -1)
-  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (I * ↑t)) = cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
-    congr 1
-    have hI : I * I = (-1 : ℂ) := I_mul_I
-    calc π * I * ↑(‖x‖ ^ 2) * (I * ↑t)
-        = π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
-      _ = π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
-      _ = -π * ↑(‖x‖ ^ 2) * ↑t := by ring
-  rw [hexp]
-  simp only [ofReal_pow]
-  ring
-
-/-- For t ∈ [1,∞), I₆_integrand (x, t) equals Φ₆ (‖x‖²) t.
-
-z₆' t = I*t, so the exponential factor cexp(π*I*r*I*t) = cexp(-π*r*t). -/
-lemma I₆_integrand_eq_Φ₆ (x : V) (t : ℝ) (ht : t ∈ Ici 1) :
-    I₆_integrand (x, t) = Φ₆ (‖x‖^2) t := by
-  simp only [I₆_integrand, Φ₆, Φ₆', z₆'_eq_of_mem ht]
-  -- Exponential: π*I*r*(I*t) = -π*r*t (using I² = -1)
-  have hexp : cexp (π * I * ↑(‖x‖ ^ 2) * (I * ↑t)) = cexp (-π * ↑(‖x‖ ^ 2) * ↑t) := by
-    congr 1
-    have hI : I * I = (-1 : ℂ) := I_mul_I
-    calc π * I * ↑(‖x‖ ^ 2) * (I * ↑t)
-        = π * (I * I) * ↑(‖x‖ ^ 2) * ↑t := by ring
-      _ = π * (-1) * ↑(‖x‖ ^ 2) * ↑t := by rw [hI]
-      _ = -π * ↑(‖x‖ ^ 2) * ↑t := by ring
-  rw [hexp]
-  simp only [ofReal_pow]
-  ring
-
-end Equivalence
 
 end
 
