@@ -659,8 +659,17 @@ lemma Φ₆_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
     ‖I₆_integrand (x, t)‖ ≤ C * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_I₆_bound
   refine ⟨C₀, hC₀_pos, fun x t ht => ?_⟩
-  unfold I₆_integrand
-  rw [norm_mul, norm_mul]
+  unfold I₆_integrand Φ₆ Φ₆'
+  -- Convert z₆' t to I * t for t ≥ 1
+  have hz₆ : z₆' t = I * t := z₆'_eq_of_mem ht
+  -- Simplify the exponential: π * I * r * (I * t) = -π * r * t
+  have h_exp_eq : π * I * ((‖x‖^2 : ℝ) : ℂ) * (I * t) = -π * ‖x‖^2 * t := by
+    have h_I_sq : (I : ℂ) ^ 2 = -1 := I_sq
+    ring_nf
+    rw [h_I_sq]
+    simp only [ofReal_pow]
+    ring
+  simp only [hz₆, h_exp_eq, norm_mul]
   have h_I : ‖(I : ℂ)‖ = 1 := Complex.norm_I
   have h_φ : ‖φ₀'' (I * t)‖ ≤ C₀ * Real.exp (-2 * π * t) := hC₀ t ht
   have h_gauss_norm := norm_cexp_neg_pi_norm_sq_mul x t
@@ -670,9 +679,13 @@ lemma Φ₆_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
       have hpi : -π * ‖x‖^2 ≤ 0 := by nlinarith [Real.pi_pos, sq_nonneg ‖x‖]
       nlinarith
     linarith
-  calc ‖(I : ℂ)‖ * ‖φ₀'' (I * t)‖ * ‖cexp (-π * ‖x‖^2 * t)‖
-      = 1 * ‖φ₀'' (I * t)‖ * Real.exp (-π * ‖x‖^2 * t) := by rw [h_I, h_gauss_norm]
-    _ ≤ 1 * (C₀ * Real.exp (-2 * π * t)) * Real.exp (-π * ‖x‖^2) := by gcongr
+  calc ‖(I : ℂ)‖ * (‖φ₀'' (I * t)‖ * ‖cexp (-π * ‖x‖^2 * t)‖)
+      = 1 * (‖φ₀'' (I * t)‖ * Real.exp (-π * ‖x‖^2 * t)) := by rw [h_I, h_gauss_norm]
+    _ ≤ 1 * (C₀ * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2)) := by
+        gcongr
+        calc ‖φ₀'' (I * t)‖ * Real.exp (-π * ‖x‖^2 * t)
+            ≤ (C₀ * Real.exp (-2 * π * t)) * Real.exp (-π * ‖x‖^2 * t) := by gcongr
+          _ ≤ (C₀ * Real.exp (-2 * π * t)) * Real.exp (-π * ‖x‖^2) := by gcongr
     _ = C₀ * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2) := by ring
 
 /-- I₆ integrand is integrable on V × [1,∞) (Class C tail).
@@ -759,17 +772,70 @@ def I₃_integrand (p : V × ℝ) : ℂ := Φ₃ (‖p.1‖^2) p.2
 /-- The integrand for I₅ over V × (0,1]. Uses the canonical Φ₅ from Basic.lean. -/
 def I₅_integrand (p : V × ℝ) : ℂ := Φ₅ (‖p.1‖^2) p.2
 
-/-- I₁ integrand equals I₅ integrand times a unit-modulus phase factor. -/
-lemma Φ₁_prod_eq_Φ₅_mul_phase (p : V × ℝ) :
-    I₁_integrand p = I₅_integrand p * cexp (-π * I * ‖p.1‖^2) := by
-  simp only [I₁_integrand, I₅_integrand]
-  ring
+/-- I₁ integrand equals I₅ integrand times a unit-modulus phase factor (on the domain).
 
-/-- I₃ integrand equals I₅ integrand times a unit-modulus phase factor. -/
-lemma Φ₃_prod_eq_Φ₅_mul_phase (p : V × ℝ) :
+The key insight is that z₁' t + 1 = I*t = z₅' t, so the φ₀'' and z² factors
+are identical, and only the exponential differs by the phase cexp(-πIr). -/
+lemma Φ₁_prod_eq_Φ₅_mul_phase {p : V × ℝ} (ht : p.2 ∈ Icc 0 1) :
+    I₁_integrand p = I₅_integrand p * cexp (-π * I * ‖p.1‖^2) := by
+  simp only [I₁_integrand, I₅_integrand, Φ₁, Φ₅, Φ₁', Φ₅', z₁'_eq_of_mem ht, z₅'_eq_of_mem ht]
+  -- z₁' t + 1 = -1 + I*t + 1 = I*t, and z₅' t = I*t
+  have h_add : (-1 : ℂ) + I * ↑p.2 + 1 = I * ↑p.2 := by ring
+  rw [h_add]
+  -- The exponential factors: cexp(π*I*r*(-1 + I*t)) = cexp(-π*I*r) * cexp(-π*r*t)
+  -- and cexp(π*I*r*(I*t)) = cexp(-π*r*t)
+  have h_exp1 : cexp (↑π * I * ↑(‖p.1‖^2) * (-1 + I * ↑p.2)) =
+      cexp (-↑π * I * ↑(‖p.1‖^2)) * cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by
+    rw [← Complex.exp_add]
+    congr 1
+    have : I * I = (-1 : ℂ) := I_mul_I
+    calc ↑π * I * ↑(‖p.1‖^2) * (-1 + I * ↑p.2)
+        = -↑π * I * ↑(‖p.1‖^2) + ↑π * (I * I) * ↑(‖p.1‖^2) * ↑p.2 := by ring
+      _ = -↑π * I * ↑(‖p.1‖^2) + ↑π * (-1) * ↑(‖p.1‖^2) * ↑p.2 := by rw [this]
+      _ = -↑π * I * ↑(‖p.1‖^2) + (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by ring
+  have h_exp5 : cexp (↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2)) = cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by
+    congr 1
+    have : I * I = (-1 : ℂ) := I_mul_I
+    calc ↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2) = ↑π * (I * I) * ↑(‖p.1‖^2) * ↑p.2 := by ring
+      _ = ↑π * (-1) * ↑(‖p.1‖^2) * ↑p.2 := by rw [this]
+      _ = -↑π * ↑(‖p.1‖^2) * ↑p.2 := by ring
+  rw [h_exp1, h_exp5]
+  ring_nf
+  simp only [ofReal_pow]
+  -- The two cexp factors need to be swapped; use mul_right_comm to reorder a * b * c = a * c * b
+  rw [mul_right_comm]
+
+/-- I₃ integrand equals I₅ integrand times a unit-modulus phase factor (on the domain).
+
+The key insight is that z₃' t - 1 = I*t = z₅' t, so the φ₀'' and z² factors
+are identical, and only the exponential differs by the phase cexp(πIr). -/
+lemma Φ₃_prod_eq_Φ₅_mul_phase {p : V × ℝ} (ht : p.2 ∈ Icc 0 1) :
     I₃_integrand p = I₅_integrand p * cexp (π * I * ‖p.1‖^2) := by
-  simp only [I₃_integrand, I₅_integrand]
-  ring
+  simp only [I₃_integrand, I₅_integrand, Φ₃, Φ₅, Φ₃', Φ₅', z₃'_eq_of_mem ht, z₅'_eq_of_mem ht]
+  -- z₃' t - 1 = 1 + I*t - 1 = I*t, and z₅' t = I*t
+  have h_sub : (1 : ℂ) + I * ↑p.2 - 1 = I * ↑p.2 := by ring
+  rw [h_sub]
+  -- The exponential factors: cexp(π*I*r*(1 + I*t)) = cexp(π*I*r) * cexp(-π*r*t)
+  -- and cexp(π*I*r*(I*t)) = cexp(-π*r*t)
+  have h_exp3 : cexp (↑π * I * ↑(‖p.1‖^2) * (1 + I * ↑p.2)) =
+      cexp (↑π * I * ↑(‖p.1‖^2)) * cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by
+    rw [← Complex.exp_add]
+    congr 1
+    have : I * I = (-1 : ℂ) := I_mul_I
+    calc ↑π * I * ↑(‖p.1‖^2) * (1 + I * ↑p.2)
+        = ↑π * I * ↑(‖p.1‖^2) + ↑π * (I * I) * ↑(‖p.1‖^2) * ↑p.2 := by ring
+      _ = ↑π * I * ↑(‖p.1‖^2) + ↑π * (-1) * ↑(‖p.1‖^2) * ↑p.2 := by rw [this]
+      _ = ↑π * I * ↑(‖p.1‖^2) + (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by ring
+  have h_exp5 : cexp (↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2)) = cexp (-↑π * ↑(‖p.1‖^2) * ↑p.2) := by
+    congr 1
+    have : I * I = (-1 : ℂ) := I_mul_I
+    calc ↑π * I * ↑(‖p.1‖^2) * (I * ↑p.2) = ↑π * (I * I) * ↑(‖p.1‖^2) * ↑p.2 := by ring
+      _ = ↑π * (-1) * ↑(‖p.1‖^2) * ↑p.2 := by rw [this]
+      _ = -↑π * ↑(‖p.1‖^2) * ↑p.2 := by ring
+  rw [h_exp3, h_exp5]
+  ring_nf
+  simp only [ofReal_pow]
+  rw [mul_right_comm]
 
 /-- The phase factor cexp(-πI‖x‖²) has unit modulus. -/
 lemma norm_phase_factor_I₁ (x : V) : ‖cexp (-π * I * ‖x‖^2)‖ = 1 := by
@@ -999,35 +1065,48 @@ theorem Φ₅_prod_integrable :
 Follows from I₅ integrability since I₁ = I₅ * (unit-modulus phase). -/
 theorem Φ₁_prod_integrable :
     Integrable I₁_integrand (volume.prod (volume.restrict (Ioc 0 1))) := by
-  have h_eq : I₁_integrand = fun p => I₅_integrand p * cexp (-π * I * ‖p.1‖^2) := by
-    ext p; exact Φ₁_prod_eq_Φ₅_mul_phase p
-  rw [h_eq]
-  -- I₅ is integrable, and we multiply by a unit-modulus factor
+  -- On the domain (univ ×ˢ Ioc 0 1), I₁_integrand = I₅_integrand * phase
+  have h_eq : ∀ p : V × ℝ, p.2 ∈ Ioc 0 1 →
+      I₁_integrand p = I₅_integrand p * cexp (-π * I * ‖p.1‖^2) := fun p ht =>
+    Φ₁_prod_eq_Φ₅_mul_phase (mem_Icc_of_Ioc ht)
+  -- Use congr to transfer integrability
   have h_I₅ := Φ₅_prod_integrable
-  -- ‖f*g‖ = ‖f‖*‖g‖ = ‖f‖*1 = ‖f‖
-  apply Integrable.mono' h_I₅.norm
-  · -- Measurability
-    have h_cont : Continuous (fun p : V × ℝ => cexp (-π * I * ‖p.1‖^2)) := by fun_prop
-    exact h_I₅.aestronglyMeasurable.mul h_cont.aestronglyMeasurable
-  · -- Norm bound
-    apply ae_of_all
-    intro p
-    rw [norm_mul, norm_phase_factor_I₁ p.1, mul_one]
+  rw [volume_prod_restrict_eq]
+  have h_integrable : Integrable (fun p => I₅_integrand p * cexp (-π * I * ‖p.1‖^2))
+      (volume.prod volume).restrict (Set.univ ×ˢ Ioc 0 1) := by
+    rw [← volume_prod_restrict_eq]
+    apply Integrable.mono' h_I₅.norm
+    · have h_cont : Continuous (fun p : V × ℝ => cexp (-π * I * ‖p.1‖^2)) := by fun_prop
+      exact h_I₅.aestronglyMeasurable.mul h_cont.aestronglyMeasurable
+    · apply ae_of_all; intro p
+      rw [norm_mul, norm_phase_factor_I₁ p.1, mul_one]
+  refine h_integrable.congr ?_
+  rw [ae_restrict_iff' (MeasurableSet.univ.prod measurableSet_Ioc)]
+  apply ae_of_all; intro ⟨x, t⟩ ⟨_, ht⟩
+  exact (h_eq (x, t) ht).symm
 
 /-- I₃ integrand is integrable on V × (0,1] (Class B segment).
 Follows from I₅ integrability since I₃ = I₅ * (unit-modulus phase). -/
 theorem Φ₃_prod_integrable :
     Integrable I₃_integrand (volume.prod (volume.restrict (Ioc 0 1))) := by
-  have h_eq : I₃_integrand = fun p => I₅_integrand p * cexp (π * I * ‖p.1‖^2) := by
-    ext p; exact Φ₃_prod_eq_Φ₅_mul_phase p
-  rw [h_eq]
+  -- On the domain (univ ×ˢ Ioc 0 1), I₃_integrand = I₅_integrand * phase
+  have h_eq : ∀ p : V × ℝ, p.2 ∈ Ioc 0 1 →
+      I₃_integrand p = I₅_integrand p * cexp (π * I * ‖p.1‖^2) := fun p ht =>
+    Φ₃_prod_eq_Φ₅_mul_phase (mem_Icc_of_Ioc ht)
   have h_I₅ := Φ₅_prod_integrable
-  apply Integrable.mono' h_I₅.norm
-  · have h_cont : Continuous (fun p : V × ℝ => cexp (π * I * ‖p.1‖^2)) := by fun_prop
-    exact h_I₅.aestronglyMeasurable.mul h_cont.aestronglyMeasurable
-  · apply ae_of_all
-    intro p
-    rw [norm_mul, norm_phase_factor_I₃ p.1, mul_one]
+  rw [volume_prod_restrict_eq]
+  have h_integrable : Integrable (fun p => I₅_integrand p * cexp (π * I * ‖p.1‖^2))
+      (volume.prod volume).restrict (Set.univ ×ˢ Ioc 0 1) := by
+    rw [← volume_prod_restrict_eq]
+    apply Integrable.mono' h_I₅.norm
+    · have h_cont : Continuous (fun p : V × ℝ => cexp (π * I * ‖p.1‖^2)) := by fun_prop
+      exact h_I₅.aestronglyMeasurable.mul h_cont.aestronglyMeasurable
+    · apply ae_of_all; intro p
+      rw [norm_mul, norm_phase_factor_I₃ p.1, mul_one]
+  refine h_integrable.congr ?_
+  rw [ae_restrict_iff' (MeasurableSet.univ.prod measurableSet_Ioc)]
+  apply ae_of_all; intro ⟨x, t⟩ ⟨_, ht⟩
+  exact (h_eq (x, t) ht).symm
 
 end CuspApproachingSegments
 
