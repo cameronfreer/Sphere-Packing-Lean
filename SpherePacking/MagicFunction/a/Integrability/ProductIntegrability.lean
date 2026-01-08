@@ -118,13 +118,18 @@ So `norm_φ₀_le` applies, giving uniform bounds on φ₀''.
 
 section HorizontalSegments
 
-/-- Core formula: Im(-1/(t + I)) = 1/(t² + 1) for any t ∈ ℝ. -/
-lemma im_neg_inv_t_add_I_eq (t : ℝ) : (-1 / (t + I)).im = 1 / (t^2 + 1) := by
-  have hns : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
-  simp [neg_div, inv_im, hns]
+/-- normSq(s + I) = s² + 1 for any s ∈ ℝ. -/
+lemma normSq_add_I (s : ℝ) : normSq (s + I) = s^2 + 1 := by simp [normSq, sq]
 
-/-- normSq(t + I) = t² + 1 for any t ∈ ℝ. -/
-lemma normSq_t_add_I (t : ℝ) : normSq (t + I) = t^2 + 1 := by simp [normSq, sq]
+/-- Core formula: Im(-1/(s + I)) = 1/(s² + 1) for any s ∈ ℝ. -/
+lemma im_neg_inv_add_I_eq (s : ℝ) : (-1 / (s + I)).im = 1 / (s^2 + 1) := by
+  simp [neg_div, inv_im, normSq_add_I]
+
+/-- Alias for normSq_add_I with t. -/
+lemma normSq_t_add_I (t : ℝ) : normSq (t + I) = t^2 + 1 := normSq_add_I t
+
+/-- Alias for im_neg_inv_add_I_eq with t. -/
+lemma im_neg_inv_t_add_I_eq (t : ℝ) : (-1 / (t + I)).im = 1 / (t^2 + 1) := im_neg_inv_add_I_eq t
 
 /-- For t ∈ [0,1], Im(-1/(t + I)) ≥ 1/2. -/
 lemma im_neg_inv_t_add_I (t : ℝ) (ht : t ∈ Icc 0 1) : 1/2 ≤ (-1 / (t + I)).im := by
@@ -149,12 +154,9 @@ lemma norm_sq_t_add_I_le (t : ℝ) (ht : t ∈ Icc 0 1) : ‖(t + I) ^ 2‖ ≤ 
   rw [norm_pow, ← normSq_eq_norm_sq, normSq_t_add_I]
   nlinarith [sq_nonneg t, ht.1, ht.2]
 
-/-- For t ∈ [0,1], |(-t + I)²| ≤ 2. Derived from norm_sq_t_add_I_le via (-t)² = t². -/
+/-- For t ∈ [0,1], |(-t + I)²| ≤ 2. -/
 lemma norm_sq_neg_t_add_I_le (t : ℝ) (ht : t ∈ Icc 0 1) : ‖(-t + I) ^ 2‖ ≤ 2 := by
-  have h : (-t + I) ^ 2 = ((-t) + I) ^ 2 := by ring
-  rw [h, norm_pow, ← normSq_eq_norm_sq]
-  have hns : normSq ((-t) + I) = t^2 + 1 := by simp [normSq, sq]
-  rw [hns]
+  rw [norm_pow, ← normSq_eq_norm_sq, show normSq (-↑t + I) = t^2 + 1 by simp [normSq, sq]]
   nlinarith [sq_nonneg t, ht.1, ht.2]
 
 /-- For t ∈ [0,1], the positive imaginary part of -1/(t+I). -/
@@ -219,8 +221,7 @@ lemma norm_φ₀''_I₂_bound_Ico : ∃ C₀ > 0, ∀ t : ℝ, t ∈ Ico 0 1 →
   rw [φ₀''_eq _ him_pos]
   calc ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im) := hC₀ z him_ge
     _ ≤ C₀ * Real.exp (-π) := by
-        gcongr
-        have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
+        gcongr; have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
         linarith [Real.pi_pos]
 
 /-- For any t ∈ ℝ, Im(-1/(-t+I)) = 1/(t² + 1) > 0. -/
@@ -262,8 +263,7 @@ lemma norm_φ₀''_I₄_bound_Ico : ∃ C₀ > 0, ∀ t : ℝ, t ∈ Ico 0 1 →
   rw [φ₀''_eq _ him_pos]
   calc ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im) := hC₀ z him_ge
     _ ≤ C₀ * Real.exp (-π) := by
-        gcongr
-        have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
+        gcongr; have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
         linarith [Real.pi_pos]
 
 /-- Continuity of exponential factor cexp(π·I·‖x‖²·z(t)) on V × ℝ.
@@ -599,15 +599,8 @@ lemma Φ₆_prod_continuousOn :
       intro t ht
       exact congrArg φ₀'' (h_eq t ht)
     exact h.comp continuous_snd.continuousOn (fun ⟨_, t⟩ ht => ht.2)
-  -- (z₆' p.2)^2 is continuous
-  have h2 : Continuous (fun p : V × ℝ => (z₆' p.2) ^ 2) :=
-    (continuous_z₆'.comp continuous_snd).pow 2
-  -- The exponential factor
-  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₆' p.2)) := by
-    refine Complex.continuous_exp.comp ?_
-    have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
-      Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
-    exact (continuous_const.mul h_norm).mul (continuous_z₆'.comp continuous_snd)
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₆' p.2)) :=
+    continuous_cexp_norm_sq_mul_path continuous_z₆'
   exact (continuous_const.continuousOn.mul (h1.mul h3.continuousOn))
 
 /-- The norm of I₆_integrand is bounded by C * exp(-2πt) * exp(-π‖x‖²) for t ≥ 1. -/
@@ -811,48 +804,23 @@ lemma continuousOn_φ₀''_cusp_path :
 
 /-- The I₅ integrand is continuous on V × (0, 1]. -/
 lemma Φ₅_prod_continuousOn : ContinuousOn I₅_integrand (Set.univ ×ˢ Set.Ioc 0 1) := by
-  unfold I₅_integrand
-  -- Φ₅ r t = I * Φ₅' r (z₅' t), where Φ₅' r z = φ₀''(-1/z) * z^2 * cexp(πIrz)
-  refine ContinuousOn.mul ?_ ?_
-  · exact continuousOn_const  -- I is constant
-  · -- Need to show Φ₅' (‖p.1‖^2) (z₅' p.2) is continuous
-    unfold Φ₅'
-    refine ContinuousOn.mul ?_ ?_
-    · refine ContinuousOn.mul ?_ ?_
-      · -- φ₀''(-1/z₅' p.2) part: use congr since z₅' t = I * t on Ioc 0 1
-        have h_eq : ∀ p : V × ℝ, p ∈ Set.univ ×ˢ Set.Ioc 0 1 →
-            φ₀'' (-1 / z₅' p.2) = φ₀'' (-1 / (I * p.2)) := fun ⟨_, t⟩ ht => by
-          simp only [Set.mem_prod, Set.mem_univ, Set.mem_Ioc, true_and] at ht
-          rw [z₅'_eq_of_mem (mem_Icc_of_Ioc ht)]
-        have h : ContinuousOn (fun p : V × ℝ => φ₀'' (-1 / (I * p.2))) (Set.univ ×ˢ Set.Ioc 0 1) :=
-          ContinuousOn.comp continuousOn_φ₀''_cusp_path continuous_snd.continuousOn
-            (fun ⟨_, t⟩ ht => by simp only [Set.mem_prod, Set.mem_univ, Set.mem_Ioc,
-              true_and, Set.mem_Ioi] at ht ⊢; exact ht.1)
-        exact h.congr h_eq
-      · -- (z₅' p.2)² part: z₅' is continuous
-        have hz₅_cont : Continuous z₅' := by
-          unfold z₅' z₅
-          simp only [IccExtend, Function.comp_apply]
-          exact continuous_const.mul (continuous_ofReal.comp
-            (continuous_subtype_val.comp continuous_projIcc))
-        have h : Continuous (fun t : ℝ => (z₅' t : ℂ) ^ 2) :=
-          (continuous_pow 2).comp hz₅_cont
-        exact (h.comp continuous_snd).continuousOn
-    · -- cexp(π*I*‖p.1‖^2*z₅' p.2) part: depends on both p.1 and p.2
-      have hz₅_cont : Continuous z₅' := by
-        unfold z₅' z₅
-        simp only [IccExtend, Function.comp_apply]
-        exact continuous_const.mul (continuous_ofReal.comp
-          (continuous_subtype_val.comp continuous_projIcc))
-      have h : Continuous (fun p : V × ℝ => cexp (π * I * ↑(‖p.1‖^2) * z₅' p.2)) := by
-        apply Complex.continuous_exp.comp
-        have h1 : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
-          Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
-        have h2 : Continuous (fun p : V × ℝ => z₅' p.2) :=
-          hz₅_cont.comp continuous_snd
-        have h3 : Continuous (fun p : V × ℝ => (π : ℂ) * I) := continuous_const
-        exact (h3.mul h1).mul h2
-      exact h.continuousOn
+  unfold I₅_integrand Φ₅ Φ₅'
+  have hz₅ : Continuous z₅' := by
+    unfold z₅' z₅; simp only [IccExtend, Function.comp_apply]
+    exact continuous_const.mul
+      (continuous_ofReal.comp (continuous_subtype_val.comp continuous_projIcc))
+  have h1 : ContinuousOn (fun p : V × ℝ => φ₀'' (-1 / z₅' p.2)) (Set.univ ×ˢ Set.Ioc 0 1) := by
+    have h_eq : ∀ p : V × ℝ, p ∈ Set.univ ×ˢ Set.Ioc 0 1 →
+        φ₀'' (-1 / z₅' p.2) = φ₀'' (-1 / (I * p.2)) := fun ⟨_, t⟩ ht => by
+      simp only [Set.mem_prod, Set.mem_univ, Set.mem_Ioc, true_and] at ht
+      rw [z₅'_eq_of_mem (mem_Icc_of_Ioc ht)]
+    exact (continuousOn_φ₀''_cusp_path.comp continuous_snd.continuousOn
+      (fun ⟨_, t⟩ ht => by simp only [Set.mem_prod, Set.mem_univ, Set.mem_Ioc, true_and,
+                                     Set.mem_Ioi] at ht ⊢; exact ht.1)).congr h_eq
+  have h2 : Continuous (fun p : V × ℝ => (z₅' p.2) ^ 2) := (hz₅.comp continuous_snd).pow 2
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ↑(‖p.1‖^2) * z₅' p.2)) :=
+    continuous_cexp_norm_sq_mul_path hz₅
+  exact continuousOn_const.mul ((h1.mul h2.continuousOn).mul h3.continuousOn)
 
 /-- I₅ integrand norm bound for Class B. -/
 lemma Φ₅_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 0 < t → t ≤ 1 →
