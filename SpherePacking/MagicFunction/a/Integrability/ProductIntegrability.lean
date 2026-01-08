@@ -630,17 +630,29 @@ lemma norm_φ₀''_I₆_bound : ∃ C₀ > 0, ∀ t : ℝ, 1 ≤ t →
 This matches the blueprint's I₆ parametrization z = it for t ∈ [1,∞). -/
 lemma Φ₆_prod_continuousOn :
     ContinuousOn I₆_integrand (Set.univ ×ˢ Set.Ici (1 : ℝ)) := by
-  unfold I₆_integrand
-  -- φ₀''(I * p.2) is ContinuousOn on univ ×ˢ Ici 1 via continuousOn_φ₀''_I₆_param
-  have h1 : ContinuousOn (fun p : V × ℝ => φ₀'' (I * p.2)) (Set.univ ×ˢ Set.Ici 1) := by
-    apply ContinuousOn.comp continuousOn_φ₀''_I₆_param continuous_snd.continuousOn
-    intro ⟨_, t⟩ ht
-    exact ht.2
-  -- The other factors are globally continuous
-  have h2 : Continuous (fun p : V × ℝ => cexp (-π * ‖p.1‖^2 * p.2)) :=
-    Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
-      (continuous_ofReal.comp continuous_snd))
-  exact (continuous_const.continuousOn.mul h1).mul h2.continuousOn
+  unfold I₆_integrand Φ₆ Φ₆'
+  -- After unfolding: fun p => I * (φ₀'' (z₆' p.2) * cexp (π * I * (‖p.1‖^2) * z₆' p.2))
+  -- Since z₆' t = I * t for t ≥ 1, and I² = -1, the exp becomes cexp (-π * ‖p.1‖^2 * t)
+  -- φ₀''(z₆' t) = φ₀''(I * t) is ContinuousOn via continuousOn_φ₀''_I₆_param
+  have h1 : ContinuousOn (fun p : V × ℝ => φ₀'' (z₆' p.2)) (Set.univ ×ˢ Set.Ici 1) := by
+    -- For t ≥ 1, z₆' t = I * t by IciExtend
+    have h_eq : ∀ t ∈ Set.Ici (1 : ℝ), z₆' t = I * t := fun t ht =>
+      by rw [z₆', IciExtend_of_mem z₆ ht, z₆]
+    have h : ContinuousOn (fun t : ℝ => φ₀'' (z₆' t)) (Set.Ici 1) := by
+      refine continuousOn_φ₀''_I₆_param.congr ?_
+      intro t ht
+      exact congrArg φ₀'' (h_eq t ht)
+    exact h.comp continuous_snd.continuousOn (fun ⟨_, t⟩ ht => ht.2)
+  -- (z₆' p.2)^2 is continuous
+  have h2 : Continuous (fun p : V × ℝ => (z₆' p.2) ^ 2) :=
+    (continuous_z₆'.comp continuous_snd).pow 2
+  -- The exponential factor
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₆' p.2)) := by
+    refine Complex.continuous_exp.comp ?_
+    have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
+      Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
+    exact (continuous_const.mul h_norm).mul (continuous_z₆'.comp continuous_snd)
+  exact (continuous_const.continuousOn.mul (h1.mul h3.continuousOn))
 
 /-- The norm of I₆_integrand is bounded by C * exp(-2πt) * exp(-π‖x‖²) for t ≥ 1. -/
 lemma Φ₆_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
