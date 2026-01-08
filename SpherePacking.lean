@@ -27,7 +27,7 @@ import SpherePacking.ForMathlib.ZLattice
 import SpherePacking.ForMathlib.tprod
 import SpherePacking.MagicFunction.IntegralParametrisations
 import SpherePacking.MagicFunction.a.Integrability.ProductIntegrability
-import SpherePacking.MagicFunction.Fubini
+import SpherePacking.MagicFunction.a.Fubini
 import SpherePacking.MagicFunction.PolyFourierCoeffBound
 import SpherePacking.MagicFunction.a.Basic
 import SpherePacking.MagicFunction.a.Eigenfunction
