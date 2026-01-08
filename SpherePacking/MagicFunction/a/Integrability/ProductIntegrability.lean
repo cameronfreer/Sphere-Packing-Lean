@@ -681,11 +681,7 @@ lemma Φ₆_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 1 ≤ t →
     linarith
   calc ‖(I : ℂ)‖ * (‖φ₀'' (I * t)‖ * ‖cexp (-π * ‖x‖^2 * t)‖)
       = 1 * (‖φ₀'' (I * t)‖ * Real.exp (-π * ‖x‖^2 * t)) := by rw [h_I, h_gauss_norm]
-    _ ≤ 1 * (C₀ * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2)) := by
-        gcongr
-        calc ‖φ₀'' (I * t)‖ * Real.exp (-π * ‖x‖^2 * t)
-            ≤ (C₀ * Real.exp (-2 * π * t)) * Real.exp (-π * ‖x‖^2 * t) := by gcongr
-          _ ≤ (C₀ * Real.exp (-2 * π * t)) * Real.exp (-π * ‖x‖^2) := by gcongr
+    _ ≤ 1 * (C₀ * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2)) := by gcongr
     _ = C₀ * Real.exp (-2 * π * t) * Real.exp (-π * ‖x‖^2) := by ring
 
 /-- I₆ integrand is integrable on V × [1,∞) (Class C tail).
@@ -881,54 +877,98 @@ lemma continuousOn_φ₀''_cusp_path :
 /-- The I₅ integrand is continuous on V × (0, 1]. -/
 lemma Φ₅_prod_continuousOn : ContinuousOn I₅_integrand (Set.univ ×ˢ Set.Ioc 0 1) := by
   unfold I₅_integrand
+  -- Φ₅ r t = I * Φ₅' r (z₅' t), where Φ₅' r z = φ₀''(-1/z) * z^2 * cexp(πIrz)
   refine ContinuousOn.mul ?_ ?_
-  · refine ContinuousOn.mul ?_ ?_
+  · exact continuousOn_const  -- I is constant
+  · -- Need to show Φ₅' (‖p.1‖^2) (z₅' p.2) is continuous
+    unfold Φ₅'
+    refine ContinuousOn.mul ?_ ?_
     · refine ContinuousOn.mul ?_ ?_
-      · exact continuousOn_const
-      · -- φ₀''(-1/(I*t)) is continuous in t
-        apply ContinuousOn.comp continuousOn_φ₀''_cusp_path
-        · exact continuous_snd.continuousOn
-        · intro ⟨_, t⟩ ht
+      · -- φ₀''(-1/z₅' p.2) part: use congr since z₅' t = I * t on Ioc 0 1
+        have h_eq : ∀ p : V × ℝ, p ∈ Set.univ ×ˢ Set.Ioc 0 1 →
+            φ₀'' (-1 / z₅' p.2) = φ₀'' (-1 / (I * p.2)) := fun ⟨_, t⟩ ht => by
           simp only [Set.mem_prod, Set.mem_univ, Set.mem_Ioc, true_and] at ht
-          exact ht.1
-    · -- t² is continuous
-      have h : Continuous (fun p : V × ℝ => (p.2 : ℂ) ^ 2) := by
-        exact (continuous_pow 2).comp (continuous_ofReal.comp continuous_snd)
+          rw [z₅'_eq_of_mem (mem_Icc_of_Ioc ht)]
+        have h : ContinuousOn (fun p : V × ℝ => φ₀'' (-1 / (I * p.2))) (Set.univ ×ˢ Set.Ioc 0 1) :=
+          ContinuousOn.comp continuousOn_φ₀''_cusp_path continuous_snd.continuousOn
+            (fun ⟨_, t⟩ ht => by simp only [Set.mem_prod, Set.mem_univ, Set.mem_Ioc,
+              true_and, Set.mem_Ioi] at ht ⊢; exact ht.1)
+        exact h.congr h_eq
+      · -- (z₅' p.2)² part: z₅' is continuous
+        have hz₅_cont : Continuous z₅' := by
+          unfold z₅' z₅
+          simp only [IccExtend, Function.comp_apply]
+          exact continuous_const.mul (continuous_ofReal.comp
+            (continuous_subtype_val.comp continuous_projIcc))
+        have h : Continuous (fun t : ℝ => (z₅' t : ℂ) ^ 2) :=
+          (continuous_pow 2).comp hz₅_cont
+        exact (h.comp continuous_snd).continuousOn
+    · -- cexp(π*I*‖p.1‖^2*z₅' p.2) part: depends on both p.1 and p.2
+      have hz₅_cont : Continuous z₅' := by
+        unfold z₅' z₅
+        simp only [IccExtend, Function.comp_apply]
+        exact continuous_const.mul (continuous_ofReal.comp
+          (continuous_subtype_val.comp continuous_projIcc))
+      have h : Continuous (fun p : V × ℝ => cexp (π * I * ↑(‖p.1‖^2) * z₅' p.2)) := by
+        apply Complex.continuous_exp.comp
+        have h1 : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
+          Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
+        have h2 : Continuous (fun p : V × ℝ => z₅' p.2) :=
+          hz₅_cont.comp continuous_snd
+        have h3 : Continuous (fun p : V × ℝ => (π : ℂ) * I) := continuous_const
+        exact (h3.mul h1).mul h2
       exact h.continuousOn
-  · -- cexp(-π‖x‖²*t) is continuous
-    have h : Continuous (fun p : V × ℝ => cexp (-π * ‖p.1‖^2 * p.2)) := by
-      apply Complex.continuous_exp.comp
-      apply Continuous.mul
-      · apply Continuous.mul continuous_const
-        have h1 : Continuous (fun p : V × ℝ => (‖p.1‖ ^ 2 : ℂ)) :=
-          (continuous_pow 2).comp (continuous_ofReal.comp (continuous_norm.comp continuous_fst))
-        exact h1
-      · exact continuous_ofReal.comp continuous_snd
-    exact h.continuousOn
 
 /-- I₅ integrand norm bound for Class B. -/
 lemma Φ₅_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 0 < t → t ≤ 1 →
     ‖I₅_integrand (x, t)‖ ≤ C * Real.exp (-2 * π / t) * t ^ 2 * Real.exp (-π * ‖x‖^2 * t) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_cusp_bound
   refine ⟨C₀, hC₀_pos, fun x t ht ht' => ?_⟩
-  unfold I₅_integrand
+  unfold I₅_integrand Φ₅ Φ₅'
+  -- After unfolding: I * (φ₀''(-1/z₅' t) * (z₅' t)^2 * cexp(π*I*r*z₅' t))
+  -- Convert z₅' t to I * t for t ∈ (0, 1]
+  have ht_mem : t ∈ Icc 0 1 := ⟨le_of_lt ht, ht'⟩
+  have hz₅ : z₅' t = I * t := z₅'_eq_of_mem ht_mem
+  rw [hz₅]
+  -- Simplify the exponential: π * I * r * (I * t) = -π * r * t
+  have h_exp_eq : π * I * ↑(‖x‖^2) * (I * t) = -π * ‖x‖^2 * t := by
+    have h_I_sq : (I : ℂ) ^ 2 = -1 := I_sq
+    ring_nf
+    rw [h_I_sq]
+    simp only [ofReal_pow]
+    ring
+  -- Simplify (I * t)^2 = -t^2
+  have h_z_sq : (I * (t : ℂ)) ^ 2 = -(t^2 : ℂ) := by
+    have h_I_sq : (I : ℂ) ^ 2 = -1 := I_sq
+    ring_nf
+    rw [h_I_sq]
+    ring
+  simp only [h_exp_eq, h_z_sq, neg_mul, mul_neg]
+  -- Now the structure is: -(I * (φ₀''(-1/(It)) * t^2 * cexp(-π*‖x‖^2*t)))
+  -- First eliminate the outer negation, then the multiplications
+  simp only [norm_neg]
+  -- Structure: I * (φ₀'' * (t^2 * cexp))
   rw [norm_mul, norm_mul, norm_mul]
-  have h_I : ‖(-I : ℂ)‖ = 1 := by rw [norm_neg, Complex.norm_I]
+  have h_I : ‖(I : ℂ)‖ = 1 := Complex.norm_I
   have h_φ := hC₀ t ht ht'
-  -- Gaussian factor
-  have h_gauss : ‖cexp ((-π : ℂ) * ‖x‖^2 * t)‖ = Real.exp (-π * ‖x‖^2 * t) := by
+  -- Gaussian factor - note the parenthesization after simp
+  have h_gauss : ‖cexp (-((π : ℂ) * ‖x‖^2 * t))‖ = Real.exp (-π * ‖x‖^2 * t) := by
     rw [Complex.norm_exp]
     congr 1
     have h1 : (‖x‖^2 : ℂ).re = ‖x‖^2 := by simp [sq]
     have h2 : (‖x‖^2 : ℂ).im = 0 := by simp [sq]
-    simp only [neg_mul, neg_re, mul_re, ofReal_re, ofReal_im, mul_zero, sub_zero, h1, h2]
+    simp only [neg_re, mul_re, ofReal_re, ofReal_im, mul_zero, sub_zero, h1, h2, neg_mul]
   -- t² factor
   have h_t2 : ‖(t : ℂ) ^ 2‖ = t ^ 2 := by
     simp only [norm_pow, Complex.norm_real, Real.norm_eq_abs, abs_of_pos ht]
   rw [h_I, h_t2, h_gauss, one_mul]
-  calc ‖φ₀'' (-1 / (I * t))‖ * t ^ 2 * Real.exp (-π * ‖x‖^2 * t)
-      ≤ (C₀ * Real.exp (-2 * π / t)) * t ^ 2 * Real.exp (-π * ‖x‖^2 * t) := by gcongr
-    _ = C₀ * Real.exp (-2 * π / t) * t ^ 2 * Real.exp (-π * ‖x‖^2 * t) := by ring
+  -- Goal: ‖φ₀''‖ * t^2 * exp(-π*‖x‖²*t) ≤ C₀ * exp(-(2*π)/t) * t^2 * exp(-(π*‖x‖²*t))
+  -- h_φ has C₀ * exp(-2*π/t) which equals C₀ * exp(-(2*π)/t)
+  have h_exp_match : Real.exp (-π * ‖x‖^2 * t) = Real.exp (-(π * ‖x‖^2 * t)) := by ring_nf
+  rw [h_exp_match]
+  have h_φ' : ‖φ₀'' (-1 / (I * t))‖ ≤ C₀ * Real.exp (-(2 * π) / t) := by
+    convert h_φ using 2; ring
+  gcongr
 
 /-- I₅ integrand is integrable on V × (0,1] (Class B segment).
 
@@ -965,14 +1005,24 @@ theorem Φ₅_prod_integrable :
       -- For fixed t ∈ (0, 1], the slice x ↦ I₅_integrand(x, t) is continuous
       -- I₅_integrand (x, t) = -I * φ₀''(-1/(It)) * t² * cexp(-π‖x‖²t) = const * cexp(...)
       have h_cont : Continuous (fun x : V => I₅_integrand (x, t)) := by
-        simp only [I₅_integrand]
+        -- I₅_integrand (x, t) = Φ₅ (‖x‖^2) t = I * Φ₅' (‖x‖^2) (z₅' t)
+        -- Φ₅' r z = φ₀''(-1/z) * z^2 * cexp(π*I*r*z)
+        -- For fixed t, z₅' t is constant, so structure is:
+        -- I * (φ₀''(const) * const^2 * cexp(π * I * ‖x‖^2 * const))
+        simp only [I₅_integrand, Φ₅, Φ₅']
+        -- Structure: I * (φ₀'' * z^2 * cexp(...))
         apply Continuous.mul
-        · exact continuous_const  -- -I * φ₀''(-1/(It)) * t² is constant
-        · apply Complex.continuous_exp.comp
-          -- The argument is -π * ‖x‖² * t
-          refine Continuous.mul ?_ continuous_const
-          refine Continuous.mul continuous_const ?_
-          exact (continuous_pow 2).comp (continuous_ofReal.comp continuous_norm)
+        · exact continuous_const  -- I
+        -- Goal: φ₀''(-1/z₅' t) * z₅' t^2 * cexp(π*I*‖x‖^2 * z₅' t)
+        -- Structure: (φ₀'' * z^2) * cexp
+        · apply Continuous.mul
+          · exact continuous_const  -- φ₀''(-1/(z₅' t)) * (z₅' t)^2
+          · apply Complex.continuous_exp.comp
+            -- The argument is π * I * ‖x‖^2 * z₅' t
+            refine (Continuous.mul ?_ continuous_const)
+            refine (Continuous.mul ?_ ?_)
+            · exact continuous_const  -- π * I
+            · exact continuous_ofReal.comp ((continuous_norm).pow 2)
       exact h_cont.aestronglyMeasurable
     · -- Norm bound
       refine ae_of_all _ fun x => ?_
@@ -1013,13 +1063,16 @@ theorem Φ₅_prod_integrable :
         apply Integrable.mono' (h_gauss.const_mul (C * Real.exp (-2 * π / t) * t^2))
         · -- For fixed t, x ↦ ‖I₅_integrand(x, t)‖ is continuous (norm of continuous function)
           have h_cont : Continuous (fun x : V => I₅_integrand (x, t)) := by
-            simp only [I₅_integrand]
+            simp only [I₅_integrand, Φ₅, Φ₅']
             apply Continuous.mul
-            · exact continuous_const
-            · apply Complex.continuous_exp.comp
-              refine Continuous.mul ?_ continuous_const
-              refine Continuous.mul continuous_const ?_
-              exact (continuous_pow 2).comp (continuous_ofReal.comp continuous_norm)
+            · exact continuous_const  -- I
+            · apply Continuous.mul
+              · exact continuous_const  -- φ₀''(-1/(z₅' t)) * (z₅' t)^2
+              · apply Complex.continuous_exp.comp
+                refine (Continuous.mul ?_ continuous_const)
+                refine (Continuous.mul ?_ ?_)
+                · exact continuous_const  -- π * I
+                · exact continuous_ofReal.comp ((continuous_norm).pow 2)
           exact (continuous_norm.comp h_cont).aestronglyMeasurable
         · refine ae_of_all _ fun x => ?_
           rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
@@ -1072,8 +1125,8 @@ theorem Φ₁_prod_integrable :
   -- Use congr to transfer integrability
   have h_I₅ := Φ₅_prod_integrable
   rw [volume_prod_restrict_eq]
-  have h_integrable : Integrable (fun p => I₅_integrand p * cexp (-π * I * ‖p.1‖^2))
-      (volume.prod volume).restrict (Set.univ ×ˢ Ioc 0 1) := by
+  have h_integrable : Integrable (fun p => I₅_integrand p * cexp (-π * I * (‖p.1‖^2 : ℂ)))
+      ((volume.prod volume).restrict (Set.univ ×ˢ Ioc 0 1)) := by
     rw [← volume_prod_restrict_eq]
     apply Integrable.mono' h_I₅.norm
     · have h_cont : Continuous (fun p : V × ℝ => cexp (-π * I * ‖p.1‖^2)) := by fun_prop
@@ -1081,8 +1134,9 @@ theorem Φ₁_prod_integrable :
     · apply ae_of_all; intro p
       rw [norm_mul, norm_phase_factor_I₁ p.1, mul_one]
   refine h_integrable.congr ?_
-  rw [ae_restrict_iff' (MeasurableSet.univ.prod measurableSet_Ioc)]
-  apply ae_of_all; intro ⟨x, t⟩ ⟨_, ht⟩
+  -- Show f =ᶠ[ae μ] g by showing equality on the support set
+  refine Filter.eventually_of_mem (self_mem_ae_restrict (MeasurableSet.univ.prod measurableSet_Ioc)) ?_
+  intro ⟨x, t⟩ ⟨_, ht⟩
   exact (h_eq (x, t) ht).symm
 
 /-- I₃ integrand is integrable on V × (0,1] (Class B segment).
@@ -1095,8 +1149,8 @@ theorem Φ₃_prod_integrable :
     Φ₃_prod_eq_Φ₅_mul_phase (mem_Icc_of_Ioc ht)
   have h_I₅ := Φ₅_prod_integrable
   rw [volume_prod_restrict_eq]
-  have h_integrable : Integrable (fun p => I₅_integrand p * cexp (π * I * ‖p.1‖^2))
-      (volume.prod volume).restrict (Set.univ ×ˢ Ioc 0 1) := by
+  have h_integrable : Integrable (fun p => I₅_integrand p * cexp (π * I * (‖p.1‖^2 : ℂ)))
+      ((volume.prod volume).restrict (Set.univ ×ˢ Ioc 0 1)) := by
     rw [← volume_prod_restrict_eq]
     apply Integrable.mono' h_I₅.norm
     · have h_cont : Continuous (fun p : V × ℝ => cexp (π * I * ‖p.1‖^2)) := by fun_prop
@@ -1104,8 +1158,9 @@ theorem Φ₃_prod_integrable :
     · apply ae_of_all; intro p
       rw [norm_mul, norm_phase_factor_I₃ p.1, mul_one]
   refine h_integrable.congr ?_
-  rw [ae_restrict_iff' (MeasurableSet.univ.prod measurableSet_Ioc)]
-  apply ae_of_all; intro ⟨x, t⟩ ⟨_, ht⟩
+  -- Show f =ᶠ[ae μ] g by showing equality on the support set
+  refine Filter.eventually_of_mem (self_mem_ae_restrict (MeasurableSet.univ.prod measurableSet_Ioc)) ?_
+  intro ⟨x, t⟩ ⟨_, ht⟩
   exact (h_eq (x, t) ht).symm
 
 end CuspApproachingSegments
