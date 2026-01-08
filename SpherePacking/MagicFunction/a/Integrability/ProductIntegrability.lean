@@ -156,14 +156,12 @@ lemma norm_sq_neg_t_add_I_le (t : ℝ) (ht : t ∈ Icc 0 1) : ‖(-t + I) ^ 2‖
   nlinarith [sq_nonneg t, ht.1, ht.2]
 
 /-- For t ∈ [0,1], the positive imaginary part of -1/(t+I). -/
-lemma im_neg_inv_t_add_I_pos (t : ℝ) (ht : t ∈ Icc 0 1) : 0 < (-1 / (t + I)).im := by
-  have h := im_neg_inv_t_add_I t ht
-  linarith
+lemma im_neg_inv_t_add_I_pos (t : ℝ) (ht : t ∈ Icc 0 1) : 0 < (-1 / (t + I)).im :=
+  lt_of_lt_of_le (by norm_num) (im_neg_inv_t_add_I t ht)
 
 /-- For t ∈ [0,1], the positive imaginary part of -1/(-t+I). -/
-lemma im_neg_inv_neg_t_add_I_pos (t : ℝ) (ht : t ∈ Icc 0 1) : 0 < (-1 / (-t + I)).im := by
-  have h := im_neg_inv_neg_t_add_I t ht
-  linarith
+lemma im_neg_inv_neg_t_add_I_pos (t : ℝ) (ht : t ∈ Icc 0 1) : 0 < (-1 / (-t + I)).im :=
+  lt_of_lt_of_le (by norm_num) (im_neg_inv_neg_t_add_I t ht)
 
 /-- For any t ∈ ℝ, Im(-1/(t+I)) = 1/(t² + 1) > 0. -/
 lemma im_neg_inv_t_add_I_pos_general (t : ℝ) : 0 < (-1 / (t + I)).im := by
@@ -720,12 +718,8 @@ section CuspApproachingSegments
 
 /-- Key identity: -1/(I*t) = I/t for t ≠ 0 -/
 lemma neg_one_div_I_mul (t : ℝ) (ht : t ≠ 0) : (-1 : ℂ) / (I * t) = I / t := by
-  have hI : (I : ℂ) ≠ 0 := Complex.I_ne_zero
-  have ht' : (t : ℂ) ≠ 0 := ofReal_ne_zero.mpr ht
-  have hIt : (I : ℂ) * t ≠ 0 := mul_ne_zero hI ht'
-  field_simp [hIt, ht']
-  ring_nf
-  simp only [Complex.I_sq]
+  field_simp [I_ne_zero, ht]
+  simp [I_sq]
 
 /-- φ₀'' bound for cusp-approaching segments: for t ∈ (0, 1], ‖φ₀''(-1/(It))‖ ≤ C₀ * exp(-2π/t) -/
 lemma norm_φ₀''_cusp_bound : ∃ C₀ > 0, ∀ t : ℝ, 0 < t → t ≤ 1 →
@@ -751,9 +745,12 @@ lemma norm_φ₀''_cusp_bound : ∃ C₀ > 0, ∀ t : ℝ, 0 < t → t ≤ 1 →
 
 /-- Exponential simplification: cexp(π*I*r*(I*t)) = cexp(-π*r*t) since I² = -1. -/
 lemma cexp_pi_I_mul_I (r t : ℂ) : cexp (π * I * r * (I * t)) = cexp (-π * r * t) := by
-  congr 1; calc π * I * r * (I * t) = π * (I * I) * r * t := by ring
-    _ = π * (-1) * r * t := by rw [I_mul_I]
-    _ = -π * r * t := by ring
+  congr 1
+  calc π * I * r * (I * t) = π * (I * I) * r * t := by ring
+    _ = -π * r * t := by rw [I_mul_I]; ring
+
+/-- (I * t)² = -t² -/
+lemma I_mul_sq (t : ℂ) : (I * t) ^ 2 = -t ^ 2 := by rw [mul_pow, I_sq]; ring
 
 /-- The integrand for I₁ over V × (0,1]. Uses the canonical Φ₁ from Basic.lean. -/
 def I₁_integrand (p : V × ℝ) : ℂ := Φ₁ (‖p.1‖^2) p.2
@@ -1131,17 +1128,13 @@ lemma I₁_eq_integral (x : V) :
   apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ioc
   refine ae_of_all _ fun t ht => ?_
   simp only [I₁_integrand, Φ₁, Φ₁', z₁'_eq_of_mem (mem_Icc_of_Ioc ht), ofReal_pow]
-  -- z₁' t + 1 = -1 + I*t + 1 = I*t, and (I*t)^2 = -t^2
-  have h_add : (-1 : ℂ) + I * ↑t + 1 = I * ↑t := by ring
-  have h_sq : (I * (t : ℂ)) ^ 2 = -(t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
-  -- cexp(π*I*r*(-1 + I*t)) = cexp(-π*I*r) * cexp(-π*r*t)
   have h_exp : ∀ r : ℂ, cexp (↑π * I * r * (-1 + I * ↑t)) =
       cexp (-↑π * I * r) * cexp (-↑π * r * ↑t) := fun r => by
     rw [← Complex.exp_add]; congr 1
-    calc ↑π * I * r * (-1 + I * ↑t) = -↑π * I * r + ↑π * (I * I) * r * ↑t := by ring
-      _ = -↑π * I * r + ↑π * (-1) * r * ↑t := by rw [I_mul_I]
-      _ = -↑π * I * r + -↑π * r * ↑t := by ring
-  simp only [h_add, h_sq, h_exp]; ring
+    rw [show ↑π * I * r * (-1 + I * ↑t) = -↑π * I * r + ↑π * (I * I) * r * ↑t by ring, I_mul_I]
+    ring
+  simp only [show (-1 : ℂ) + I * ↑t + 1 = I * ↑t by ring, I_mul_sq, h_exp]
+  ring
 
 /-- Connection: I₂ x = ∫ t, I₂_integrand (x, t) over [0,1].
 Note: Uses Icc because the integrand is continuous (no singularity at 0). -/
@@ -1164,7 +1157,8 @@ lemma I₂_eq_integral (x : V) :
         = -↑π * I * r + ↑π * I * r * ↑t + ↑π * (I * I) * r := by ring
       _ = -↑π * I * r + ↑π * I * r * ↑t + ↑π * (-1) * r := by rw [I_mul_I]
       _ = -↑π * I * r + ↑π * I * r * ↑t + -↑π * r := by ring
-  simp only [h_add, h_exp]; ring
+  simp only [h_add, h_exp]
+  ring
 
 /-- Connection: I₃ x = ∫ t, I₃_integrand (x, t) -/
 lemma I₃_eq_integral (x : V) :
@@ -1173,17 +1167,13 @@ lemma I₃_eq_integral (x : V) :
   apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ioc
   refine ae_of_all _ fun t ht => ?_
   simp only [I₃_integrand, Φ₃, Φ₃', z₃'_eq_of_mem (mem_Icc_of_Ioc ht), ofReal_pow]
-  -- z₃' t - 1 = 1 + I*t - 1 = I*t, and (I*t)^2 = -t^2
-  have h_sub : (1 : ℂ) + I * ↑t - 1 = I * ↑t := by ring
-  have h_sq : (I * (t : ℂ)) ^ 2 = -(t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
-  -- cexp(π*I*r*(1 + I*t)) = cexp(π*I*r) * cexp(-π*r*t)
   have h_exp : ∀ r : ℂ, cexp (↑π * I * r * (1 + I * ↑t)) =
       cexp (↑π * I * r) * cexp (-↑π * r * ↑t) := fun r => by
     rw [← Complex.exp_add]; congr 1
-    calc ↑π * I * r * (1 + I * ↑t) = ↑π * I * r + ↑π * (I * I) * r * ↑t := by ring
-      _ = ↑π * I * r + ↑π * (-1) * r * ↑t := by rw [I_mul_I]
-      _ = ↑π * I * r + -↑π * r * ↑t := by ring
-  simp only [h_sub, h_sq, h_exp]; ring
+    rw [show ↑π * I * r * (1 + I * ↑t) = ↑π * I * r + ↑π * (I * I) * r * ↑t by ring, I_mul_I]
+    ring
+  simp only [show (1 : ℂ) + I * ↑t - 1 = I * ↑t by ring, I_mul_sq, h_exp]
+  ring
 
 /-- Connection: I₄ x = ∫ t, I₄_integrand (x, t) over [0,1].
 Note: Uses Icc because the integrand is continuous (no singularity at 0). -/
@@ -1206,7 +1196,8 @@ lemma I₄_eq_integral (x : V) :
         = ↑π * I * r - ↑π * I * r * ↑t + ↑π * (I * I) * r := by ring
       _ = ↑π * I * r - ↑π * I * r * ↑t + ↑π * (-1) * r := by rw [I_mul_I]
       _ = ↑π * I * r + -↑π * I * r * ↑t + -↑π * r := by ring
-  simp only [h_sub, h_exp]; ring
+  simp only [h_sub, h_exp]
+  ring
 
 /-- Connection: I₅ x = -2 * ∫ t, I₅_integrand (x, t) -/
 lemma I₅_eq_integral (x : V) :
@@ -1215,15 +1206,9 @@ lemma I₅_eq_integral (x : V) :
   congr 1
   apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ioc
   refine ae_of_all _ fun t ht => ?_
-  simp only [I₅_integrand, Φ₅, Φ₅', z₅'_eq_of_mem (mem_Icc_of_Ioc ht), ofReal_pow]
-  -- (I*t)^2 = -t^2 and cexp(π*I*r*(I*t)) = cexp(-π*r*t)
-  have h1 : (I * (t : ℂ)) ^ 2 = -(t : ℂ) ^ 2 := by rw [mul_pow, I_sq]; ring
-  have h2 : ∀ r : ℂ, cexp (↑π * I * r * (I * ↑t)) = cexp (-↑π * r * ↑t) := fun r => by
-    congr 1
-    calc ↑π * I * r * (I * ↑t) = ↑π * (I * I) * r * ↑t := by ring
-      _ = ↑π * (-1) * r * ↑t := by rw [I_mul_I]
-      _ = -↑π * r * ↑t := by ring
-  simp only [h1, h2]; ring
+  simp only [I₅_integrand, Φ₅, Φ₅', z₅'_eq_of_mem (mem_Icc_of_Ioc ht), ofReal_pow, I_mul_sq,
+    cexp_pi_I_mul_I]
+  ring
 
 /-- Connection: I₆ x = 2 * ∫ t, I₆_integrand (x, t) -/
 lemma I₆_eq_integral (x : V) :
@@ -1232,14 +1217,8 @@ lemma I₆_eq_integral (x : V) :
   congr 1
   apply MeasureTheory.setIntegral_congr_ae₀ nullMeasurableSet_Ici
   refine ae_of_all _ fun t ht => ?_
-  simp only [I₆_integrand, Φ₆, Φ₆', z₆'_eq_of_mem ht, ofReal_pow]
-  -- cexp(π*I*r*(I*t)) = cexp(-π*r*t)
-  have h : ∀ r : ℂ, cexp (↑π * I * r * (I * ↑t)) = cexp (-↑π * r * ↑t) := fun r => by
-    congr 1
-    calc ↑π * I * r * (I * ↑t) = ↑π * (I * I) * r * ↑t := by ring
-      _ = ↑π * (-1) * r * ↑t := by rw [I_mul_I]
-      _ = -↑π * r * ↑t := by ring
-  simp only [h]; ring
+  simp only [I₆_integrand, Φ₆, Φ₆', z₆'_eq_of_mem ht, ofReal_pow, cexp_pi_I_mul_I]
+  ring
 
 /-- Fubini for I₁: swap ∫_{ℝ⁸} and ∫_{(0,1]} -/
 theorem I₁_integral_swap :
@@ -1318,12 +1297,7 @@ theorem I₆_integrable : Integrable (I₆ : V → ℂ) :=
 
 /-- The magic function `a` is integrable over ℝ⁸. -/
 theorem a_integrable : Integrable (a : V → ℂ) := by
-  have h : a = I₁ + I₂ + I₃ + I₄ + I₅ + I₆ := by
-    ext x
-    simp only [Pi.add_apply]
-    exact a_eq x
-  rw [h]
-  exact ((((I₁_integrable.add I₂_integrable).add I₃_integrable).add I₄_integrable).add
+  simpa [a_eq] using ((((I₁_integrable.add I₂_integrable).add I₃_integrable).add I₄_integrable).add
     I₅_integrable).add I₆_integrable
 
 end BasicIntegrability
