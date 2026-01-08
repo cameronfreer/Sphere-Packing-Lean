@@ -332,8 +332,8 @@ lemma Φ₂_prod_continuous : Continuous I₂_integrand := by
     have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₂' t + 1), h_im t⟩) :=
       φ₀_continuous.comp h_lift
     have h_eq : (fun p : V × ℝ => φ₀'' (-1 / (z₂' p.2 + 1))) =
-                (fun p => φ₀ ⟨-1 / (z₂' p.2 + 1), h_im p.2⟩) := by
-      ext p; exact φ₀''_eq _ (h_im p.2)
+                (fun p => φ₀ ⟨-1 / (z₂' p.2 + 1), h_im p.2⟩) :=
+      funext fun p => φ₀''_eq _ (h_im p.2)
     rw [h_eq]; exact h_cont.comp continuous_snd
   have h2 : Continuous (fun p : V × ℝ => (z₂' p.2 + 1) ^ 2) :=
     ((hz.comp continuous_snd).add continuous_const).pow 2
@@ -369,11 +369,11 @@ lemma Φ₂_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
   -- = cexp(-π*I*r) * cexp(π*I*r*t) * cexp(-π*r) by expanding -1+t+I and using I²=-1
   have h_exp : ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I))‖ = Real.exp (-π * ‖x‖^2) := by
     -- Expand and simplify the exponent
-    have h1 : (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I) : ℂ) =
-        (↑(π * ‖x‖^2 * (t - 1)) : ℂ) * I + (↑(-π * ‖x‖^2) : ℂ) := by
-      push_cast; ring
-    rw [h1, Complex.exp_add, Complex.norm_mul]
-    rw [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal]
+    have h_eq : (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I) : ℂ) =
+        (π * ‖x‖^2 * (t - 1) : ℝ) * I + ((-π * ‖x‖^2 : ℝ) : ℂ) := by
+      simp only [I_sq]; push_cast; ring
+    rw [h_eq, Complex.exp_add, Complex.norm_mul]
+    simp only [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal, one_mul]
   have h1 : ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖ ≤ M * 2 := by
     calc ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖
         ≤ M * ‖(↑t + I) ^ 2‖ := mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
@@ -455,8 +455,8 @@ lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
     have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₄' t - 1), h_im t⟩) :=
       φ₀_continuous.comp h_lift
     have h_eq : (fun p : V × ℝ => φ₀'' (-1 / (z₄' p.2 - 1))) =
-                (fun p => φ₀ ⟨-1 / (z₄' p.2 - 1), h_im p.2⟩) := by
-      ext p; exact φ₀''_eq _ (h_im p.2)
+                (fun p => φ₀ ⟨-1 / (z₄' p.2 - 1), h_im p.2⟩) :=
+      funext fun p => φ₀''_eq _ (h_im p.2)
     rw [h_eq]; exact h_cont.comp continuous_snd
   have h2 : Continuous (fun p : V × ℝ => (z₄' p.2 - 1) ^ 2) :=
     ((hz.comp continuous_snd).sub continuous_const).pow 2
@@ -486,11 +486,11 @@ lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
   have h_sq : ‖(-↑t + I) ^ 2‖ ≤ 2 := norm_sq_neg_t_add_I_le t ht
   -- Exponential factor: cexp(π*I*r*(1-t+I)) where r = ‖x‖²
   have h_exp : ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I))‖ = Real.exp (-π * ‖x‖^2) := by
-    have h1 : (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I) : ℂ) =
-        (↑(π * ‖x‖^2 * (1 - t)) : ℂ) * I + (↑(-π * ‖x‖^2) : ℂ) := by
-      push_cast; ring
-    rw [h1, Complex.exp_add, Complex.norm_mul]
-    rw [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal]
+    have h_eq : (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I) : ℂ) =
+        (π * ‖x‖^2 * (1 - t) : ℝ) * I + ((-π * ‖x‖^2 : ℝ) : ℂ) := by
+      simp only [I_sq]; push_cast; ring
+    rw [h_eq, Complex.exp_add, Complex.norm_mul]
+    simp only [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal, one_mul]
   have h1 : ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ ≤ M * 2 := by
     calc ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖
         ≤ M * ‖(-↑t + I) ^ 2‖ := mul_le_mul_of_nonneg_right h_φ (norm_nonneg _)
