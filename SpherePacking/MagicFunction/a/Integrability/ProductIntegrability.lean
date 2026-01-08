@@ -299,6 +299,8 @@ def I₂_integrand (p : V × ℝ) : ℂ := Φ₂ (‖p.1‖^2) p.2
 /-- The integrand for I₄ over V × [0,1]. Uses the canonical Φ₄ from Basic.lean. -/
 def I₄_integrand (p : V × ℝ) : ℂ := Φ₄ (‖p.1‖^2) p.2
 
+-- Increase heartbeats for the continuity proofs which involve heavy unification
+set_option maxHeartbeats 400000 in
 /-- The I₂ integrand is continuous as a function V × ℝ → ℂ.
 Follows from: continuity of φ₀''(-1/(t+I)), polynomial in t, and cexp compositions.
 
@@ -331,16 +333,16 @@ lemma Φ₂_prod_continuous : Continuous I₂_integrand := by
       simp only [h, zero_im, div_zero, lt_self_iff_false] at this
     have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₂' t + 1), h_im t⟩) :=
       φ₀_continuous.comp h_lift
-    have h_eq : (fun p : V × ℝ => φ₀'' (-1 / (z₂' p.2 + 1))) =
-                (fun p => φ₀ ⟨-1 / (z₂' p.2 + 1), h_im p.2⟩) :=
-      funext fun p => φ₀''_eq _ (h_im p.2)
-    rw [h_eq]; exact h_cont.comp continuous_snd
+    -- Use Continuous.congr to avoid heavy funext unification
+    exact (h_cont.comp continuous_snd).congr fun p => (φ₀''_eq _ (h_im p.2)).symm
   have h2 : Continuous (fun p : V × ℝ => (z₂' p.2 + 1) ^ 2) :=
     ((hz.comp continuous_snd).add continuous_const).pow 2
-  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * (‖p.1‖^2 : ℂ) * z₂' p.2)) := by
-    simp_rw [← ofReal_pow]
-    exact Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
-      (hz.comp continuous_snd))
+  -- Continuity of exponential factor
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₂' p.2)) := by
+    refine Complex.continuous_exp.comp ?_
+    have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
+      Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
+    exact (continuous_const.mul h_norm).mul (hz.comp continuous_snd)
   exact (h1.mul h2).mul h3
 
 /-- The norm of I₂_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
@@ -371,7 +373,7 @@ lemma Φ₂_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     -- Expand and simplify the exponent
     have h_eq : (↑π * I * ↑(‖x‖ ^ 2) * (-1 + ↑t + I) : ℂ) =
         (π * ‖x‖^2 * (t - 1) : ℝ) * I + ((-π * ‖x‖^2 : ℝ) : ℂ) := by
-      simp only [I_sq]; push_cast; ring
+      apply Complex.ext <;> simp [I_re, I_im, ofReal_re, ofReal_im] <;> ring
     rw [h_eq, Complex.exp_add, Complex.norm_mul]
     simp only [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal, one_mul]
   have h1 : ‖φ₀'' (-1 / (↑t + I))‖ * ‖(↑t + I) ^ 2‖ ≤ M * 2 := by
@@ -430,6 +432,7 @@ theorem Φ₂_prod_integrable :
     exact hC x t ht
   exact Integrable.mono' h_g_int h_meas h_bound
 
+set_option maxHeartbeats 400000 in
 /-- The I₄ integrand is continuous as a function V × ℝ → ℂ.
 Uses z₄'_im_eq_one to show Im(z₄' t) = 1 for all t, so -1/(z₄' t - 1) has positive Im. -/
 lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
@@ -454,16 +457,16 @@ lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
       simp only [h, zero_im, div_zero, lt_self_iff_false] at this
     have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₄' t - 1), h_im t⟩) :=
       φ₀_continuous.comp h_lift
-    have h_eq : (fun p : V × ℝ => φ₀'' (-1 / (z₄' p.2 - 1))) =
-                (fun p => φ₀ ⟨-1 / (z₄' p.2 - 1), h_im p.2⟩) :=
-      funext fun p => φ₀''_eq _ (h_im p.2)
-    rw [h_eq]; exact h_cont.comp continuous_snd
+    -- Use Continuous.congr to avoid heavy funext unification
+    exact (h_cont.comp continuous_snd).congr fun p => (φ₀''_eq _ (h_im p.2)).symm
   have h2 : Continuous (fun p : V × ℝ => (z₄' p.2 - 1) ^ 2) :=
     ((hz.comp continuous_snd).sub continuous_const).pow 2
-  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * (‖p.1‖^2 : ℂ) * z₄' p.2)) := by
-    simp_rw [← ofReal_pow]
-    exact Complex.continuous_exp.comp ((continuous_const.mul continuous_norm_sq_fst).mul
-      (hz.comp continuous_snd))
+  -- Continuity of exponential factor
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₄' p.2)) := by
+    refine Complex.continuous_exp.comp ?_
+    have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
+      Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
+    exact (continuous_const.mul h_norm).mul (hz.comp continuous_snd)
   exact (continuous_const.mul ((h1.mul h2).mul h3))
 
 /-- The norm of I₄_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
@@ -488,7 +491,7 @@ lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
   have h_exp : ‖cexp (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I))‖ = Real.exp (-π * ‖x‖^2) := by
     have h_eq : (↑π * I * ↑(‖x‖ ^ 2) * (1 - ↑t + I) : ℂ) =
         (π * ‖x‖^2 * (1 - t) : ℝ) * I + ((-π * ‖x‖^2 : ℝ) : ℂ) := by
-      simp only [I_sq]; push_cast; ring
+      apply Complex.ext <;> simp [I_re, I_im, ofReal_re, ofReal_im] <;> ring
     rw [h_eq, Complex.exp_add, Complex.norm_mul]
     simp only [Complex.norm_exp_ofReal_mul_I, norm_exp_ofReal, one_mul]
   have h1 : ‖φ₀'' (-1 / (-↑t + I))‖ * ‖(-↑t + I) ^ 2‖ ≤ M * 2 := by
