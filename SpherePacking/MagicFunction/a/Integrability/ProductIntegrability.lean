@@ -266,57 +266,58 @@ lemma norm_φ₀''_I₄_bound_Ico : ∃ C₀ > 0, ∀ t : ℝ, t ∈ Ico 0 1 →
         have : 2 * π * z.im > 2 * π * (1/2) := mul_lt_mul_of_pos_left him_ge (by positivity)
         linarith [Real.pi_pos]
 
+/-- Continuity of exponential factor cexp(π·I·‖x‖²·z(t)) on V × ℝ.
+    This is the common exponential factor in I₂ and I₄ integrands. -/
+lemma continuous_cexp_norm_sq_mul_path {z : ℝ → ℂ} (hz : Continuous z) :
+    Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z p.2)) := by
+  refine Complex.continuous_exp.comp ?_
+  have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
+    Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
+  exact (continuous_const.mul h_norm).mul (hz.comp continuous_snd)
+
+/-- Helper for paths where w(t).im = 1: the function -1/w(t) has positive imaginary part. -/
+lemma im_neg_inv_pos_of_im_one {w : ℝ → ℂ} (him : ∀ t, (w t).im = 1) (t : ℝ) :
+    0 < (-1 / w t).im := by
+  simp only [neg_div, neg_im, one_div, inv_im, him, neg_neg]
+  have hns : 0 < normSq (w t) := normSq_pos.mpr fun h => by
+    have : (w t).im = 0 := by rw [h]; simp
+    rw [him] at this; exact one_ne_zero this
+  positivity
+
+/-- Continuity of φ₀''(-1/w(t)) when w is continuous and w(t).im = 1 for all t.
+    This is the common φ₀'' factor in I₂ and I₄ integrands. -/
+lemma continuous_φ₀''_neg_inv_im_one {w : ℝ → ℂ} (hw : Continuous w) (him : ∀ t, (w t).im = 1) :
+    Continuous (fun t => φ₀'' (-1 / w t)) := by
+  have h_im := im_neg_inv_pos_of_im_one him
+  have h_ne : ∀ t, w t ≠ 0 := fun t h => by
+    have : (w t).im = 0 := by rw [h]; simp
+    rw [him] at this; exact one_ne_zero this
+  exact continuous_φ₀''_comp (Continuous.div continuous_const hw h_ne) h_im
+
 /-- The integrand for I₂ over V × [0,1]. Uses the canonical Φ₂ from Basic.lean. -/
 def I₂_integrand (p : V × ℝ) : ℂ := Φ₂ (‖p.1‖^2) p.2
 
 /-- The integrand for I₄ over V × [0,1]. Uses the canonical Φ₄ from Basic.lean. -/
 def I₄_integrand (p : V × ℝ) : ℂ := Φ₄ (‖p.1‖^2) p.2
 
-set_option maxHeartbeats 400000 in
--- Heavy unification in continuity proof
 /-- The I₂ integrand is continuous as a function V × ℝ → ℂ.
 Follows from: continuity of φ₀''(-1/(t+I)), polynomial in t, and cexp compositions.
 
 Note: We unfold through Φ₂ to the explicit formula and use z₂'_add_one_eq to relate
 z₂' t + 1 to t + I (on [0,1]) or its IccExtend clamping (outside [0,1]). -/
 lemma Φ₂_prod_continuous : Continuous I₂_integrand := by
-  -- Strategy: Show that I₂_integrand factors as composition of continuous functions
-  -- I₂_integrand p = Φ₂ (‖p.1‖²) p.2 = Φ₂' (‖p.1‖²) (z₂' p.2)
-  -- The key is that z₂' is continuous and φ₀'' is continuous on paths with Im > 0
   unfold I₂_integrand Φ₂ Φ₂'
-  -- Each factor is continuous
   have hz : Continuous z₂' := continuous_z₂'
   -- Key: Im(z₂' t + 1) = 1 for all t (IccExtend clamps t to [0,1], where z₂ s = -1 + s + I)
   have him_one : ∀ t : ℝ, (z₂' t + 1).im = 1 := fun t => by
     simp only [add_im, one_im, add_zero, z₂', IccExtend, Function.comp_apply, z₂, neg_im, neg_zero,
       ofReal_im, I_im, zero_add]
-  -- Thus Im(-1/(z₂' t + 1)) > 0 for all t
-  have h_im : ∀ t : ℝ, 0 < (-1 / (z₂' t + 1)).im := fun t => by
-    simp only [neg_div, neg_im, one_div, inv_im, him_one, neg_neg]
-    have hns : 0 < normSq (z₂' t + 1) := by
-      apply normSq_pos.mpr
-      intro h; have : (z₂' t + 1).im = 0 := by rw [h]; simp
-      rw [him_one] at this; exact one_ne_zero this
-    positivity
-  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (z₂' p.2 + 1))) := by
-    -- Factor through ℍ since Im(-1/(z₂' t + 1)) > 0 for all t
-    have h_lift : Continuous (fun t : ℝ => (⟨-1 / (z₂' t + 1), h_im t⟩ : UpperHalfPlane)) := by
-      refine Continuous.subtype_mk ?_ _
-      apply Continuous.div continuous_const (hz.add continuous_const)
-      intro t h; have := h_im t
-      simp only [h, zero_im, div_zero, lt_self_iff_false] at this
-    have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₂' t + 1), h_im t⟩) :=
-      φ₀_continuous.comp h_lift
-    -- Use Continuous.congr to avoid heavy funext unification
-    exact (h_cont.comp continuous_snd).congr fun p => (φ₀''_eq _ (h_im p.2)).symm
+  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (z₂' p.2 + 1))) :=
+    (continuous_φ₀''_neg_inv_im_one (hz.add continuous_const) him_one).comp continuous_snd
   have h2 : Continuous (fun p : V × ℝ => (z₂' p.2 + 1) ^ 2) :=
     ((hz.comp continuous_snd).add continuous_const).pow 2
-  -- Continuity of exponential factor
-  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₂' p.2)) := by
-    refine Complex.continuous_exp.comp ?_
-    have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
-      Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
-    exact (continuous_const.mul h_norm).mul (hz.comp continuous_snd)
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₂' p.2)) :=
+    continuous_cexp_norm_sq_mul_path hz
   exact (h1.mul h2).mul h3
 
 /-- The norm of I₂_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
@@ -406,8 +407,6 @@ theorem Φ₂_prod_integrable :
     exact hC x t ht
   exact Integrable.mono' h_g_int h_meas h_bound
 
-set_option maxHeartbeats 400000 in
--- Heavy unification in continuity proof
 /-- The I₄ integrand is continuous as a function V × ℝ → ℂ.
 Im(z₄' t) = 1 for all t (via IccExtend), so -1/(z₄' t - 1) has positive Im. -/
 lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
@@ -417,32 +416,12 @@ lemma Φ₄_prod_continuous : Continuous I₄_integrand := by
   have him_one : ∀ t : ℝ, (z₄' t - 1).im = 1 := fun t => by
     simp only [sub_im, one_im, sub_zero, z₄', IccExtend, Function.comp_apply, z₄, add_im, ofReal_im,
       I_im, zero_add]
-  -- Thus Im(-1/(z₄' t - 1)) > 0 for all t
-  have h_im : ∀ t : ℝ, 0 < (-1 / (z₄' t - 1)).im := fun t => by
-    simp only [neg_div, neg_im, one_div, inv_im, him_one, neg_neg]
-    have hns : 0 < normSq (z₄' t - 1) := by
-      apply normSq_pos.mpr
-      intro h; have : (z₄' t - 1).im = 0 := by rw [h]; simp
-      rw [him_one] at this; exact one_ne_zero this
-    positivity
-  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (z₄' p.2 - 1))) := by
-    have h_lift : Continuous (fun t : ℝ => (⟨-1 / (z₄' t - 1), h_im t⟩ : UpperHalfPlane)) := by
-      refine Continuous.subtype_mk ?_ _
-      apply Continuous.div continuous_const (hz.sub continuous_const)
-      intro t h; have := h_im t
-      simp only [h, zero_im, div_zero, lt_self_iff_false] at this
-    have h_cont : Continuous (fun t : ℝ => φ₀ ⟨-1 / (z₄' t - 1), h_im t⟩) :=
-      φ₀_continuous.comp h_lift
-    -- Use Continuous.congr to avoid heavy funext unification
-    exact (h_cont.comp continuous_snd).congr fun p => (φ₀''_eq _ (h_im p.2)).symm
+  have h1 : Continuous (fun p : V × ℝ => φ₀'' (-1 / (z₄' p.2 - 1))) :=
+    (continuous_φ₀''_neg_inv_im_one (hz.sub continuous_const) him_one).comp continuous_snd
   have h2 : Continuous (fun p : V × ℝ => (z₄' p.2 - 1) ^ 2) :=
     ((hz.comp continuous_snd).sub continuous_const).pow 2
-  -- Continuity of exponential factor
-  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₄' p.2)) := by
-    refine Complex.continuous_exp.comp ?_
-    have h_norm : Continuous (fun p : V × ℝ => ((‖p.1‖^2 : ℝ) : ℂ)) :=
-      Complex.continuous_ofReal.comp ((continuous_norm.comp continuous_fst).pow 2)
-    exact (continuous_const.mul h_norm).mul (hz.comp continuous_snd)
+  have h3 : Continuous (fun p : V × ℝ => cexp (π * I * ((‖p.1‖^2 : ℝ) : ℂ) * z₄' p.2)) :=
+    continuous_cexp_norm_sq_mul_path hz
   exact (continuous_const.mul ((h1.mul h2).mul h3))
 
 /-- The norm of I₄_integrand is bounded by C * exp(-π‖x‖²) for all (x, t) ∈ V × [0,1].
@@ -923,7 +902,8 @@ lemma Φ₅_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t : ℝ, 0 < t → t ≤
   have h_exp_match : Real.exp (-π * ‖x‖^2 * t) = Real.exp (-(π * ‖x‖^2 * t)) := by ring_nf
   rw [h_exp_match]
   have h_φ' : ‖φ₀'' (-1 / (I * t))‖ ≤ C₀ * Real.exp (-(2 * π) / t) := by
-    convert h_φ using 2; ring
+    convert h_φ using 2
+    ring_nf
   gcongr
 
 /-- For fixed t, the x-slice of I₅_integrand is continuous.
