@@ -713,7 +713,7 @@ theorem diffwithinat_prod_1 :
 
 lemma Delta_q_one_term : (qExpansion 1 Delta).coeff 1 = 1 := by
   rw [qExpansion_coeff]
-  simp
+  simp only [Nat.factorial_one, Nat.cast_one, inv_one, iteratedDeriv_one, one_mul]
   rw [← derivWithin_of_isOpen (s := Metric.ball 0 (1 / 2 : ℝ)) (isOpen_ball) (by simp) ]
   rw [derivWithin_congr Delta_cuspFuntion_eq]
   · rw [derivWithin_fun_mul]
@@ -738,13 +738,13 @@ variable [CommMonoid α] [TopologicalSpace α] [UniformSpace α]
 lemma E4_q_exp_one : (qExpansion 1 E₄).coeff 1 = 240 := by
   have := E4_q_exp
   have H := congr_fun this 1
-  simp at H
+  simp only [one_ne_zero, ↓reduceIte, ArithmeticFunction.sigma_one, Nat.cast_one, mul_one] at H
   rw [H]
 
 lemma E6_q_exp_one : (qExpansion 1 E₆).coeff 1 = -504 := by
   have := E6_q_exp
   have H := congr_fun this 1
-  simp at H
+  simp only [one_ne_zero, ↓reduceIte, ArithmeticFunction.sigma_one, Nat.cast_one, mul_one] at H
   rw [H]
 
 lemma antidiagonal_one : Finset.antidiagonal 1 = {(1,0), (0,1)} := by
@@ -755,10 +755,14 @@ lemma antidiagonal_one : Finset.antidiagonal 1 = {(1,0), (0,1)} := by
 lemma E4_pow_q_exp_one : (qExpansion 1 ((E₄).mul ((E₄).mul E₄))).coeff 1 = 3 * 240 := by
   rw [← Nat.cast_one (R := ℝ), qExpansion_mul_coeff, qExpansion_mul_coeff]
   rw [PowerSeries.coeff_mul, antidiagonal_one]
-  simp
+  simp only [Nat.cast_one, Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
+    not_false_eq_true, Finset.sum_insert, PowerSeries.coeff_zero_eq_constantCoeff, map_mul,
+    Finset.sum_singleton]
   rw [PowerSeries.coeff_mul, antidiagonal_one]
   have := E4_q_exp_zero
-  simp at *
+  simp only [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
+    not_false_eq_true, Finset.sum_insert, PowerSeries.coeff_zero_eq_constantCoeff,
+    Finset.sum_singleton] at *
   simp_rw [E4_q_exp_one, this]
   ring
 

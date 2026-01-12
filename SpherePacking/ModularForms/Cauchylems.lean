@@ -39,7 +39,7 @@ lemma cc (f : ℤ → ℂ) (hc : CauchySeq fun N : ℕ => ∑ m ∈ Finset.Icc (
       simp_rw [h2] at H3
       rw [← hs n] at H3
       rw [show f n + f n = 2 * f n by ring] at H3
-      simp at H3
+      simp only [neg_sub, add_sub_cancel_right, Complex.norm_mul, norm_ofNat] at H3
       have HN := hN N (by rfl)
       have hgn : g N ≤ |g N| := by
         exact le_abs_self (g N)
