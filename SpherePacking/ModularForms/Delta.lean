@@ -306,7 +306,7 @@ lemma Discriminant_zeroAtImInfty :
   have := Discriminant_SIF.slash_action_eq' γ ⟨γ', CongruenceSubgroup.mem_Gamma_one γ', hγ⟩
   simp only [SlashInvariantForm.toFun_eq_coe] at *
   rw [this]
-  simp [Discriminant_SIF]
+  simp only [Discriminant_SIF, SlashInvariantForm.coe_mk]
   unfold Δ
   rw [show (0 : ℂ) = 0 * 1 by ring]
   apply Tendsto.mul
