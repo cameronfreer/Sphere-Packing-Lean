@@ -40,7 +40,7 @@ lemma linear_bigO (m : ℤ) (z : ℍ) : (fun (n : ℤ) => ((m : ℂ) * z + n)⁻
   apply Asymptotics.IsBigO.trans h1
   rw [@Asymptotics.isBigO_iff']
   use (r z)⁻¹
-  refine ⟨by simp; exact r_pos z, ?_⟩
+  refine ⟨by simp only [gt_iff_lt, inv_pos]; exact r_pos z, ?_⟩
   simp
   constructor
   · use min (-1) m
@@ -119,7 +119,7 @@ lemma linear_bigO' (m : ℤ) (z : ℍ) : (fun (n : ℤ) => ((n : ℂ) * z + m)�
   apply Asymptotics.IsBigO.trans h1
   rw [@Asymptotics.isBigO_iff']
   use (r z)⁻¹
-  refine ⟨by simp; exact r_pos z, ?_⟩
+  refine ⟨by simp only [gt_iff_lt, inv_pos]; exact r_pos z, ?_⟩
   simp
   constructor
   · use min (-1) m
