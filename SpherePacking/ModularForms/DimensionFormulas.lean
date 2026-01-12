@@ -54,7 +54,8 @@ lemma Modform_mul_Delta_apply (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gam
   rw [Modform_mul_Delta']
   have := congr_fun
     (CuspForm_to_ModularForm_Fun_coe _ _ (mul_Delta_map k f) (mul_Delta_IsCuspForm k f)) z
-  simp at *
+  simp only [SlashInvariantForm.toFun_eq_coe, CuspForm.toSlashInvariantForm_coe,
+    toSlashInvariantForm_coe] at *
   rw [mul_Delta_map_eq] at this
   exact this
 
@@ -72,14 +73,14 @@ def CuspForms_iso_Modforms (k : ℤ) : CuspForm (CongruenceSubgroup.Gamma 1) k �
       left_inv := by
         intro f
         ext z
-        simp [Modform_mul_Delta_apply, CuspForm_div_Discriminant_apply ]
+        simp only [Modform_mul_Delta_apply, CuspForm_div_Discriminant_apply]
         rw [Delta_apply]
         rw [div_mul_cancel₀ ]
         apply Δ_ne_zero
       right_inv := by
         intro f
         ext z
-        simp [Modform_mul_Delta_apply, CuspForm_div_Discriminant_apply ]
+        simp only [CuspForm_div_Discriminant_apply, Modform_mul_Delta_apply]
         rw [Delta_apply]
         rw [mul_div_cancel_right₀]
         apply Δ_ne_zero
@@ -89,7 +90,7 @@ lemma delta_eq_E4E6_const : ∃ (c : ℂ), (c • Delta) = Delta_E4_E6_aux := by
   have hr : Module.finrank ℂ (CuspForm Γ(1) 12) = 1 := by
     apply Module.finrank_eq_of_rank_eq
     rw [LinearEquiv.rank_eq this]
-    simp
+    simp only [Int.reduceSub, Nat.cast_one]
     exact ModularForm.levelOne_weight_zero_rank_one
   simp at this
   apply (finrank_eq_one_iff_of_nonzero' Delta Delta_ne_zero).mp hr Delta_E4_E6_aux
@@ -122,10 +123,11 @@ lemma Delta_E4_E6_eq : ModForm_mk _ _ Delta_E4_E6_aux =
   rw [Delta_E4_E6_aux]
   have := CuspForm_to_ModularForm_Fun_coe _ _ ((1/ 1728 : ℂ) • (((DirectSum.of _ 4 E₄)^3 -
     (DirectSum.of _ 6 E₆)^2) 12 )) ?_
-  · simp at *
+  · simp only [one_div, DirectSum.sub_apply, SlashInvariantForm.toFun_eq_coe,
+      CuspForm.toSlashInvariantForm_coe, toSlashInvariantForm_coe, IsGLPos.coe_smul, coe_sub] at *
     ext z
     have hg := congr_fun this z
-    simp at *
+    simp only [Pi.smul_apply, Pi.sub_apply, smul_eq_mul, IsGLPos.smul_apply, sub_apply] at *
     rw [← hg]
     rfl
   rw [IsCuspForm_iff_coeffZero_eq_zero]
@@ -147,7 +149,7 @@ lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 :=
   have h6 := qExpansion_pow E₆ 2
   simp only [Nat.cast_ofNat, Int.reduceMul] at h4 h6
   rw [h4, h6]
-  simp
+  simp only [map_smul, map_sub, smul_eq_mul]
   rw [pow_three, pow_two]
   simp_rw [PowerSeries.coeff_mul]
   rw [antidiagonal_one]
@@ -156,7 +158,7 @@ lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 :=
     Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero]
   have he4 := E4_q_exp_zero
   have he6 := E6_q_exp_zero
-  simp at *
+  simp only [one_div, DirectSum.sub_apply, PowerSeries.coeff_zero_eq_constantCoeff] at *
   simp_rw [E4_q_exp_one, he4, he6]
   ring_nf
   rw [antidiagonal_one]
@@ -170,14 +172,14 @@ theorem Delta_E4_eqn : Delta = Delta_E4_E6_aux := by
   obtain ⟨c, H⟩ := delta_eq_E4E6_const
   suffices h2 : c = 1 by
     rw [h2] at H
-    simp at H
+    simp only [one_smul] at H
     rw [H]
   · have h1 := Delta_q_one_term
     have h2 := Delta_E4_E6_aux_q_one_term
     have := qExpansion_smul 1 c Delta
     rw [← H] at h2
     rw [← Nat.cast_one (R := ℝ), ← this] at h2
-    simp at h2
+    simp only [Nat.cast_one, map_smul, smul_eq_mul] at h2
     rw [h1] at h2
     simpa using h2
 
@@ -186,11 +188,11 @@ lemma weight_six_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 6) = 1 := 
   rw [rank_eq_one_iff ]
   refine ⟨E₆,E6_ne_zero, ?_⟩
   by_contra h
-  simp at h
+  simp only [not_forall, not_exists] at h
   obtain ⟨f, hf⟩ := h
   by_cases hf2 : IsCuspForm Γ(1) 6 f
   · have hfc1 := hf 0
-    simp at *
+    simp only [zero_smul] at *
     have := IsCuspForm_weight_lt_eq_zero 6 (by norm_num) f hf2
     aesop
   · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := by
@@ -216,11 +218,11 @@ lemma weight_four_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 4) = 1 :=
   rw [rank_eq_one_iff ]
   refine ⟨E₄,E4_ne_zero, ?_⟩
   by_contra h
-  simp at h
+  simp only [not_forall, not_exists] at h
   obtain ⟨f, hf⟩ := h
   by_cases hf2 : IsCuspForm Γ(1) 4 f
   · have hfc1 := hf 0
-    simp at *
+    simp only [zero_smul] at *
     have := IsCuspForm_weight_lt_eq_zero 4 (by norm_num) f hf2
     aesop
   · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := by
@@ -246,11 +248,11 @@ lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even 
   rw [rank_eq_one_iff ]
   refine ⟨E k hk ,Ek_ne_zero k hk hk2, ?_⟩
   by_contra h
-  simp at h
+  simp only [not_forall, not_exists] at h
   obtain ⟨f, hf⟩ := h
   by_cases hf2 : IsCuspForm Γ(1) k f
   · have hfc1 := hf 0
-    simp at *
+    simp only [zero_smul] at *
     have := IsCuspForm_weight_lt_eq_zero k (by simpa using hk3) f hf2
     aesop
   · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := by
@@ -265,7 +267,7 @@ lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even 
       simp only [ne_eq, map_sub] at *
       rw [hc, this]
       have hE := Ek_q_exp_zero k hk hk2
-      simp at *
+      simp only [PowerSeries.coeff_zero_eq_constantCoeff] at *
       rw [hE]
       exact sub_eq_zero_of_eq rfl
     have := IsCuspForm_weight_lt_eq_zero k (by simpa using hk3) (E k hk - c⁻¹• f) hcusp
@@ -334,17 +336,18 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       apply HD
     have HF2 : (F^2) = c4 • (DirectSum.of _ 4 E₄) := by
       rw [← DirectSum.of_smul, hc4]
-      simp [F]
+      simp only [F]
       rw [pow_two, DirectSum.of_mul_of]
       rfl
     have HF3 : (F^3) = c6 • (DirectSum.of _ 6 E₆) := by
       rw [← DirectSum.of_smul, hc6]
-      simp [F]
+      simp only [Int.reduceAdd, F]
       rw [pow_three, ← mul_assoc, DirectSum.of_mul_of, DirectSum.of_mul_of]
       rfl
     have HF12 : (((F^2)^3) 12) = ((qExpansion 1 f).coeff 0)^6 • (E₄.mul (E₄.mul E₄)) := by
       rw [HF2, pow_three]
-      simp
+      simp only [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, Int.reduceAdd,
+        PowerSeries.coeff_zero_eq_constantCoeff]
       rw [DirectSum.of_mul_of, DirectSum.of_mul_of, hc4e, smul_smul, smul_smul]
       ring_nf
       rw [@DirectSum.smul_apply]
