@@ -200,8 +200,10 @@ lemma H₃_S_action : (H₃ ∣[(2 : ℤ)] S) = -H₃ := by
   ext x
   have hx' : (x : ℂ) ≠ 0 := by obtain ⟨x, hx⟩ := x; change x ≠ 0; simp [Complex.ext_iff, hx.ne.symm]
   have := jacobiTheta₂_functional_equation 0
-  simp [-one_div] at this
-  simp [modular_slash_S_apply, Pi.neg_apply, H₃, Θ₃_as_jacobiTheta₂]
+  simp only [neg_mul, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, mul_zero, zero_div,
+    Complex.exp_zero, mul_one] at this
+  simp only [modular_slash_S_apply, H₃, inv_neg, Θ₃_as_jacobiTheta₂, UpperHalfPlane.coe_mk,
+    Int.reduceNeg, zpow_neg, Pi.neg_apply]
   rw [this, mul_pow, neg_div, div_neg, neg_neg, one_div (x : ℂ)⁻¹, inv_inv,
     mul_right_comm, ← neg_one_mul (_ ^ 4)]
   congr
@@ -682,7 +684,7 @@ theorem jacobiTheta₂_half_mul_apply_tendsto_atImInfty :
       have h_base' : rexp (-π) ^ ((n : ℝ) + n ^ 2) < 1 := by
         apply Real.rpow_lt_one
         · positivity
-        · apply Real.exp_lt_one_iff.mpr (by simp; positivity)
+        · apply Real.exp_lt_one_iff.mpr (by simp only [Left.neg_neg_iff]; positivity)
         convert_to 0 < ((n * (n + 1) : ℤ) : ℝ)
         · push_cast
           ring_nf
@@ -858,7 +860,8 @@ noncomputable def jacobi_f_MF : ModularForm (Γ 1) 4 := {
 
 /-- jacobi_f_MF is a cusp form because it vanishes at i∞ -/
 theorem jacobi_f_MF_IsCuspForm : IsCuspForm (Γ 1) 4 jacobi_f_MF := by
-  rw [IsCuspForm_iff_coeffZero_eq_zero, ModularFormClass.qExpansion_coeff]; simp
+  rw [IsCuspForm_iff_coeffZero_eq_zero, ModularFormClass.qExpansion_coeff]
+  simp only [Nat.factorial_zero, Nat.cast_one, inv_one, iteratedDeriv_zero, one_mul]
   exact IsZeroAtImInfty.cuspFunction_apply_zero jacobi_f_tendsto_atImInfty
     (by norm_num : (0 : ℝ) < 1)
 
