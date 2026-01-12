@@ -21,13 +21,13 @@ open Matrix UpperHalfPlane CongruenceSubgroup ModularGroup
 local notation "GL(" n ", " R ")" "⁺" => Matrix.GLPos (Fin n) R
 local notation "Γ " n:100 => Gamma n
 
-def α : Γ 2 := ⟨⟨!![1, 2; 0, 1], by simp⟩, by simp; decide⟩
+def α : Γ 2 := ⟨⟨!![1, 2; 0, 1], by simp⟩, by simp only [Gamma_mem, Fin.isValue, of_apply, cons_val', cons_val_zero, cons_val_fin_one, Int.cast_one, cons_val_one, Int.cast_ofNat, Int.cast_zero, and_self, and_true, true_and]; decide⟩
 
-def β : Γ 2 := ⟨⟨!![1, 0; 2, 1], by simp⟩, by simp; decide⟩
+def β : Γ 2 := ⟨⟨!![1, 0; 2, 1], by simp⟩, by simp only [Gamma_mem, Fin.isValue, of_apply, cons_val', cons_val_zero, cons_val_fin_one, Int.cast_one, cons_val_one, Int.cast_zero, Int.cast_ofNat, and_true, true_and]; decide⟩
 
 def negI : Γ 2 := ⟨⟨!![-1, 0; 0, -1], by simp⟩, by simp⟩
 
-theorem α_eq_T_sq : α = ⟨T ^ 2, by simp [sq, T]; decide⟩ := by ext; simp [α, T, sq]
+theorem α_eq_T_sq : α = ⟨T ^ 2, by simp only [T, sq, Gamma_mem, Fin.isValue, SpecialLinearGroup.coe_mul, cons_mul, Nat.succ_eq_add_one, Nat.reduceAdd, vecMul_cons, head_cons, one_smul, tail_cons, empty_vecMul, add_zero, add_cons, Int.reduceAdd, empty_add_empty, zero_smul, zero_add, empty_mul, Equiv.symm_apply_apply, of_apply, cons_val', cons_val_zero, cons_val_fin_one, Int.cast_one, cons_val_one, Int.cast_ofNat, Int.cast_zero, and_self, and_true, true_and]; decide⟩ := by ext; simp [α, T, sq]
 
 theorem β_eq_negI_mul_S_mul_α_inv_mul_S : β = negI * S * α⁻¹ * S := by ext; simp [β, S, α, negI]
 
