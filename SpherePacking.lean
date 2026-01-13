@@ -26,12 +26,13 @@ import SpherePacking.ForMathlib.VolumeOfBalls
 import SpherePacking.ForMathlib.ZLattice
 import SpherePacking.ForMathlib.tprod
 import SpherePacking.MagicFunction.IntegralParametrisations
-import SpherePacking.MagicFunction.a.Integrability.ProductIntegrability
 import SpherePacking.MagicFunction.PolyFourierCoeffBound
+import SpherePacking.MagicFunction.RealDecay
 import SpherePacking.MagicFunction.a.Basic
 import SpherePacking.MagicFunction.a.Eigenfunction
 import SpherePacking.MagicFunction.a.Integrability.ComplexIntegrands
 import SpherePacking.MagicFunction.a.Integrability.Integrability
+import SpherePacking.MagicFunction.a.Integrability.ProductIntegrability
 import SpherePacking.MagicFunction.a.Integrability.RealIntegrands
 import SpherePacking.MagicFunction.a.IntegralEstimates.I1
 import SpherePacking.MagicFunction.a.IntegralEstimates.I2
