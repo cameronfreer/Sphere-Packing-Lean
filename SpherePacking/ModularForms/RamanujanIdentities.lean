@@ -1,4 +1,5 @@
 import SpherePacking.ModularForms.CoreRamanujan
+import SpherePacking.ModularForms.FG
 
 /-!
 # Q-Expansion Identities for Eisenstein Series
@@ -480,27 +481,6 @@ Prove modular linear differential equation satisfied by $F$.
 -/
 noncomputable def X₄₂ := 288⁻¹ * (E₄.toFun - E₂ * E₂)
 
-noncomputable def Δ_fun := 1728⁻¹ * (E₄.toFun ^ 3 - E₆.toFun ^ 2)
-
-noncomputable def F := (E₂ * E₄.toFun - E₆.toFun) ^ 2
-
-theorem F_aux : D F = 5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2 - 5 * 2⁻¹ * E₂ ^ 2 * E₄.toFun * E₆.toFun
-    + 5 * 6⁻¹ * E₂ * E₄.toFun ^ 3 + 5 * 3⁻¹ * E₂ * E₆.toFun ^ 2 - 5 * 6⁻¹ * E₄.toFun^2 * E₆.toFun
-    := by
-  rw [F, D_sq, D_sub, D_mul]
-  · ring_nf
-    rw [ramanujan_E₂, ramanujan_E₄, ramanujan_E₆]
-    ext z
-    simp
-    ring_nf
-  -- Holomorphicity of the terms
-  · exact E₂_holo'
-  · exact E₄.holo'
-  · exact MDifferentiable.mul E₂_holo' E₄.holo'
-  · exact E₆.holo'
-  have h24 := MDifferentiable.mul E₂_holo' E₄.holo'
-  exact MDifferentiable.sub h24 E₆.holo'
-
 
 /-- Holomorphicity of F. -/
 lemma F_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) F := by
@@ -610,11 +590,11 @@ lemma E2_E6sq_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₂ * E₆.toFun ^ 2
 lemma E4sq_E6_holo' : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (E₄.toFun ^ 2 * E₆.toFun) :=
   MDifferentiable.mul E₄sq_holo' E₆.holo'
 
--- MLDE_F involves complex algebraic manipulations where simp args are needed
+-- MLDE_F_X42 involves complex algebraic manipulations where simp args are needed
 -- for normalization even if the linter says they're unused
 set_option linter.unusedSimpArgs false in
-/-- Modular linear differential equation satisfied by `F`. -/
-theorem MLDE_F : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
+/-- Modular linear differential equation satisfied by `F` (variant using X₄₂). -/
+theorem MLDE_F_X42 : serre_D 12 (serre_D 10 F) = 5 * 6⁻¹ * E₄.toFun * F + 172800 * Δ_fun * X₄₂ := by
   -- Holomorphicity setup
   have hE₂ := E₂_holo'
   have hE₄ := E₄.holo'
