@@ -2,6 +2,10 @@ import Mathlib.Analysis.CStarAlgebra.Classes
 
 open Complex
 
+set_option push_neg.use_distrib true in
+lemma _root_.Complex.ne_iff (a b : ℂ) : a ≠ b ↔ (a.re ≠ b.re ∨ a.im ≠ b.im) := by
+  rw [ne_eq, Complex.ext_iff]; push_neg; rfl
+
 -- [TODO] move all this metaprogramming stuff elsewhere!!
 -- example (a b c:ℂ) : a / (b * c) = (a/b) * c⁻¹ := by rw [@div_mul_eq_div_div]; exact?
 -- Before we can prove the main result, we prove some auxiliary results.
@@ -13,7 +17,9 @@ lemma congr_aux_1' (x : ℝ) :
   obtain rfl | hx := eq_or_ne x 0
   · simp
   have : (x:ℂ) ≠ 0 := mod_cast hx
-  have : 1 + I ≠ 0 := sorry -- ought to be by done by a norm_num extension
+  have : 1 + I ≠ 0 := by
+    rw [Complex.ne_iff]
+    norm_num
   field_simp
   linear_combination - I_sq
 
@@ -29,10 +35,6 @@ lemma congr_aux_1' (x : ℝ) :
 -- let ⟨ey, q⟩ ← deriveRat y i
 -- -- let ⟨ed, pf⟩ := proveIntLCM ex ey
 -- return (_ : Result e)
-
-set_option push_neg.use_distrib true in
-lemma _root_.Complex.ne_iff (a b : ℂ) : a ≠ b ↔ (a.re ≠ b.re ∨ a.im ≠ b.im) := by
-  rw [ne_eq, Complex.ext_iff]; push_neg; rfl
 
 example (z : ℂ) :z = ⟨z.re,z.im⟩ := by rw [Complex.eta]
 example : 1 + I ≠ 0 := by rw [Complex.ne_iff]; norm_num
@@ -66,6 +68,8 @@ lemma congr_aux_1'' (x : ℝ) :
   rw [div_mul_eq_div_div]
   congr! 1
   conv_lhs => norm_num1
-  have : 1 + I ≠ 0 := sorry -- ought to be by done by a norm_num extension
+  have : 1 + I ≠ 0 := by
+    rw [Complex.ne_iff]
+    norm_num
   field_simp
   linear_combination - I_sq
