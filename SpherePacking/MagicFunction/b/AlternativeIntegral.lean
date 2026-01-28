@@ -76,6 +76,9 @@ lemma laplace_exp_pos {x : ℝ} (hx : x > 2) :
 -- Laplace integral: ∫₀^∞ e^(-πxt) dt = 1/(πx) for x > 0
 lemma laplace_exp {x : ℝ} (hx : x > 0) :
     ∫ t in Ioi (0 : ℝ), cexp (-(π * x) * t) = 1 / (π * x) := by
+  -- TODO: Use integral_exp_mul_complex_Ioi
+  -- with a = -(π*x) (which has negative real part when x > 0)
+  -- and c = 0, giving ∫₀^∞ e^(-π*x*t) dt = -e^0 / (-π*x) = 1/(π*x)
   sorry
 
 -- TODO: Assemble the formula for x > 2
