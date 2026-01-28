@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2025 Sidharth Hariharan. All rights reserved.
+Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Sidharth Hariharan
+Authors: Cameron Freer
 -/
 
 import SpherePacking.MagicFunction.b.Schwartz
@@ -22,69 +22,86 @@ noncomputable section
 
 This file formalizes the alternative integral representation from the blueprint:
 
-b(r) = 4i * sin(πr²/2)² * (144/(πr²) + 1/(π(r²-2)) + ∫₀^∞(ψ_I(it) - 144 - e^(2πt))e^(-πr²t) dt)
+For x ≥ 0 (where x = r² is the squared radius):
+b(x) = 4i * sin(πx/2)² * (144/(πx) + 1/(π(x-2)) + ∫₀^∞(ψ_I(it) - 144 - e^(2πt))e^(-πxt) dt)
+
+Note: b' (denoted bℝ) takes the squared radius x directly, so bℝ x corresponds to b(r) where x = r².
 
 The proof strategy:
-1. Prove for r > √2 using the double zeros representation and asymptotic expansion
-2. Extend to r ≥ 0 via continuity/analyticity
+1. Prove for x > 2 using the double zeros representation and asymptotic expansion
+2. Extend to x ≥ 0 via continuity/analyticity
 3. Use to prove b(0) = 0 -/
 
 -- Use RealIntegrals.b' explicitly to avoid ambiguity
+-- bℝ x = b' x where x is the squared radius
 local notation "bℝ" => MagicFunction.b.RealIntegrals.b'
 
--- TODO: Prove b(r) using vertical contour integral for r > √2
--- This uses prop:b-double-zeros from the blueprint
-lemma b_vertical_contour_integral {r : ℝ} (hr : r > Real.sqrt 2) :
-    bℝ r = 4 * I * (Real.sin (π * r ^ 2 / 2)) ^ 2 *
-      ∫ t in Ioi (0 : ℝ), ψI' (I * t) * cexp (-π * r ^ 2 * t) := by
+-- Bridge lemma: connect b (Schwartz function on ℝ⁸) to bℝ (function on ℝ)
+-- b v = bℝ (‖v‖²) since b' takes the squared norm as input
+lemma b_eq_bℝ {v : EuclideanSpace ℝ (Fin 8)} : 
+    b v = bℝ (‖v‖ ^ 2) := by 
   sorry
 
--- TODO: Prove integrability of ψ_I(it) * exp(-πr²t) for r > √2
-lemma integrable_psiI_kernel {r : ℝ} (hr : r > Real.sqrt 2) :
-    IntegrableOn (fun t : ℝ => ψI' (I * t) * cexp (-π * r ^ 2 * t)) (Ioi 0) := by
+-- Special case: b 0 = bℝ 0
+lemma b_zero_eq_bℝ_zero : b 0 = bℝ 0 := by 
+  rw [b_eq_bℝ]
+  simp
+
+-- TODO: Prove b(x) using vertical contour integral for x > 2
+-- This uses prop:b-double-zeros from the blueprint
+-- x represents the squared radius (x = r²)
+lemma b_vertical_contour_integral {x : ℝ} (hx : x > 2) :
+    bℝ x = 4 * I * (Real.sin (π * x / 2)) ^ 2 *
+      ∫ t in Ioi (0 : ℝ), ψI' (I * t) * cexp (-π * x * t) := by
+  sorry
+
+-- TODO: Prove integrability of ψ_I(it) * exp(-πxt) for x > 2
+lemma integrable_psiI_kernel {x : ℝ} (hx : x > 2) :
+    IntegrableOn (fun t : ℝ => ψI' (I * t) * cexp (-π * x * t)) (Ioi 0) := by
   sorry
 
 -- TODO: Asymptotic expansion: ψ_I(it) = e^(2πt) + 144 + R(t) where |R(t)| ≤ C * e^(-πt) for t ≥ t₀
 -- This requires new q-expansion lemmas for ψ_I
-lemma psiI_asymptotic_im_axis {t : ℝ} (ht : t > 0) :
-    ∃ C : ℝ, ∃ R : ℝ → ℂ,
-      ψI' (I * t) = cexp (2 * π * t) + 144 + R t ∧
-      ‖R t‖ ≤ C * Real.exp (-π * t) := by
+-- Strengthened to uniform bound for all t ≥ t₀
+lemma psiI_asymptotic_im_axis :
+    ∃ C : ℝ, ∃ t₀ : ℝ, ∀ t : ℝ, t ≥ t₀ →
+      ‖ψI' (I * t) - cexp (2 * π * t) - 144‖ ≤ C * Real.exp (-π * t) := by
   sorry
 
--- Laplace integral: ∫₀^∞ e^(-(π(r²-2))t) dt = 1/(π(r²-2)) for r > √2
-lemma laplace_exp_pos {r : ℝ} (hr : r > Real.sqrt 2) :
-    ∫ t in Ioi (0 : ℝ), cexp (-(π * (r ^ 2 - 2)) * t) = 1 / (π * (r ^ 2 - 2)) := by
+-- Laplace integral: ∫₀^∞ e^(-(π(x-2))t) dt = 1/(π(x-2)) for x > 2
+lemma laplace_exp_pos {x : ℝ} (hx : x > 2) :
+    ∫ t in Ioi (0 : ℝ), cexp (-(π * (x - 2)) * t) = 1 / (π * (x - 2)) := by
   sorry
 
--- Laplace integral: ∫₀^∞ e^(-πr²t) dt = 1/(πr²) for r > 0
-lemma laplace_exp_r2 {r : ℝ} (hr : r > 0) :
-    ∫ t in Ioi (0 : ℝ), cexp (-(π * r ^ 2) * t) = 1 / (π * r ^ 2) := by
+-- Laplace integral: ∫₀^∞ e^(-πxt) dt = 1/(πx) for x > 0
+lemma laplace_exp {x : ℝ} (hx : x > 0) :
+    ∫ t in Ioi (0 : ℝ), cexp (-(π * x) * t) = 1 / (π * x) := by
   sorry
 
--- TODO: Assemble the formula for r > √2
-lemma b_another_integral_r_gt_sqrt2 {r : ℝ} (hr : r > Real.sqrt 2) :
-    bℝ r = 4 * I * (Real.sin (π * r ^ 2 / 2)) ^ 2 *
-      (144 / (π * r ^ 2) + 1 / (π * (r ^ 2 - 2)) +
-       ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * r ^ 2 * t)) := by
+-- TODO: Assemble the formula for x > 2
+lemma b_another_integral_x_gt_2 {x : ℝ} (hx : x > 2) :
+    bℝ x = 4 * I * (Real.sin (π * x / 2)) ^ 2 *
+      (144 / (π * x) + 1 / (π * (x - 2)) +
+       ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * x * t)) := by
   sorry
 
 -- TODO: Prove continuity of both sides on [0, ∞)
-lemma b_continuous : ContinuousOn (fun r : ℝ => bℝ r) (Ici 0) := by
+lemma b_continuous : ContinuousOn (fun x : ℝ => bℝ x) (Ici 0) := by
   sorry
 
 lemma b_alt_repr_continuous : ContinuousOn
-    (fun r : ℝ => 4 * I * (Real.sin (π * r ^ 2 / 2)) ^ 2 *
-      (144 / (π * r ^ 2) + 1 / (π * (r ^ 2 - 2)) +
-       ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * r ^ 2 * t)))
+    (fun x : ℝ => 4 * I * (Real.sin (π * x / 2)) ^ 2 *
+      (144 / (π * x) + 1 / (π * (x - 2)) +
+       ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * x * t)))
     (Ici 0) := by
   sorry
 
--- TODO: Extend to all r ≥ 0 via continuity
-lemma b_another_integral {r : ℝ} (hr : r ≥ 0) :
-    bℝ r = 4 * I * (Real.sin (π * r ^ 2 / 2)) ^ 2 *
-      (144 / (π * r ^ 2) + 1 / (π * (r ^ 2 - 2)) +
-       ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * r ^ 2 * t)) := by
+-- TODO: Extend to all x ≥ 0 via continuity
+-- This is Proposition 7.17: the alternative integral representation for b(x) where x = r²
+lemma b_another_integral {x : ℝ} (hx : x ≥ 0) :
+    bℝ x = 4 * I * (Real.sin (π * x / 2)) ^ 2 *
+      (144 / (π * x) + 1 / (π * (x - 2)) +
+       ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * x * t)) := by
   sorry
 
 end
