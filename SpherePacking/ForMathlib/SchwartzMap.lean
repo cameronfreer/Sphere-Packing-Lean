@@ -659,8 +659,10 @@ lemma iteratedDeriv_odd_eq_zero_of_even (f : ℝ → ℝ) (heven : Function.Even
           · exact deriv_comp_neg (deriv^[k] f) x;
       -- Since $f$ is even, we have $f(-x) = f(x)$. Taking the $k$-th derivative of both sides, we get $(deriv^[k] f) (-x) = (-1)^k * (deriv^[k] f) x$.
       have h_even_deriv : ∀ k : ℕ, deriv^[k] f (-0) = (-1)^k * deriv^[k] f 0 := by
-        intro k; specialize h_odd_deriv k; replace h_odd_deriv := congr_fun h_odd_deriv 0; aesop;
-        rw [ ← h_odd_deriv, show ( fun x => f ( -x ) ) = f from funext fun x => heven x ];
+        intro k
+        have hneg : (fun x => f (-x)) = f := by funext x; simpa using heven x
+        have h0 := congr_fun (h_odd_deriv k) 0
+        simpa [hneg] using h0
       -- Applying the result from h_even_deriv with k = 2k+1, we get that the (2k+1)-th derivative of f at 0 is equal to (-1)^(2k+1) times itself.
       have h_odd_deriv_zero : deriv^[2 * k + 1] f 0 = (-1)^(2 * k + 1) * deriv^[2 * k + 1] f 0 := by
         grind +ring;
@@ -674,7 +676,11 @@ lemma exists_smooth_even_approx (f : ℝ → ℝ) (heven : Function.Even f) (hsm
     ∃ g : ℝ → ℝ, ContDiff ℝ ∞ g ∧ ∀ k, iteratedDeriv k (fun x => f x - g (x ^ 2)) 0 = 0 := by
       -- Define the function $g$ using the provided theorem and the coefficients $a_k$.
       obtain ⟨g, hg⟩ : ∃ g : ℝ → ℝ, ContDiff ℝ ∞ g ∧ ∀ k : ℕ, iteratedDeriv k g 0 = (iteratedDeriv (2 * k) f 0) / ((Nat.factorial (2 * k) : ℝ) / (Nat.factorial k : ℝ)) := by
-        have := smooth_realization_jet; aesop;
+        simpa using
+          (smooth_realization_jet
+            (a := fun k =>
+              (iteratedDeriv (2 * k) f 0) /
+              ((Nat.factorial (2 * k) : ℝ) / (Nat.factorial k : ℝ))))
       -- By definition of $g$, we know that its iterated derivatives at 0 match those of $f$.
       have h_deriv : ∀ k : ℕ, iteratedDeriv (2 * k) (fun x => f x - g (x ^ 2)) 0 = 0 := by
         -- By definition of $g$, we know that its iterated derivatives at 0 match those of $f$. Therefore, the difference $f(x) - g(x^2)$ has all derivatives zero at 0.
@@ -827,7 +833,10 @@ lemma contDiff_parametric_integral (F : ℝ → ℝ → ℝ) (hF : ContDiff ℝ 
               · exact contDiff_snd;
               · exact contDiff_const;
           rw [ contDiff_succ_iff_deriv ];
-          exact ⟨ fun x => ( h_deriv x |> HasDerivAt.differentiableAt ), by aesop, by rw [ show deriv _ = _ from funext fun x => HasDerivAt.deriv ( h_deriv x ) ] ; exact h_deriv_cont_diff ⟩;
+          refine ⟨fun x => (h_deriv x).differentiableAt, ?_, ?_⟩
+          · intro htop; cases htop
+          · rw [show deriv _ = _ from funext (fun x => (h_deriv x).deriv)]
+            exact h_deriv_cont_diff
       assumption
 
 set_option linter.style.longLine false in
@@ -843,7 +852,8 @@ lemma exists_smooth_flat_factor (f : ℝ → ℝ) (hsmooth : ContDiff ℝ ∞ f)
         have hfg : ∀ x, f x = x * g x := by
           norm_num +zetaDelta at *;
           intro x; rw [ intervalIntegral.integral_deriv_eq_sub ];
-          · specialize hflat 0 ; aesop;
+          · have h0 : f 0 = 0 := by simpa [iteratedDeriv_zero] using hflat 0
+            simp [h0]
           · exact fun t ht => hsmooth.contDiffAt.differentiableAt ( by norm_num );
           · -- Since $f$ is smooth, its derivative $f'$ is continuous, and hence integrable on any closed interval.
             have h_cont_deriv : Continuous (deriv f) := by
