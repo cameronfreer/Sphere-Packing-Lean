@@ -201,7 +201,7 @@ lemma smooth_bump_scaling_bound (ϕ : ℝ → ℝ) (hϕ : ContDiff ℝ ∞ ϕ) (
           simp_all only [gt_iff_lt, norm_eq_abs]
           obtain ⟨w, h⟩ := this
           obtain ⟨left, right⟩ := h
-          exact ⟨ w, left, fun x hx => Classical.not_not.1 fun hx' => hx.not_ge <| right x <| subset_closure <| by aesop ⟩;
+          exact ⟨ w, left, fun x hx => Classical.not_not.1 fun hx' => hx.not_ge <| right x <| subset_closure (by simpa [Function.support] using hx') ⟩;
         use M
         constructor
         · exact hM.1
@@ -445,7 +445,10 @@ lemma contDiff_integral_poly_mul_comp (f : ℝ → ℝ) (hf : ContDiff ℝ ∞ f
             apply hf.of_le; norm_num;
           simp +zetaDelta at *;
           rw [ contDiff_succ_iff_deriv ];
-          exact ⟨ fun x => ( h_eq_deriv x |> HasDerivAt.differentiableAt ), by aesop, by rw [ show deriv _ = _ from funext fun x => HasDerivAt.deriv ( h_eq_deriv x ) ] ; exact h_deriv ⟩;
+          refine ⟨fun x => (h_eq_deriv x).differentiableAt, ?_, ?_⟩
+          · intro htop; cases htop
+          · rw [show deriv _ = _ from funext (fun x => (h_eq_deriv x).deriv)]
+            exact h_deriv
       exact contDiff_iff_contDiffAt.mpr fun x => contDiffAt_infty.mpr fun n => h_ind n |> ContDiff.contDiffAt
 
 
@@ -455,8 +458,9 @@ set_option linter.style.longLine false in
 theorem smooth_realization_jet : ∀ a : ℕ → ℝ, ∃ f : ℝ → ℝ, (ContDiff ℝ ∞ f) ∧ ∀ k : ℕ, iteratedDeriv k f 0 = a k := by
   -- Apply the lemma exists_smooth_term_with_bound to each term in the sequence a.
   have h_seq : ∀ n : ℕ, ∀ a_n : ℝ, ∃ f_n : ℝ → ℝ, ContDiff ℝ ∞ f_n ∧ HasCompactSupport f_n ∧ (∀ k, iteratedDeriv k f_n 0 = if k = n then a_n else 0) ∧ (∀ k < n, ∀ x, |iteratedDeriv k f_n x| ≤ (1 / 2) ^ (n + 1)) := by
-    aesop;
-    convert exists_smooth_term_with_bound n a_n ( ( 2 ^ ( n + 1 ) ) ⁻¹ ) ( by positivity ) using 1;
+    intro n a_n
+    simpa [one_div, pow_add, mul_assoc, mul_left_comm, mul_comm] using
+      (exists_smooth_term_with_bound n a_n ((2 ^ (n + 1) : ℝ)⁻¹) (by positivity))
   -- Define the function $f$ as the sum of the functions $f_n$ from $h_seq$.
   have h_sum : ∀ a : ℕ → ℝ, ∃ f : ℝ → ℝ, ContDiff ℝ ∞ f ∧ ∀ k, iteratedDeriv k f 0 = a k := by
     intro a
