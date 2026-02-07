@@ -1097,8 +1097,7 @@ def comp (f : 𝓢(E, F)) {g : D → E} {S : Set D} (hS : UniqueDiffOn ℝ S)
       exact one_add_le_sup_seminorm_apply le_rfl hi _ _
     have hbound' (i) (hi : i ≤ n) :
         ‖iteratedFDerivWithin ℝ i f ⊤ (g x)‖ ≤ 2 ^ k' * seminorm_f / (1 + ‖g x‖) ^ k' := by
-      -- This must be trivial, surely...
-      sorry
+      simpa [iteratedFDerivWithin_univ] using hbound i hi
     have hgrowth' (N : ℕ) (hN₁ : 1 ≤ N) (hN₂ : N ≤ n) :
         ‖iteratedFDerivWithin ℝ N g S x‖ ≤ ((C + 1) * (1 + ‖x‖) ^ l) ^ N := by
       stop
@@ -1109,7 +1108,7 @@ def comp (f : 𝓢(E, F)) {g : D → E} {S : Set D} (hS : UniqueDiffOn ℝ S)
       · exact le_trans (by simp) (le_self_pow₀ (by simp [hC]) hN₁')
       · refine le_self_pow₀ (one_le_pow₀ ?_) hN₁'
         simp only [le_add_iff_nonneg_right, norm_nonneg]
-    have hbound_aux_1 : UniqueDiffOn ℝ (⊤ : Set E) := by sorry
+    have hbound_aux_1 : UniqueDiffOn ℝ (⊤ : Set E) := uniqueDiffOn_univ
     have hbound_aux_2 : Set.MapsTo g S (⊤ : Set E) := fun _ _ ↦ trivial
     -- stop -- Proof I'm trying to generalise
     have := norm_iteratedFDerivWithin_comp_le (f.smooth ⊤).contDiffOn hg.1 (mod_cast le_top)
@@ -1137,7 +1136,7 @@ def comp (f : 𝓢(E, F)) {g : D → E} {S : Set D} (hS : UniqueDiffOn ℝ S)
     sorry
     stop
     -- Proof I tried before I realised I had to do suffices hbound
-    have := norm_iteratedFDerivWithin_comp_le (f.smooth ⊤).contDiffOn hg.1 (mod_cast le_top) (by sorry) hS (by sorry) trivial hbound hgrowth'
+    have := norm_iteratedFDerivWithin_comp_le (f.smooth ⊤).contDiffOn hg.1 (mod_cast le_top) uniqueDiffOn_univ hS (Set.mapsTo_univ g S) trivial hbound hgrowth'
     have hxk : ‖x‖ ^ k ≤ (1 + ‖x‖) ^ k :=
       pow_le_pow_left₀ (norm_nonneg _) (by simp only [zero_le_one, le_add_iff_nonneg_left]) _
     grw [hxk, this]
