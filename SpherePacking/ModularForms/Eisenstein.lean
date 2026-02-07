@@ -324,8 +324,8 @@ lemma qexpsummable (k : ℕ) (hk : 3 ≤ (k : ℤ)) (z : ℍ) :
         (f := fun a : ℕ ↦ (((a) : ℝ) ^ k) * ‖cexp (2 * ↑π * Complex.I * ↑z) ^ (a)‖)
     simp at *
     rw [this]
-    have ht : ‖cexp (2 * ↑π * Complex.I * ↑z)‖ < 1 := by
-      exact norm_exp_two_pi_I_lt_one z
+    have ht : ‖cexp (2 * ↑π * Complex.I * ↑z)‖ < 1 :=
+      norm_exp_two_pi_I_lt_one z
     have := summable_norm_pow_mul_geometric_of_norm_lt_one k ht
     simp at *
     apply this
@@ -740,8 +740,8 @@ lemma modularForm_normalise (f : ModularForm Γ(1) k) (hf : ¬ IsCuspForm Γ(1) 
   exact hf h
 
 lemma PowerSeries.coeff_add (f g : PowerSeries ℂ) (n : ℕ) :
-    (f + g).coeff n = (f.coeff n) + (g.coeff n) := by
-  exact rfl
+    (f + g).coeff n = (f.coeff n) + (g.coeff n) :=
+  rfl
 
 open ArithmeticFunction
 

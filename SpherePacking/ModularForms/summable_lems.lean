@@ -409,8 +409,7 @@ lemma sum_int_pnat3 (z : ℍ) (d : ℤ) :
     have he : ∀ m d : ℂ , ((m : ℂ) * z + d) = z * ((d : ℂ)/z + m) := by
       intro m
       ring_nf
-      have : (z : ℂ) ≠ (0 : ℂ) := by
-        exact ne_zero z
+      have : (z : ℂ) ≠ (0 : ℂ) := ne_zero z
       field_simp
       exact fun _ ↦ trivial
     rw [arg1]

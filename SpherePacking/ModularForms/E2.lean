@@ -554,16 +554,11 @@ lemma G2_transf_aux (z : ℍ) : (z.1 ^ 2)⁻¹ * G₂ (ModularGroup.S • z) - -
 
 lemma ModularGroup.coe_mul (A B : SL(2, ℤ)) :
     (ModularGroup.coe A) * B = ModularGroup.coe (A * B) := by
-  have : Matrix.SpecialLinearGroup.toGLPos ∘ (Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) =
-    ModularGroup.coe := by
-    funext A
-    rfl
-  let C := MonoidHom.comp Matrix.SpecialLinearGroup.toGLPos
-    (Matrix.SpecialLinearGroup.map (n := Fin 2) (Int.castRingHom ℝ))
-  have hC : C = ModularGroup.coe := by
-    rw [← this]
-    rfl
-  have := C.map_mul A B
+  have hC : (MonoidHom.comp Matrix.SpecialLinearGroup.toGLPos
+    (Matrix.SpecialLinearGroup.map (n := Fin 2) (Int.castRingHom ℝ))) = ModularGroup.coe := by
+    funext A; rfl
+  have := (MonoidHom.comp Matrix.SpecialLinearGroup.toGLPos
+    (Matrix.SpecialLinearGroup.map (n := Fin 2) (Int.castRingHom ℝ))).map_mul A B
   rw [hC] at this
   exact this.symm
 
@@ -637,8 +632,8 @@ lemma D2_S (z : ℍ) : D₂ ModularGroup.S z = 2 * (π : ℂ) * Complex.I / z :=
   simp [D₂, ModularGroup.S, ModularGroup.denom_apply]
 
 /-This is being PRd-/
-lemma SL2_gens : Subgroup.closure {ModularGroup.S, ModularGroup.T} = ⊤ := by
-  exact SpecialLinearGroup.SL2Z_generators
+lemma SL2_gens : Subgroup.closure {ModularGroup.S, ModularGroup.T} = ⊤ :=
+  SpecialLinearGroup.SL2Z_generators
 
 
 variable (f : ℍ → ℂ) (k : ℤ) (z : ℍ)

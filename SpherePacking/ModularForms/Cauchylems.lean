@@ -40,11 +40,9 @@ lemma cc (f : ℤ → ℂ) (hc : CauchySeq fun N : ℕ => ∑ m ∈ Finset.Icc (
       rw [show f n + f n = 2 * f n by ring] at H3
       simp at H3
       have HN := hN N (by rfl)
-      have hgn : g N ≤ |g N| := by
-        exact le_abs_self (g N)
+      have hgn : g N ≤ |g N| := le_abs_self (g N)
       have := le_trans H3 hgn
-      have hgnn : 2 * ‖(f n)‖ < 2 * ε := by
-        exact lt_of_le_of_lt this HN
+      have hgnn : 2 * ‖(f n)‖ < 2 * ε := lt_of_le_of_lt this HN
       nlinarith
     omega
   · omega
@@ -61,8 +59,7 @@ lemma sum_Icc_eq_sum_Ico_succ {α : Type*} [AddCommMonoid α] (f : ℤ → α)
 
 lemma auxl2 (a b c : ℂ) : ‖(a - b)‖≤ ‖(a - b + c)‖ + ‖c‖ := by
   nth_rw 1 [show a - b = (a - b + c) + -c by ring]
-  have : ‖(a - b + c + -c)‖ ≤ ‖(a - b+ c)‖ + ‖-c‖ := by
-    exact norm_add_le (a - b + c) (-c)
+  have : ‖(a - b + c + -c)‖ ≤ ‖(a - b+ c)‖ + ‖-c‖ := norm_add_le (a - b + c) (-c)
   simpa using this
 
 lemma CauchySeq_Icc_iff_CauchySeq_Ico (f : ℤ → ℂ) (hs : ∀ n, f n = f (-n))

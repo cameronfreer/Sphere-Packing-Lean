@@ -136,8 +136,8 @@ theorem fderiv_coordinateEmbedding₁₂_hasTemperateGrowth (x : ℝ) :
   · sorry
   · sorry
 
-example {a b : ℝ} : 0 ≤ a → 0 ≤ b → (a ≤ b ↔ a ^ 2 ≤ b ^ 2) := by
-  exact fun a_1 a_2 ↦ Iff.symm (sq_le_sq₀ a_1 a_2)
+example {a b : ℝ} : 0 ≤ a → 0 ≤ b → (a ≤ b ↔ a ^ 2 ≤ b ^ 2) :=
+  fun a_1 a_2 ↦ Iff.symm (sq_le_sq₀ a_1 a_2)
 
 /-- `coordinateEmbedding₁₂` has temperate growth. -/
 theorem coordinateEmbedding₁₂_hasTemperateGrowth (x : ℝ) :

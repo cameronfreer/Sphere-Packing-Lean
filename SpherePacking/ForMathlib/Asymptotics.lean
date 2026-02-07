@@ -42,8 +42,8 @@ example {f g F G : ℤ → ℝ} (hf : f =O[atTop] F) (hg : g =O[atTop] G) :
 -- variable [Nonempty α]
 
 theorem isBigO_pow {f F : α → E} {n : ℕ} (hf : f =O[atTop] F) :
-    (fun x => (f x) ^ n) =O[atTop] (fun x => (F x) ^ n) := by
-  exact IsBigO.pow hf n
+    (fun x => (f x) ^ n) =O[atTop] (fun x => (F x) ^ n) :=
+  IsBigO.pow hf n
   -- induction' n with n hn
   -- · simp only [pow_zero]
   -- exact (isBigO_const_const_iff atTop).mpr fun a ↦ a
