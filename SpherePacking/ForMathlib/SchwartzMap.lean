@@ -74,28 +74,12 @@ lemma Function.Even.comp_abs : f = f ∘ abs := by
 
 include heven in
 lemma Function.Even.comp_abs_apply (x : ℝ) : f x = f |x| := by
-  conv_lhs => rw [heven.comp_abs]
-  rw [comp_apply]
+  simpa using congrArg (fun g => g x) (heven.comp_abs)
 
 include heven in
 lemma Function.Even.HasDeriv_at_zero : deriv f (0 : ℝ) = 0 := by
-  wlog hdiff : DifferentiableAt ℝ f 0
-  · rw [← differentiableWithinAt_univ] at hdiff
-    rw [deriv, fderiv, fderivWithin]
-    simp [hdiff]
-  -- simp
-  suffices deriv f 0 = -deriv f 0 by linarith
-  -- apply HasDerivAt.deriv
-  -- rw [hasDerivAt_iff_tendsto_slope_zero]
-  -- have hHasDerivAt : HasDerivAt f (deriv f 0) 0 := hdiff.hasDerivAt
-  have hrw {t : ℝ} : f (-t) - f 0 = f t - f 0 := by rw [heven]
-  have hlim₁ : Tendsto (fun t ↦ t⁻¹ • (f (0 + t) - f 0)) (nhdsWithin 0 {0}ᶜ) (nhds (deriv f 0)) :=
-    hasDerivAt_iff_tendsto_slope_zero.mp hdiff.hasDerivAt
-  simp only [zero_add, smul_eq_mul] at hlim₁
-  have hlim₂ : Tendsto (fun t ↦ -((t)⁻¹ * (f t - f 0))) (nhdsWithin 0 {0}ᶜ) (nhds (-deriv f 0)) :=
-    hlim₁.neg
-  -- do tendsto comp or something - use fact that x ↦ -x tends to 0 as you go to 0 or smth
-  sorry
+  linarith [show deriv f 0 = -deriv f 0 by
+    simpa [funext heven] using (deriv_comp_neg f 0)]
 
 /-
 *****************  New Aristotle Proofs ***********************
