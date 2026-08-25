@@ -14,15 +14,7 @@ open Real MeasureTheory Set Nat
 
 theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
     r ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * rexp (-π * r / s) ≤
-      (n / π) ^ n * (n)! / (2 * π) ^ n := by
-  have hs : ∀ s ∈ Ici (1 : ℝ), 0 ≤ r / s := by
-    intro _ hs
-    rw [mem_Ici] at hs
-    positivity
-  have hexp : ∀ s ∈ Ici (1 : ℝ), _ := fun s' hs' ↦ exp_neg_mul_decay n pi_pos <| hs s' hs'
-
-  -- now the proof structure
-  calc
+      (n / π) ^ n * (n)! / (2 * π) ^ n := calc
   _ = ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * (r ^ n * rexp (-π * r / s)) := by
       simp only [← smul_eq_mul (a := r ^ n), ← integral_smul]
       grind [smul_eq_mul (a := r ^ n)]
