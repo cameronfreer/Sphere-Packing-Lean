@@ -22,20 +22,25 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
   have hexp : ∀ s ∈ Ici (1 : ℝ), _ := fun s' hs' ↦ exp_neg_mul_decay n pi_pos <| hs s' hs'
 
   -- now the proof structure
-
   calc
   _ = ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * (r ^ n * rexp (-π * r / s)) := by
       simp only [← smul_eq_mul (a := r ^ n), ← integral_smul]
       grind [smul_eq_mul (a := r ^ n)]
   _ ≤ ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * ((n / π) ^ n * s ^ n) := by
       refine setIntegral_mono_of_nonneg ?_ ?_ ?_
-      · intro _ hx
-        rw [mem_Ici] at hx
+      · intro _ hs
+        rw [mem_Ici] at hs
         positivity
       · intro s hs
+        rw [mem_Ici] at hs
         gcongr 1
-        
-        sorry
+        rw [← mul_inv_le_iff₀ (by positivity)]
+        calc
+        _ = r ^ n * (s ^ n)⁻¹ * rexp (-π * (r / s)) := by ring_nf
+        _ = (r / s) ^ n * rexp (-π * (r / s)) := by
+            rw [div_pow]
+            congr
+        _ ≤ _ := exp_neg_mul_decay n pi_pos (x := r / s) <| by positivity
       · sorry
   _ ≤ (n / π) ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * s ^ n := sorry
   _ ≤ (n / π) ^ n * ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * s ^ n := sorry
