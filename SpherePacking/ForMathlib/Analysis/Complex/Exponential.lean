@@ -20,8 +20,6 @@ theorem exp_decay (k : ℕ) {x : ℝ} (hx : 0 ≤ x) : x ^ k * rexp (-k * x) ≤
       linarith [add_one_le_exp x]
     _ = 1 := by simp [← exp_add]
 
-/-- The polynomial-times-exponential decay bound: `x ^ k * exp (-r * x)` is bounded above by
-`(k / r) ^ k`, uniformly in `x ≥ 0`. -/
 theorem exp_neg_mul_decay (k : ℕ) {r : ℝ} (hr : 0 < r) {x : ℝ} (hx : 0 ≤ x) :
     x ^ k * rexp (-r * x) ≤ (k / r) ^ k := by
   rcases Nat.eq_zero_or_pos k with rfl | hk
