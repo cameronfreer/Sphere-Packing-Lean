@@ -34,10 +34,23 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
             congr
         _ ≤ _ := exp_neg_mul_decay n pi_pos (x := r / s) <| by positivity
       · sorry
-  _ ≤ (n / π) ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * s ^ n := sorry
-  _ ≤ (n / π) ^ n * ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * s ^ n := sorry
-  _ = (n / π) ^ n * ∫ s in Ici (0 : ℝ), 1 / (2 * π) ^ (n + 1) * rexp (-2 * π * s) * (2 * π * s) ^ n
-      := sorry
+  _ ≤ (n / π) ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * s ^ n := by
+      simp only [← smul_eq_mul (a := (n / π) ^ n), ← integral_smul]
+      grind [smul_eq_mul (a := (n / π) ^ n)]
+  _ ≤ (n / π) ^ n * ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * s ^ n := by
+      gcongr 1
+      refine setIntegral_mono_set ?_ (ae_restrict_of_forall_mem measurableSet_Ici ?_) ?_
+      · sorry -- same as previous `sorry` - prove some more general aux result
+      · intro s hs
+        rw [mem_Ici] at hs
+        positivity
+      · filter_upwards with x
+        change x ∈ Set.Ici 1 → x ∈ Set.Ici 0
+        grind
+  _ = (n / π) ^ n * ∫ s in Ici (0 : ℝ), 1 / (2 * π) ^ n * rexp (-2 * π * s) * (2 * π * s) ^ n
+        := by
+      congr with s
+      field
   _ = (n / π) ^ n * Gamma (n + 1) / (2 * π) ^ n := sorry
   _ = _ := sorry
 
