@@ -97,11 +97,24 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
       have hf : InjOn f s := by aesop
       rw [← integral_Ici_eq_integral_Ioi]
       convert_to ∫ (x : ℝ) in s, g (f x) = 1 / (2 * π) * ∫ (x : ℝ) in s, g x
-      -- have hfs : f '' s = s := by
-      --   sorry
-      sorry
+      · simp [s, g, f]
+      · simp [s, g]
+      have hfs : f '' s = s := by
+        ext x
+        simp only [mem_image, mem_Ici, s]
+        constructor <;> intro hx
+        · obtain ⟨y, hy₁, hy₂⟩ := hx
+          rw [← hy₂]
+          positivity
+        · refine ⟨x / (2 * π), by positivity, ?_⟩
+          field
+      conv_rhs => rw [← hfs]
+      simp only [integral_image_eq_integral_abs_deriv_smul hs hf' hf g, f', integral_smul]
+      rw [smul_eq_mul, ← mul_assoc]
+      conv_lhs => rw [← one_mul (a := ∫ _ in _, _)]
+      congr
+      rw [abs_mul, abs_of_nonneg (pi_nonneg), abs_of_nonneg (by positivity)]
+      field_simp
   _ = _ := by rw [Gamma_nat_eq_factorial n]; field
 
 end MagicFunction
-
-#check integral_image_eq_integral_abs_deriv_smul
