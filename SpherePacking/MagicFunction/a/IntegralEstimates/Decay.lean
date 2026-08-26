@@ -95,7 +95,10 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
         · aesop
         exact (hasDerivWithinAt_id x s).fun_const_smul (c := (2 * π))
       have hf : InjOn f s := by aesop
-      
+      rw [← integral_Ici_eq_integral_Ioi]
+      convert_to ∫ (x : ℝ) in s, g (f x) = 1 / (2 * π) * ∫ (x : ℝ) in s, g x
+      -- have hfs : f '' s = s := by
+      --   sorry
       sorry
   _ = _ := by rw [Gamma_nat_eq_factorial n]; field
 
