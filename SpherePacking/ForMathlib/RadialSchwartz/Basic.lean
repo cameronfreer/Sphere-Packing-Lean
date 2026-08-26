@@ -91,6 +91,8 @@ namespace RadialSchwartzMap
 variable {𝕜 E F : Type*} [NormedField 𝕜] [NormedAddCommGroup E] [NormedAddCommGroup F]
   [NormedSpace ℝ F] [NormedSpace 𝕜 F] [SMulCommClass ℝ 𝕜 F]
 
+def mk [NormedSpace ℝ E] (f : 𝓢(E, F)) (hf : IsRadial f) : RadialSchwartzMap 𝕜 E F := ⟨f, hf⟩
+
 section NormedSpace
 
 variable [NormedSpace ℝ E]
