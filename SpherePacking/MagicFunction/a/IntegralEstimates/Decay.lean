@@ -7,6 +7,10 @@ module
 
 public import SpherePacking.ForMathlib.Analysis.Complex.Exponential
 
+/-!
+# Bound on the integral with which we bound I₁, I₃, I₅, J₁, J₃, J₅ and their derivatives
+-/
+
 @[expose] public section
 
 open Real MeasureTheory Set
@@ -35,11 +39,11 @@ private lemma neg_two_pi_neg : -2 * π < 0 := mul_neg_of_neg_of_pos (by norm_num
 
 theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
     r ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * rexp (-π * r / s) ≤
-      (n / π) ^ n * (n)! / (2 * π) ^ (n + 1) := calc
+      (n / π * rexp (-1)) ^ n * (n)! / (2 * π) ^ (n + 1) := calc
   _ = ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * (r ^ n * rexp (-π * r / s)) := by
       simp only [← smul_eq_mul (a := r ^ n), ← integral_smul]
       grind [smul_eq_mul (a := r ^ n)]
-  _ ≤ ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * ((n / π) ^ n * s ^ n) := by
+  _ ≤ ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * ((n / π * rexp (-1)) ^ n * s ^ n) := by
       refine setIntegral_mono_of_nonneg ?_ ?_ ?_
       · intro _ hs
         rw [mem_Ici] at hs
@@ -55,10 +59,10 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
             congr
         _ ≤ _ := exp_neg_mul_decay n pi_pos (x := r / s) <| by positivity
       · exact integrableOn_exp_mul_const_mul_pow_Ici zero_le_one neg_two_pi_neg _ n
-  _ ≤ (n / π) ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * s ^ n := by
-      simp only [← smul_eq_mul (a := (n / π) ^ n), ← integral_smul]
-      grind [smul_eq_mul (a := (n / π) ^ n)]
-  _ ≤ (n / π) ^ n * ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * s ^ n := by
+  _ ≤ (n / π * rexp (-1)) ^ n * ∫ s in Ici (1 : ℝ), rexp (-2 * π * s) * s ^ n := by
+      simp only [← smul_eq_mul (a := (n / π * rexp (-1)) ^ n), ← integral_smul]
+      grind [smul_eq_mul (a := (n / π * rexp (-1)) ^ n)]
+  _ ≤ (n / π * rexp (-1)) ^ n * ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * s ^ n := by
       gcongr 1
       refine setIntegral_mono_set ?_ (ae_restrict_of_forall_mem measurableSet_Ici ?_) ?_
       · simpa using integrableOn_exp_mul_const_mul_pow_Ici le_rfl neg_two_pi_neg 1 n
@@ -68,17 +72,17 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
       · filter_upwards with x
         change x ∈ Set.Ici 1 → x ∈ Set.Ici 0
         grind
-  _ = (n / π) ^ n * ∫ s in Ici (0 : ℝ), 1 / (2 * π) ^ n * rexp (-2 * π * s) * (2 * π * s) ^ n
-        := by
+  _ = (n / π * rexp (-1)) ^ n *
+        ∫ s in Ici (0 : ℝ), 1 / (2 * π) ^ n * rexp (-2 * π * s) * (2 * π * s) ^ n := by
       congr with s
       field
-  _ = (n / π) ^ n * 1 / (2 * π) ^ n * ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * (2 * π * s) ^ n
-        := by
+  _ = (n / π * rexp (-1)) ^ n * 1 / (2 * π) ^ n *
+        ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * (2 * π * s) ^ n := by
       rw [mul_div_assoc, mul_assoc]
       congr 1
       simp only [← smul_eq_mul (a := 1 / (2 * π) ^ n), ← integral_smul]
       grind [smul_eq_mul (a := 1 / (2 * π) ^ n)]
-  _ = (n / π) ^ n * 1 / (2 * π) ^ (n + 1) * Gamma (n + 1) := by
+  _ = (n / π * rexp (-1)) ^ n * 1 / (2 * π) ^ (n + 1) * Gamma (n + 1) := by
       rw [Gamma_eq_integral (by positivity), mul_div_assoc, mul_div_assoc,
         show 1 / (2 * π) ^ (n + 1) = 1 / (2 * π) ^ n * 1 / (2 * π) by field,
         mul_assoc, mul_assoc, mul_div_assoc, mul_assoc]
