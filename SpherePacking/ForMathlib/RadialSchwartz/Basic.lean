@@ -46,15 +46,8 @@ lemma even [SeminormedAddGroup E] {f : E → F} (hf : f.IsRadial) : f.Even := fu
 lemma comp_right [Norm D] {f : D → E} {g : E → F} (hf : f.IsRadial) :
   (g ∘ f).IsRadial := by grind [isRadial_def]
 
-variable [Norm E]
-
-variable (E) in
-lemma _root_.Norm.isRadial : (‖·‖ : E → ℝ).IsRadial := by grind [isRadial_def]
-
-lemma comp_norm (g : ℝ → F) : (g ∘ (‖·‖ : E → ℝ)).IsRadial := by
-  simp [IsRadial.comp_right, Norm.isRadial]
-
 end IsRadial
+section Norm
 
 open IsRadial
 
@@ -64,8 +57,18 @@ lemma RCLike.normSq_radial {K : Type*} [RCLike K] : IsRadial (RCLike.normSq (K :
 
 lemma Complex.normSq_radial : IsRadial (Complex.normSq) := RCLike.normSq_radial
 
+variable [Norm E]
+
 variable (E) in
-lemma _Function.isRadial_norm_sq [Norm E] : IsRadial (‖·‖ ^ 2 : E → ℝ) := by grind [isRadial_def]
+lemma _root_.Norm.isRadial : (‖·‖ : E → ℝ).IsRadial := by grind [isRadial_def]
+
+lemma comp_norm (g : ℝ → F) : (g ∘ (‖·‖ : E → ℝ)).IsRadial := by
+  simp [IsRadial.comp_right, Norm.isRadial]
+
+variable (E) in
+lemma isRadial_norm_sq : IsRadial (‖·‖ ^ 2 : E → ℝ) := by grind [isRadial_def]
+
+end Norm
 
 section Isometries
 
@@ -102,6 +105,7 @@ namespace RadialSchwartzMap
 variable {𝕜 E F : Type*} [NormedField 𝕜] [NormedAddCommGroup E] [NormedAddCommGroup F]
   [NormedSpace ℝ F] [NormedSpace 𝕜 F] [SMulCommClass ℝ 𝕜 F]
 
+/-- Create a `RadialSchwartzMap` -/
 def mk [NormedSpace ℝ E] (f : 𝓢(E, F)) (hf : IsRadial f) : RadialSchwartzMap 𝕜 E F := ⟨f, hf⟩
 
 section NormedSpace
@@ -223,11 +227,13 @@ instance instFourierPair : FourierPair (RadialSchwartzMap 𝕜 E F) (RadialSchwa
 variable {f : RadialSchwartzMap 𝕜 E F}
 
 /-- The Fourier transform is an involution on radial Schwartz functions. -/
+@[simp]
 lemma fourier_apply_apply : 𝓕 (𝓕 f) = f := by
   rw [← fourierInv_eq_fourier]
   exact instFourierPair.fourierInv_fourier_eq f
 
 /-- The inverse Fourier transform is an involution on radial Schwartz functions. -/
+@[simp]
 lemma fourierInv_apply_apply : 𝓕⁻ (𝓕⁻ f) = f := by
   rw [fourierInv_eq_fourier]
   exact fourier_apply_apply

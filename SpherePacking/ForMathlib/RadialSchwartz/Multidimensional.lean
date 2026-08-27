@@ -23,26 +23,7 @@ open SchwartzMap Function RCLike ContDiff Set
 
 namespace SchwartzMap
 
-section toRadial
-
--- The `‖·‖²` differentiability helpers formerly here are now mathlib's
--- `hasStrictFDerivAt_norm_sq` / `DifferentiableAt.norm_sq` / `Differentiable.norm_sq`.
-
-variable (F : Type*) [NormedAddCommGroup F] [InnerProductSpace ℝ F] (f : 𝓢(ℝ, ℂ))
-
-@[simps!]
-def compNormSq : 𝓢(F, ℂ) :=
-    f.compCLM ℝ (Function.hasTemperateGrowth_norm_sq F) <| by
-  use 1, 1
-  intro _
-  simp only [norm_pow, norm_norm]
-  nlinarith
-
-@[simps!]
-def toRadialSchwartzMap : RadialSchwartzMap ℝ F ℂ :=
-  RadialSchwartzMap.mk (compNormSq F f) (Function.isRadial_norm_sq F).comp_right
-
-end toRadial
+section ofDecay
 
 @[fun_prop]
 theorem _root_.Complex.contDiff_ofReal {n} : ContDiff ℝ n Complex.ofReal :=
@@ -96,5 +77,35 @@ theorem ofDecayOn_eqOn {f : ℝ → ℂ} {a : ℝ}
     Set.EqOn f (ofDecayOn smooth decay) (Set.Ici a) := by
   grind [ofDecayOn, mkOfCocompact_toFun, Set.EqOn, Real.smoothTransition.eq_one_iff_one_le,
     Complex.ofReal_one, SchwartzMap.mkOfCocompact, mk_apply]
+
+end ofDecay
+
+section toRadial
+
+-- The `‖·‖²` differentiability helpers formerly here are now mathlib's
+-- `hasStrictFDerivAt_norm_sq` / `DifferentiableAt.norm_sq` / `Differentiable.norm_sq`.
+
+variable (F : Type*) [NormedAddCommGroup F] [InnerProductSpace ℝ F]
+
+@[simps!]
+def compNormSq (f : 𝓢(ℝ, ℂ)) : 𝓢(F, ℂ) :=
+    f.compCLM ℝ (Function.hasTemperateGrowth_norm_sq F) <| by
+  use 1, 1
+  intro _
+  simp only [norm_pow, norm_norm]
+  nlinarith
+
+@[simps!]
+def toRadialSchwartzMap (f : 𝓢(ℝ, ℂ)) : RadialSchwartzMap ℝ F ℂ :=
+  RadialSchwartzMap.mk (compNormSq F f) (Function.isRadial_norm_sq F).comp_right
+
+@[simps!]
+def _root_.RadialSchwartzMap.ofDecay {f : ℝ → ℂ} {a : ℝ}
+    (smooth : ContDiff ℝ ∞ f)
+    (decay : ∀ (k n : ℕ), ∃ (C : ℝ), ∀ x, a - 1 ≤ x → ‖x‖ ^ k * ‖iteratedFDeriv ℝ n f x‖ ≤ C) :
+    RadialSchwartzMap ℝ F ℂ :=
+  (ofDecayOn smooth decay).toRadialSchwartzMap F
+
+end toRadial
 
 end SchwartzMap

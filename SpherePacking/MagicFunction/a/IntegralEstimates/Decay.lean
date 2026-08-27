@@ -5,8 +5,9 @@ Authors: Sidharth Hariharan
 -/
 module
 
-public import Mathlib
 public import SpherePacking.ForMathlib.Analysis.Complex.Exponential
+
+@[expose] public section
 
 open Real MeasureTheory Set
 
