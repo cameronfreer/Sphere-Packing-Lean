@@ -38,6 +38,7 @@ def compNormSq : 𝓢(F, ℂ) :=
   simp only [norm_pow, norm_norm]
   nlinarith
 
+@[simps!]
 def toRadialSchwartzMap : RadialSchwartzMap ℝ F ℂ :=
   RadialSchwartzMap.mk (compNormSq F f) (Function.isRadial_norm_sq F).comp_right
 
