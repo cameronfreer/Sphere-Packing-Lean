@@ -5,7 +5,8 @@ Authors: Sidharth Hariharan
 -/
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.SpecialFunctions.Exp
 
 /-!
 # Bounds on the complex exponential
