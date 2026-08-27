@@ -144,17 +144,17 @@ def I₆' : 𝓢(ℝ, ℂ) := ofDecayOn (a := 1) MagicFunction.a.SchwartzPropert
   simp only [sub_self]
   exact MagicFunction.a.SchwartzProperties.I₆'_decayOn
 
-def I₁ : RadialSchwartzMap ℝ ℝ⁸ ℂ := I₁'.toRadialSchwartzMap ℝ⁸
+def I₁ : RadialSchwartzMap ℂ ℝ⁸ ℂ := I₁'.toRadialSchwartzMap ℝ⁸
 
-def I₂ : RadialSchwartzMap ℝ ℝ⁸ ℂ := I₂'.toRadialSchwartzMap ℝ⁸
+def I₂ : RadialSchwartzMap ℂ ℝ⁸ ℂ := I₂'.toRadialSchwartzMap ℝ⁸
 
-def I₃ : RadialSchwartzMap ℝ ℝ⁸ ℂ := I₃'.toRadialSchwartzMap ℝ⁸
+def I₃ : RadialSchwartzMap ℂ ℝ⁸ ℂ := I₃'.toRadialSchwartzMap ℝ⁸
 
-def I₄ : RadialSchwartzMap ℝ ℝ⁸ ℂ := I₄'.toRadialSchwartzMap ℝ⁸
+def I₄ : RadialSchwartzMap ℂ ℝ⁸ ℂ := I₄'.toRadialSchwartzMap ℝ⁸
 
-def I₅ : RadialSchwartzMap ℝ ℝ⁸ ℂ := I₅'.toRadialSchwartzMap ℝ⁸
+def I₅ : RadialSchwartzMap ℂ ℝ⁸ ℂ := I₅'.toRadialSchwartzMap ℝ⁸
 
-def I₆ : RadialSchwartzMap ℝ ℝ⁸ ℂ := I₆'.toRadialSchwartzMap ℝ⁸
+def I₆ : RadialSchwartzMap ℂ ℝ⁸ ℂ := I₆'.toRadialSchwartzMap ℝ⁸
 
 end MagicFunction.a.RadialSchwartzIntegrals
 
@@ -172,7 +172,7 @@ def a' : 𝓢(ℝ, ℂ) :=
 
 /-- The +1-Fourier Eigenfunction of Viazovska's Magic Function. -/
 @[simps!]
-def a : RadialSchwartzMap ℝ ℝ⁸ ℂ := a'.toRadialSchwartzMap ℝ⁸
+def a : RadialSchwartzMap ℂ ℝ⁸ ℂ := a'.toRadialSchwartzMap ℝ⁸
 
 theorem a_eq_sum_RadialSchwartzIntegrals : a =
     MagicFunction.a.RadialSchwartzIntegrals.I₁

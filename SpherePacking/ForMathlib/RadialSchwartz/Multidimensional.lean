@@ -95,15 +95,19 @@ def compNormSq (f : 𝓢(ℝ, ℂ)) : 𝓢(F, ℂ) :=
   simp only [norm_pow, norm_norm]
   nlinarith
 
+variable {𝕜 : Type*} [NormedField 𝕜] [NormedSpace 𝕜 ℂ] [SMulCommClass ℝ 𝕜 ℂ]
+
+/-- A radial Schwartz map on `F` obtained by composing a Schwartz map on `ℝ` with `‖·‖ ^ 2`. -/
 @[simps!]
-def toRadialSchwartzMap (f : 𝓢(ℝ, ℂ)) : RadialSchwartzMap ℝ F ℂ :=
+def toRadialSchwartzMap (f : 𝓢(ℝ, ℂ)) : RadialSchwartzMap 𝕜 F ℂ :=
   RadialSchwartzMap.mk (compNormSq F f) (Function.isRadial_norm_sq F).comp_right
 
+/-- A radial Schwartz map on `F` built from a smooth function on `ℝ` decaying on `[a, ∞)`. -/
 @[simps!]
 def _root_.RadialSchwartzMap.ofDecay {f : ℝ → ℂ} {a : ℝ}
     (smooth : ContDiff ℝ ∞ f)
     (decay : ∀ (k n : ℕ), ∃ (C : ℝ), ∀ x, a - 1 ≤ x → ‖x‖ ^ k * ‖iteratedFDeriv ℝ n f x‖ ≤ C) :
-    RadialSchwartzMap ℝ F ℂ :=
+    RadialSchwartzMap 𝕜 F ℂ :=
   (ofDecayOn smooth decay).toRadialSchwartzMap F
 
 end toRadial

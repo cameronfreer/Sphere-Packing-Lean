@@ -119,6 +119,21 @@ instance instFunLike : FunLike (RadialSchwartzMap 𝕜 E F) E F where
 @[simp, norm_cast]
 lemma coe_coe (f : RadialSchwartzMap 𝕜 E F) : ⇑(f : 𝓢(E, F)) = f := rfl
 
+@[simp]
+lemma zero_apply (x : E) : (0 : RadialSchwartzMap 𝕜 E F) x = 0 := rfl
+
+@[simp]
+lemma add_apply (f g : RadialSchwartzMap 𝕜 E F) (x : E) : (f + g) x = f x + g x := rfl
+
+@[simp]
+lemma neg_apply (f : RadialSchwartzMap 𝕜 E F) (x : E) : (-f) x = -f x := rfl
+
+@[simp]
+lemma sub_apply (f g : RadialSchwartzMap 𝕜 E F) (x : E) : (f - g) x = f x - g x := rfl
+
+@[simp]
+lemma smul_apply (c : 𝕜) (f : RadialSchwartzMap 𝕜 E F) (x : E) : (c • f) x = c • f x := rfl
+
 lemma isRadial (f : RadialSchwartzMap 𝕜 E F) : IsRadial f := f.2
 
 lemma _root_.SchwartzMap.mem_radialSchwartzMap_iff_isRadial (f : 𝓢(E, F)) :
