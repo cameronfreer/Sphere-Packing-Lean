@@ -54,6 +54,15 @@ lemma _root_.Norm.isRadial : (‖·‖ : E → ℝ).IsRadial := by grind [isRadi
 lemma comp_norm (g : ℝ → F) : (g ∘ (‖·‖ : E → ℝ)).IsRadial := by
   simp [IsRadial.comp_right, Norm.isRadial]
 
+lemma _root_.RCLike.normSq_radial {K : Type*} [RCLike K] : IsRadial (RCLike.normSq (K := K)) := by
+  intro _ _ _
+  simpa [RCLike.normSq_eq_def']
+
+lemma _root_.Complex.normSq_radial : IsRadial (Complex.normSq) := RCLike.normSq_radial
+
+variable (E) in
+lemma _root_.Function.isRadial_norm_sq : IsRadial (‖·‖ ^ 2 : E → ℝ) := by grind [isRadial_def]
+
 end IsRadial
 
 section Isometries
