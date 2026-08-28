@@ -14,6 +14,8 @@ space consisting of radial functions. It proves that the Fourier transform is an
 submodule. It proves `FourierTransform`, `FourierPair`, `ContinuousFourier`, `FourierAdd` and
 `FourierSMul` instances (and the corresponding instances for 𝓕⁻) and `StarAddMonoid` and
 `StarModule` instances (where the module structure is over ℝ).
+
+See [Mathlib PR #43179](https://github.com/leanprover-community/mathlib4/pull/43179)
 -/
 
 @[expose] public section
@@ -29,11 +31,11 @@ lemma isRadial_def [Norm E] (f : E → F) :
     f.IsRadial ↔ ∀ {x y : E}, ‖x‖ = ‖y‖ → f x = f y := by
   simp [IsRadial, Function.FactorsThrough]
 
-namespace IsRadial
-
 /-- The radial part of a function. If f is a radial function, then `f = f.radialPart ∘ ‖·‖`. -/
-noncomputable def _root_.Function.radialPart [Norm E] [hF : Nonempty F] (f : E → F) : ℝ → F :=
+noncomputable def radialPart [Norm E] [hF : Nonempty F] (f : E → F) : ℝ → F :=
   Function.extend (‖·‖ : E → ℝ) f <| fun _ ↦ Classical.choice hF
+
+namespace IsRadial
 
 lemma eq_radialPart_comp_norm [Norm E] [Nonempty F] {f : E → F} (hf : f.IsRadial) :
     f = f.radialPart ∘ (‖·‖ : E → ℝ) := by
@@ -203,7 +205,6 @@ lemma fourier_coe (f : RadialSchwartzMap 𝕜 E F) :
 
 section inverse
 
--- TODO: Trim down hypotheses for this result.
 lemma _root_.Function.Even.fourierInv {f : E → F} (hf : (𝓕 f).Even) {w : E} :
     𝓕⁻ f w = 𝓕 f w := by
   rw [fourierInv_eq_fourier_neg]
@@ -216,7 +217,6 @@ lemma _root_.SchwartzMap.fourier_eq_fourierInv_of_mem_radialSchwartzMap {f : �
   rw [fourierInv_coe, SchwartzMap.fourier_coe]
   exact Function.Even.fourierInv <| IsRadial.even (hf.fourier)
 
--- Is this necessary?
 lemma _root_.SchwartzMap.eqOn_fourier_fourierInv_radialSchwartzMap :
     Set.EqOn (𝓕⁻ : 𝓢(E, F) → 𝓢(E, F)) (𝓕 : 𝓢(E, F) → 𝓢(E, F)) (RadialSchwartzMap 𝕜 E F) :=
   fun _ hf ↦ SchwartzMap.fourier_eq_fourierInv_of_mem_radialSchwartzMap 𝕜 hf
