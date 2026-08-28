@@ -5,6 +5,10 @@ Authors: Sidharth Hariharan
 -/
 module
 
+public import Mathlib.Algebra.Ring.IsFormallyReal
+public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+public import Mathlib.Topology.EMetricSpace.Paracompact
+public import Mathlib.Topology.Separation.CompletelyRegular
 public import SpherePacking.ForMathlib.Analysis.Complex.Exponential
 
 /-!
