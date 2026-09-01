@@ -75,7 +75,7 @@ lemma I₂'_bounding_aux_1 (r : ℝ) : ∀ t ∈ Ioo (0 : ℝ) 1, ‖g r t‖ �
 `Majorants.im_neg_one_div_add_I`. -/
 lemma im_parametrisation_eq : ∀ t ∈ Ioo (0 : ℝ) 1, (-1 / (↑t + I)).im = 1 / (t ^ 2 + 1) := by
   intro t _
-  simpa using im_neg_one_div_add_I (t : ℝ)
+  simpa using im_neg_one_div_add_I t
 
 lemma im_parametrisation_lower : ∀ t ∈ Ioo (0 : ℝ) 1, 1 / 2 < (-1 / (↑t + I)).im := by
   intro t ht
