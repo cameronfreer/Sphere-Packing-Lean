@@ -39,41 +39,13 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {f : ℂ → E} 
 
 section Tendsto_Zero
 
-/-- If $f(z) \to 0$ as $\Im(z) \to \infty$, then
-  $\lim_{m \to \infty} \int_{x_1}^{x_2} f(x + mI) dx = 0$. -/
-lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero
-    (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
-    Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0) := by
-  wlog hne : x₁ ≠ x₂
-  · rw [ne_eq, Decidable.not_not] at hne
-    simp only [hne, integral_same, tendsto_const_nhds_iff]
-  simp only [NormedAddGroup.tendsto_nhds_zero, eventually_atTop]
-  intro ε hε
-  obtain ⟨M, hM⟩ := htendsto ((1 / 2) * (ε / |x₂ - x₁|)) <| by
-    simp only [one_div, inv_pos, Nat.ofNat_pos, mul_pos_iff_of_pos_left]
-    exact (div_pos hε (abs_sub_pos.mpr hne.symm))
-  use M
-  intro y hy
-  calc ‖∫ (x : ℝ) in x₁..x₂, f (↑x + ↑y * I)‖
-  _ ≤ ((1 / 2) * (ε / |x₂ - x₁|)) * |x₂ - x₁| :=
-      intervalIntegral.norm_integral_le_of_norm_le_const <| by
-      intro x hx
-      specialize hM (x + y * I)
-      rw [im_of_real_add_real_mul_I x y] at hM
-      exact le_of_lt (hM hy)
-  _ = (1 / 2) * ε := by
-      rw [mul_assoc]
-      have : 0 ≠ |x₂ - x₁| := ne_of_lt (abs_sub_pos.mpr hne.symm)
-      field_simp [this]
-  _ < ε := by linarith
+/-- Strip-local decay suffices: if `f` decays uniformly as `Im z → ∞` *within the vertical strip*
+`[[x₁, x₂]] ×ℂ ℝ` swept by the top edge, then
+$\lim_{m \to \infty} \int_{x_1}^{x_2} f(x + mI) dx = 0$.
 
-/-- Strip-local version of `tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero`:
-the decay of `f` is only ever needed on the vertical strip `[[x₁, x₂]] ×ℂ ℝ` swept by the top
-edge, never off it.
-
-This matters in practice: an integrand can decay uniformly as `Im z → ∞` *within a bounded strip*
-while growing without bound along a horizontal line, so the global hypothesis is often not merely
-stronger than needed but actually false. -/
+This is the primitive form. The decay is only ever used at points of the strip, so requiring it
+off the strip would be gratuitous — and in applications often false, since an integrand can decay
+as `Im z → ∞` within a bounded strip while growing without bound along a horizontal line. -/
 lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc
     (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, z.re ∈ [[x₁, x₂]] → M ≤ z.im → ‖f z‖ < ε) :
     Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0) := by
@@ -99,6 +71,17 @@ lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc
       have : 0 ≠ |x₂ - x₁| := ne_of_lt (abs_sub_pos.mpr hne.symm)
       field_simp [this]
   _ < ε := by linarith
+
+/-- If $f(z) \to 0$ as $\Im(z) \to \infty$, then
+  $\lim_{m \to \infty} \int_{x_1}^{x_2} f(x + mI) dx = 0$.
+
+A wrapper around the strip-local
+`tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc`. -/
+lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero
+    (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
+    Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0) :=
+  tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc
+    (fun ε hε ↦ (htendsto ε hε).imp fun _ hM z _ hz ↦ hM z hz)
 
 end Tendsto_Zero
 
