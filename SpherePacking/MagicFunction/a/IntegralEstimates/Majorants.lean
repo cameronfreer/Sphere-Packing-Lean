@@ -6,7 +6,7 @@ Authors: Cameron Freer
 module
 
 
-public import SpherePacking.MagicFunction.PolyFourierCoeffBound
+public import SpherePacking.MagicFunction.a.PhiBounds
 public import SpherePacking.MagicFunction.a.Basic
 public import SpherePacking.MagicFunction.a.Integrability.RealDecay
 
@@ -23,7 +23,7 @@ differ. This file isolates the shared ingredients so that `I1.lean`–`I6.lean` 
 ### The master bound on `φ₀''`
 
 * `norm_φ₀''_le`: for `Im w > 1/2`, `‖φ₀'' w‖ ≤ C₀ * exp (-2π * Im w)`. This is
-  `PolyFourierCoeffBound.norm_φ₀_le` transported from `ℍ` to `ℂ` once and for all.
+  `PhiBounds.φ₀_bound` transported from `ℍ` to `ℂ` once and for all.
 
 Specialisations along the three families of parametrisations:
 
@@ -48,7 +48,7 @@ Specialisations along the three families of parametrisations:
 @[expose] public section
 
 open MagicFunction.Parametrisations MagicFunction.a.RealIntegrals
-  MagicFunction.a.RadialFunctions MagicFunction.PolyFourierCoeffBound
+  MagicFunction.a.RadialFunctions MagicFunction.a
   MagicFunction.a.ComplexIntegrands MagicFunction.a.RealIntegrands
 open Complex Real Set MeasureTheory MeasureTheory.Measure Filter
 open scoped Function UpperHalfPlane
@@ -59,15 +59,15 @@ namespace MagicFunction.a.Majorants
 
 /-! ## The master bound on `φ₀''` -/
 
-/-- The `PolyFourierCoeffBound` for `φ₀`, transported to `φ₀''` on the half-plane `Im w > 1/2`.
+/-- The blueprint Corollary 7.5 bound `φ₀_bound` for `φ₀`, transported to `φ₀''` on the
+half-plane `Im w > 1/2`.
 
 Every estimate on the six contour segments is a specialisation of this one bound; the
 segments differ only in the parametrisation `t ↦ w t` fed into it. -/
 theorem norm_φ₀''_le : ∃ C₀ > 0, ∀ w : ℂ, 1 / 2 < w.im → ‖φ₀'' w‖ ≤ C₀ * rexp (-2 * π * w.im) := by
-  obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀_le
-  refine ⟨C₀, hC₀_pos, fun w hw ↦ ?_⟩
+  refine ⟨C_φ₀, C_φ₀_pos, fun w hw ↦ ?_⟩
   have hpos : 0 < w.im := one_half_pos.trans hw
-  exact (φ₀''_def hpos) ▸ hC₀ ⟨w, hpos⟩ hw
+  exact (φ₀''_def hpos) ▸ φ₀_bound ⟨w, hpos⟩ hw
 
 /-! ### Imaginary parts of the three families of parametrisations -/
 
