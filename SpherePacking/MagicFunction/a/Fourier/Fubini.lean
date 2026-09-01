@@ -59,10 +59,14 @@ namespace MagicFunction.a.Fourier
 
 /-! ## Gaussian workhorses -/
 
-/-- `‖cexp (-π‖x‖² t)‖ = exp (-π‖x‖² t)`. -/
-lemma norm_cexp_neg_pi_norm_sq_mul (x : V) (t : ℝ) :
-    ‖cexp (-π * ‖x‖ ^ 2 * t)‖ = rexp (-π * ‖x‖ ^ 2 * t) := by
-  simp only [← ofReal_neg, ← ofReal_pow, ← ofReal_mul, norm_exp_ofReal]
+/-- `‖cexp (π I ‖x‖² z)‖ = exp (-π ‖x‖² Im z)`: the modulus of the Gaussian phase attached to a
+point `z` of the upper half-plane depends only on `Im z`. -/
+lemma norm_cexp_pi_I_norm_sq_mul (x : V) (z : ℂ) :
+    ‖cexp ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * z)‖ = rexp (-π * ‖x‖ ^ 2 * z.im) := by
+  rw [Complex.norm_exp]
+  congr 1
+  simp only [mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero, zero_mul, mul_one,
+    sub_zero, zero_sub, zero_add, add_zero, neg_mul]
 
 /-- The Gaussian is integrable on `ℝ⁸`. -/
 lemma gaussian_integrable_R8 (c : ℝ) (hc : 0 < c) :
@@ -246,11 +250,7 @@ lemma Φ₂_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     ring]
   rw [norm_mul, norm_mul]
   have h_exp : ‖cexp ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * (-1 + t + I))‖ = rexp (-π * ‖x‖ ^ 2) := by
-    have h_eq : ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * (-1 + t + I)) =
-        ((π * ‖x‖ ^ 2 * (t - 1) : ℝ) : ℂ) * I + ((-π * ‖x‖ ^ 2 : ℝ) : ℂ) := by
-      apply Complex.ext <;> simp <;> ring
-    simp only [h_eq, Complex.exp_add, Complex.norm_mul, Complex.norm_exp_ofReal_mul_I,
-      norm_exp_ofReal, one_mul]
+    simpa using norm_cexp_pi_I_norm_sq_mul x (-1 + t + I)
   rw [h_exp]
   have h1 : ‖φ₀'' (-1 / ((t : ℂ) + I))‖ * ‖((t : ℂ) + I) ^ 2‖ ≤ 2 * (M + 1) := by
     calc ‖φ₀'' (-1 / ((t : ℂ) + I))‖ * ‖((t : ℂ) + I) ^ 2‖
@@ -268,11 +268,7 @@ lemma Φ₄_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Icc (0 : ℝ) 1,
     ring]
   rw [norm_mul, norm_mul, norm_mul, show ‖(-1 : ℂ)‖ = 1 by simp, one_mul]
   have h_exp : ‖cexp ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * (1 - t + I))‖ = rexp (-π * ‖x‖ ^ 2) := by
-    have h_eq : ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * (1 - t + I)) =
-        ((π * ‖x‖ ^ 2 * (1 - t) : ℝ) : ℂ) * I + ((-π * ‖x‖ ^ 2 : ℝ) : ℂ) := by
-      apply Complex.ext <;> simp <;> ring
-    simp only [h_eq, Complex.exp_add, Complex.norm_mul, Complex.norm_exp_ofReal_mul_I,
-      norm_exp_ofReal, one_mul]
+    simpa using norm_cexp_pi_I_norm_sq_mul x (1 - t + I)
   rw [h_exp]
   have hcast : ((-t : ℝ) : ℂ) = -(t : ℂ) := by push_cast; ring
   have h1 : ‖φ₀'' (-1 / (-(t : ℂ) + I))‖ * ‖(-(t : ℂ) + I) ^ 2‖ ≤ 2 * (M + 1) := by
@@ -320,10 +316,10 @@ lemma Φ₆_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Ici (1 : ℝ),
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_I_mul_le
   refine ⟨C₀, hC₀_pos, fun x t ht ↦ ?_⟩
   have ht1 : (1 : ℝ) ≤ t := ht
-  simp only [I₆_integrand, Φ₆, Φ₆', z₆'_eq_of_mem ht, cexp_pi_I_mul_I, norm_mul, Complex.norm_I,
-    one_mul]
-  have hgauss : ‖cexp (-((π : ℂ) * ((‖x‖ ^ 2 : ℝ) : ℂ) * (t : ℂ)))‖ = rexp (-π * ‖x‖ ^ 2 * t) := by
-    simpa [neg_mul] using norm_cexp_neg_pi_norm_sq_mul x t
+  simp only [I₆_integrand, Φ₆, Φ₆', z₆'_eq_of_mem ht, norm_mul, Complex.norm_I, one_mul]
+  have hgauss : ‖cexp ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * (I * (t : ℂ)))‖
+      = rexp (-π * ‖x‖ ^ 2 * t) := by
+    simpa using norm_cexp_pi_I_norm_sq_mul x (I * t)
   rw [hgauss]
   have hφ : ‖φ₀'' (I * (t : ℂ))‖ ≤ C₀ * rexp (-2 * π * t) := hC₀ t (by linarith)
   have hgle : rexp (-π * ‖x‖ ^ 2 * t) ≤ rexp (-π * ‖x‖ ^ 2) := by
@@ -372,12 +368,14 @@ lemma Φ₅_prod_norm_bound : ∃ C > 0, ∀ x : V, ∀ t ∈ Ioc (0 : ℝ) 1,
     ‖I₅_integrand (x, t)‖ ≤ C * rexp (-2 * π / t) * t ^ 2 * rexp (-π * t * ‖x‖ ^ 2) := by
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_neg_inv_I_mul_le
   refine ⟨C₀, hC₀_pos, fun x t ht ↦ ?_⟩
-  simp only [I₅_integrand, Φ₅, Φ₅', z₅'_eq_of_mem (mem_Icc_of_Ioc ht), cexp_pi_I_mul_I, norm_mul,
+  simp only [I₅_integrand, Φ₅, Φ₅', z₅'_eq_of_mem (mem_Icc_of_Ioc ht), norm_mul,
     Complex.norm_I, one_mul, mul_pow, I_sq, neg_one_mul, norm_neg, norm_pow, Complex.norm_real,
     Real.norm_eq_abs, abs_of_pos ht.1]
-  have hgauss : ‖cexp (-((π : ℂ) * ((‖x‖ ^ 2 : ℝ) : ℂ) * (t : ℂ)))‖ = rexp (-π * t * ‖x‖ ^ 2) := by
-    rw [show (-((π : ℂ) * ((‖x‖ ^ 2 : ℝ) : ℂ) * (t : ℂ))) = ((-π * t * ‖x‖ ^ 2 : ℝ) : ℂ) by
-      push_cast; ring, norm_exp_ofReal]
+  have hgauss : ‖cexp ((π : ℂ) * I * ((‖x‖ ^ 2 : ℝ) : ℂ) * (I * (t : ℂ)))‖
+      = rexp (-π * t * ‖x‖ ^ 2) := by
+    rw [norm_cexp_pi_I_norm_sq_mul]
+    simp only [mul_im, I_re, I_im, ofReal_re, ofReal_im, one_mul, mul_zero, zero_add,
+      mul_right_comm]
   rw [hgauss]
   gcongr
   exact hC₀ t ht.1 (lt_of_le_of_lt ht.2 one_lt_two)
