@@ -42,24 +42,21 @@ namespace MagicFunction.a.Integrability
 /-! ### Cusp-touching segments -/
 
 /-- `Φ₁` is integrable on `(0, 1]`: it is uniformly bounded there by `norm_Φ₁_le`. -/
-theorem Φ₁_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₁ r)
-    (Ioc (0 : ℝ) 1) volume := by
+theorem Φ₁_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₁ r) (Ioc (0 : ℝ) 1) volume := by
   obtain ⟨_, _, hb⟩ := norm_Φ₁_le hr
-  exact integrableOn_of_norm_le_const measurableSet_Ioc (by simp [Real.volume_Ioc])
+  exact integrableOn_of_norm_le_const measurableSet_Ioc measure_Ioc_lt_top.ne
     Φ₁_contDiffOn.continuousOn hb
 
 /-- `Φ₃` is integrable on `(0, 1]`: it is uniformly bounded there by `norm_Φ₃_le`. -/
-theorem Φ₃_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₃ r)
-    (Ioc (0 : ℝ) 1) volume := by
+theorem Φ₃_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₃ r) (Ioc (0 : ℝ) 1) volume := by
   obtain ⟨_, _, hb⟩ := norm_Φ₃_le hr
-  exact integrableOn_of_norm_le_const measurableSet_Ioc (by simp [Real.volume_Ioc])
+  exact integrableOn_of_norm_le_const measurableSet_Ioc measure_Ioc_lt_top.ne
     Φ₃_contDiffOn.continuousOn hb
 
 /-- `Φ₅` is integrable on `(0, 1]`: it is uniformly bounded there by `norm_Φ₅_le`. -/
-theorem Φ₅_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₅ r)
-    (Ioc (0 : ℝ) 1) volume := by
+theorem Φ₅_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₅ r) (Ioc (0 : ℝ) 1) volume := by
   obtain ⟨_, _, hb⟩ := norm_Φ₅_le hr
-  exact integrableOn_of_norm_le_const measurableSet_Ioc (by simp [Real.volume_Ioc])
+  exact integrableOn_of_norm_le_const measurableSet_Ioc measure_Ioc_lt_top.ne
     Φ₅_contDiffOn.continuousOn hb
 
 /-! ### Compact top-edge segments -/
@@ -77,19 +74,15 @@ theorem Φ₄_integrableOn {r : ℝ} (_hr : r ≥ 0) : IntegrableOn (Φ₄ r)
 /-! ### Vertical tail -/
 
 /-- On `[1, ∞)` the real integrand `Φ₆` coincides with the integrand `g` of `I₆`. -/
-lemma Φ₆_eq_I₆_g (r t : ℝ) (ht : t ∈ Ici (1 : ℝ)) :
-    Φ₆ r t = MagicFunction.a.IntegralEstimates.I₆.g r t := by
-  simp only [Φ₆, Φ₆', MagicFunction.a.IntegralEstimates.I₆.g, z₆'_eq_of_mem ht,
-    cexp_pi_I_mul_I]
+lemma Φ₆_eq_I₆_g (r t : ℝ) (ht : t ∈ Ici (1 : ℝ)) : Φ₆ r t = IntegralEstimates.I₆.g r t := by
+  simp only [Φ₆, Φ₆', IntegralEstimates.I₆.g, z₆'_eq_of_mem ht, cexp_pi_I_mul_I]
   ring_nf
 
 /-- `Φ₆` is integrable on `[1, ∞)`, dominated by the vertical-class majorant. -/
-theorem Φ₆_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₆ r)
-    (Ici (1 : ℝ)) volume := by
-  obtain ⟨C₀, _, hb⟩ := MagicFunction.a.IntegralEstimates.I₆.I₆'_bounding_aux_2 r
-  refine Integrable.mono' (MagicFunction.a.IntegralEstimates.I₆.Bound_integrableOn r C₀ hr)
-    (Φ₆_contDiffOn.continuousOn.aestronglyMeasurable measurableSet_Ici) ?_
-  rw [ae_restrict_iff' measurableSet_Ici]
-  exact ae_of_all _ fun t ht ↦ (Φ₆_eq_I₆_g r t ht).symm ▸ hb t ht
+theorem Φ₆_integrableOn {r : ℝ} (hr : r ≥ 0) : IntegrableOn (Φ₆ r) (Ici (1 : ℝ)) volume := by
+  obtain ⟨C₀, _, hb⟩ := IntegralEstimates.I₆.I₆'_bounding_aux_2 r
+  exact Integrable.mono' (integrableOn_majorant_vertical r C₀ hr)
+    (Φ₆_contDiffOn.continuousOn.aestronglyMeasurable measurableSet_Ici)
+    (ae_restrict_of_forall_mem measurableSet_Ici fun t ht ↦ (Φ₆_eq_I₆_g r t ht).symm ▸ hb t ht)
 
 end MagicFunction.a.Integrability

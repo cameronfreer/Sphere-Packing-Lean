@@ -62,14 +62,6 @@ lemma I₆'_bounding_aux_2 (r : ℝ) : ∃ C₀ > 0, ∀ t ∈ Ici (1 : ℝ),
 
 end Bounding_Integrand
 
-section Integrability
-
-lemma Bound_integrableOn (r C₀ : ℝ) (hr : 0 ≤ r) :
-    IntegrableOn (fun t ↦ C₀ * rexp (-2 * π * t) * rexp (-π * r * t)) (Ici (1 : ℝ)) volume :=
-  integrableOn_majorant_vertical r C₀ hr
-
-end Integrability
-
 section Bounding_Integral
 
 lemma I₆'_bounding_aux_3 (r : ℝ) (hr : 0 ≤ r) : ∃ C₀ > 0,
@@ -83,7 +75,7 @@ lemma I₆'_bounding_aux_3 (r : ℝ) (hr : 0 ≤ r) : ∃ C₀ > 0,
     positivity
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := I₆'_bounding_aux_2 r
   use C₀, hC₀_pos
-  exact setIntegral_mono_on hint (Bound_integrableOn r C₀ hr) measurableSet_Ici hC₀
+  exact setIntegral_mono_on hint (integrableOn_majorant_vertical r C₀ hr) measurableSet_Ici hC₀
 
 theorem I₆'_bounding (r : ℝ) (hr : 0 ≤ r) : ∃ C₁ > 0,
     ‖I₆' r‖ ≤ ∫ t in Ici (1 : ℝ), C₁ * rexp (-2 * π * t) * rexp (-π * r * t) := by

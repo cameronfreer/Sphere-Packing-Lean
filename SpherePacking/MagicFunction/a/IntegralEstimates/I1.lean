@@ -164,14 +164,6 @@ lemma I₁'_bounding_aux_2 (r : ℝ) : ∃ C₀ > 0, ∀ x ∈ Ici 1,
 
 end Bounding_Integrand
 
-section Integrability
-
-lemma Bound_integrableOn (r C₀ : ℝ) :
-    IntegrableOn (fun s ↦ C₀ * rexp (-2 * π * s) * rexp (-π * r / s)) (Ici 1) volume :=
-  integrableOn_majorant_cusp r C₀
-
-end Integrability
-
 section Bounding_Integral
 
 lemma I₁'_bounding_1_aux_3 (r : ℝ) : ∃ C₀ > 0, ∫ (s : ℝ) in Ici 1, ‖g r s‖ ≤
@@ -184,7 +176,7 @@ lemma I₁'_bounding_1_aux_3 (r : ℝ) : ∃ C₀ > 0, ∫ (s : ℝ) in Ici 1, �
     positivity
   obtain ⟨C₀, hC₀_pos, hC₀⟩ := I₁'_bounding_aux_2 r
   use C₀, hC₀_pos
-  exact setIntegral_mono_on hint (Bound_integrableOn r C₀) measurableSet_Ici hC₀
+  exact setIntegral_mono_on hint (integrableOn_majorant_cusp r C₀) measurableSet_Ici hC₀
 
 theorem I₁'_bounding (r : ℝ) : ∃ C₀ > 0,
     ‖I₁' r‖ ≤ ∫ s in Ici (1 : ℝ), C₀ * rexp (-2 * π * s) * rexp (-π * r / s) := by
