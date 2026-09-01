@@ -35,6 +35,7 @@ public import SpherePacking.MagicFunction.a.Integrability.CuspPath
 public import SpherePacking.MagicFunction.a.Integrability.Integrability
 public import SpherePacking.MagicFunction.a.Integrability.RealDecay
 public import SpherePacking.MagicFunction.a.Integrability.RealIntegrands
+public import SpherePacking.MagicFunction.a.IntegralEstimates.Majorants
 public import SpherePacking.MagicFunction.a.IntegralEstimates.I1
 public import SpherePacking.MagicFunction.a.IntegralEstimates.I2
 public import SpherePacking.MagicFunction.a.IntegralEstimates.I3

@@ -8,6 +8,7 @@ module
 
 public import SpherePacking.MagicFunction.PolyFourierCoeffBound
 public import SpherePacking.MagicFunction.a.Basic
+public import SpherePacking.MagicFunction.a.IntegralEstimates.Majorants
 
 /-!
 # Constructing Upper-Bounds for I₆
@@ -21,6 +22,7 @@ of the function `a`. We follow the proof of Proposition 7.8 in the blueprint.
 
 @[expose] public section
 
+open MagicFunction.a.Majorants
 open MagicFunction.Parametrisations MagicFunction.a.RealIntegrals
   MagicFunction.a.RadialFunctions MagicFunction.PolyFourierCoeffBound
 open Complex Real Set MeasureTheory MeasureTheory.Measure Filter intervalIntegral
@@ -51,49 +53,20 @@ lemma I₆'_bounding_aux_1 (r : ℝ) : ∀ t ∈ Ici 1, ‖g r t‖ = ‖φ₀''
 
 lemma I₆'_bounding_aux_2 (r : ℝ) : ∃ C₀ > 0, ∀ t ∈ Ici (1 : ℝ),
     ‖g r t‖ ≤ C₀ * rexp (-2 * π * t) * rexp (-π * r * t) := by
-  obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀_le -- The `PolyFourierCoeffBound` of `φ₀`
-  use C₀, hC₀_pos
-  intro t ht
+  obtain ⟨C₀, hC₀_pos, hC₀⟩ := norm_φ₀''_I_mul_le
+  refine ⟨C₀, hC₀_pos, fun t ht ↦ ?_⟩
   rw [I₆'_bounding_aux_1 r t ht]
   rw [mem_Ici] at ht
   gcongr
-  have him : (I * t).im = t := by simp
-  have hpos : 0 < (I * t).im := by rw [him]; linarith
-  have h_half_lt_one : 1 / 2 < (I * t).im := by rw [him]; linarith
-  let z : ℍ := ⟨I * t, hpos⟩
-  have him' : z.im = t := him
-  specialize hC₀ z h_half_lt_one
-  simp only [φ₀'', hpos, ↓reduceDIte]
-  simp only [him'] at hC₀
-  exact hC₀
+  exact hC₀ t (by linarith)
 
 end Bounding_Integrand
 
 section Integrability
 
 lemma Bound_integrableOn (r C₀ : ℝ) (hr : 0 ≤ r) :
-  IntegrableOn (fun t ↦ C₀ * rexp (-2 * π * t) * rexp (-π * r * t)) (Ici (1 : ℝ)) volume := by
-  have hb_pos : 0 < π * (r + 2) := mul_pos Real.pi_pos (by linarith)
-  have h0 : IntegrableOn (fun t : ℝ => rexp (-(π * (r + 2)) * t)) (Ioi (1 : ℝ)) := by
-    simpa using exp_neg_integrableOn_Ioi (a := (1 : ℝ)) (b := π * (r + 2)) hb_pos
-  have h1 : IntegrableOn (fun t : ℝ => C₀ * rexp (-(π * (r + 2)) * t)) (Ioi (1 : ℝ)) :=
-    h0.const_mul C₀
-  have h_eq (t : ℝ) :
-      C₀ * rexp (-(π * (r + 2)) * t) =
-        C₀ * rexp (-2 * π * t) * rexp (-π * r * t) := by
-    have ht : -(π * (r + 2)) * t = (-2 * π * t) + (-π * r * t) := by ring_nf
-    simp [ht, Real.exp_add, mul_comm, mul_left_comm]
-  have h2 : IntegrableOn (fun t : ℝ => C₀ * rexp (-2 * π * t) * rexp (-π * r * t))
-        (Ioi (1 : ℝ)) volume := by
-    refine h1.congr_fun ?_ measurableSet_Ioi
-    intro t _
-    exact h_eq t
-  exact
-    (integrableOn_Ici_iff_integrableOn_Ioi
-        (μ := (volume : Measure ℝ))
-        (f := fun t : ℝ => C₀ * rexp (-2 * π * t) * rexp (-π * r * t))
-        (b := (1 : ℝ))).2
-      h2
+    IntegrableOn (fun t ↦ C₀ * rexp (-2 * π * t) * rexp (-π * r * t)) (Ici (1 : ℝ)) volume :=
+  integrableOn_majorant_vertical r C₀ hr
 
 end Integrability
 
