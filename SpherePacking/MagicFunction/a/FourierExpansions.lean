@@ -8,6 +8,7 @@ module
 public import SpherePacking.MagicFunction.PolyFourierCoeffBound
 public import SpherePacking.ForMathlib.SpecificLimits
 public import SpherePacking.ModularForms.FG
+public import SpherePacking.MagicFunction.a.CauchyCoeffBounds
 
 /-!
 # Fourier expansions and norm bounds for the linear factors of φ₀, φ₂', φ₄'
@@ -96,10 +97,8 @@ lemma summable_fouterm_of_poly {c : ℤ → ℂ} {k : ℕ}
 
 A `q`-series `∑ₘ b m · qᵐ` (with `q = cexp (2π i z)`, the standard convention) becomes a
 `fouterm` sum (with `r = cexp (π i z)`, the half-`q` convention used by `DivDiscBound`) by placing
-the `m`-th coefficient at the even index `2m` and `0` on odd indices. -/
-
-/-- The even-support `fouterm` coefficient carrying `b` at index `2m`. -/
-def evenCoeff (b : ℕ → ℂ) : ℤ → ℂ := fun k => if Even k then b (k / 2).toNat else 0
+the `m`-th coefficient at the even index `2m` and `0` on odd indices; `evenCoeff` (from
+`CauchyCoeffBounds`) is that re-indexer. -/
 
 /-- **Keystone reindex** (built via `Function.Injective.tsum_eq` along `m ↦ 2m`). -/
 lemma qexp_eq_fouterm (b : ℕ → ℂ) (x : ℍ) :
@@ -129,13 +128,8 @@ lemma qexp_eq_fouterm (b : ℕ → ℂ) (x : ℍ) :
 /-! ## Linear factor q-coefficients and fouterm identities
 
 `E₄` and `E₂E₄−E₆` are the *linear* factors of the φ-numerators. Their genuine `q`-coefficients
-are simple (no Cauchy convolution), so via the keystone they have clean `fouterm` expansions. -/
-
-/-- ℕ-indexed `q`-coefficients of `E₄`: `1` at `0`, `240·σ₃(m)` for `m ≥ 1`. -/
-def bE₄ : ℕ → ℂ := fun m => if m = 0 then 1 else 240 * (σ 3 m : ℂ)
-
-/-- ℕ-indexed `q`-coefficients of `E₂E₄ − E₆`: `720·m·σ₃(m)` (vanishes at `0`). -/
-def bg : ℕ → ℂ := fun m => 720 * (m : ℂ) * (σ 3 m : ℂ)
+`bE₄` and `bg` (defined in `CauchyCoeffBounds`) are simple (no Cauchy convolution), so via the
+keystone they have clean `fouterm` expansions. -/
 
 /-- `E₄` as an ℕ-indexed `q`-series with coefficients `bE₄`. -/
 lemma E₄_qexp_nat (z : ℍ) :
