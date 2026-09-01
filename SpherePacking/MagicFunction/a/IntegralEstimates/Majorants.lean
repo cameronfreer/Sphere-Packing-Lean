@@ -106,7 +106,7 @@ theorem integrableOn_majorant_cusp (r C₀ : ℝ) :
   filter_upwards [ae_restrict_mem measurableSet_Ici] with s (hs : 1 ≤ s)
   simp only [Real.norm_eq_abs, abs_mul, Real.abs_exp]
   gcongr
-  rw [div_le_iff₀ (by linarith : (0:ℝ) < s)]
+  rw [div_le_iff₀ (by linarith : (0 : ℝ) < s)]
   nlinarith [mul_nonneg pi_pos.le (abs_nonneg r), pi_pos, neg_abs_le r]
 
 /-- Vertical class: the majorant `C₀ * exp (-2πt) * exp (-πrt)` on `[1, ∞)`, for `r ≥ 0`. -/
@@ -148,7 +148,7 @@ lemma Φ₁_eq_Φ₅_mul_phase (ht : t ∈ Icc (0 : ℝ) 1) :
     Φ₁ r t = Φ₅ r t * cexp ((-(π * r) : ℝ) * I) := by
   simp only [Φ₁, Φ₅, Φ₁', Φ₅', z₁'_eq_of_mem ht, z₅'_eq_of_mem ht, neg_add_cancel_comm]
   rw [show (π : ℂ) * I * (r : ℂ) * (-1 + I * (t : ℂ))
-      = ((-(π * r) : ℝ) : ℂ) * I + (π : ℂ) * I * (r : ℂ) * (I * (t : ℂ)) from by push_cast; ring,
+      = ((-(π * r) : ℝ) : ℂ) * I + (π : ℂ) * I * (r : ℂ) * (I * (t : ℂ)) by push_cast; ring,
     Complex.exp_add]
   ring
 
@@ -157,7 +157,7 @@ lemma Φ₃_eq_Φ₅_mul_phase (ht : t ∈ Icc (0 : ℝ) 1) :
     Φ₃ r t = Φ₅ r t * cexp (((π * r) : ℝ) * I) := by
   simp only [Φ₃, Φ₅, Φ₃', Φ₅', z₃'_eq_of_mem ht, z₅'_eq_of_mem ht, add_sub_cancel_left]
   rw [show (π : ℂ) * I * (r : ℂ) * (1 + I * (t : ℂ))
-      = (((π * r) : ℝ) : ℂ) * I + (π : ℂ) * I * (r : ℂ) * (I * (t : ℂ)) from by push_cast; ring,
+      = (((π * r) : ℝ) : ℂ) * I + (π : ℂ) * I * (r : ℂ) * (I * (t : ℂ)) by push_cast; ring,
     Complex.exp_add]
   ring
 
