@@ -67,6 +67,39 @@ lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero
       field_simp [this]
   _ < ε := by linarith
 
+/-- Strip-local version of `tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero`:
+the decay of `f` is only ever needed on the vertical strip `[[x₁, x₂]] ×ℂ ℝ` swept by the top
+edge, never off it.
+
+This matters in practice: an integrand can decay uniformly as `Im z → ∞` *within a bounded strip*
+while growing without bound along a horizontal line, so the global hypothesis is often not merely
+stronger than needed but actually false. -/
+lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc
+    (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, z.re ∈ [[x₁, x₂]] → M ≤ z.im → ‖f z‖ < ε) :
+    Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0) := by
+  wlog hne : x₁ ≠ x₂
+  · rw [ne_eq, Decidable.not_not] at hne
+    simp only [hne, integral_same, tendsto_const_nhds_iff]
+  simp only [NormedAddGroup.tendsto_nhds_zero, eventually_atTop]
+  intro ε hε
+  obtain ⟨M, hM⟩ := htendsto ((1 / 2) * (ε / |x₂ - x₁|)) <| by
+    simp only [one_div, inv_pos, Nat.ofNat_pos, mul_pos_iff_of_pos_left]
+    exact (div_pos hε (abs_sub_pos.mpr hne.symm))
+  use M
+  intro y hy
+  calc ‖∫ (x : ℝ) in x₁..x₂, f (↑x + ↑y * I)‖
+  _ ≤ ((1 / 2) * (ε / |x₂ - x₁|)) * |x₂ - x₁| :=
+      intervalIntegral.norm_integral_le_of_norm_le_const <| by
+      intro x hx
+      specialize hM (x + y * I)
+      rw [re_of_real_add_real_mul_I x y, im_of_real_add_real_mul_I x y] at hM
+      exact le_of_lt (hM (Set.uIoc_subset_uIcc hx) hy)
+  _ = (1 / 2) * ε := by
+      rw [mul_assoc]
+      have : 0 ≠ |x₂ - x₁| := ne_of_lt (abs_sub_pos.mpr hne.symm)
+      field_simp [this]
+  _ < ε := by linarith
+
 end Tendsto_Zero
 
 section Eventually_Eq_Zero
@@ -136,11 +169,11 @@ integrals along the second integral.
 We call this a deformation of _open rectangular contours_ because it allows us to change contours
 when working with contours that look like "infinite boxes without lids"---that is, rectangular
 contours that are "open" at the top (we do not mean open in a topological sense). -/
-theorem tendsto_integral_boundary_open_rect_one_side_atTop_nhds_sum_other_two_sides
+theorem tendsto_integral_boundary_open_rect_one_side_atTop_of_tendsto_top
     (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
     (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
     {C₂ : E} (hC₂ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
-    (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
+    (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
     Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop <|
       𝓝 ((∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂) := by
   have heventually : (fun (m : ℝ) ↦
@@ -153,24 +186,49 @@ theorem tendsto_integral_boundary_open_rect_one_side_atTop_nhds_sum_other_two_si
   rw [tendsto_congr' heventually.symm, ← sub_zero (∫ (t : ℝ) in x₁..x₂, f (↑t + ↑y * I))]
   refine (Tendsto.sub ?_ ?_).add hC₂
   · rw [sub_zero, tendsto_const_nhds_iff]
-  · exact tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero htendsto
+  · exact htop
+
+/-- **Deformation of open rectangular contours.** The original formulation, whose decay hypothesis
+is global in the real direction; it is a wrapper around the `_of_tendsto_top` version. -/
+theorem tendsto_integral_boundary_open_rect_one_side_atTop_nhds_sum_other_two_sides
+    (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
+    (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
+    {C₂ : E} (hC₂ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
+    (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
+    Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop <|
+      𝓝 ((∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂) :=
+  tendsto_integral_boundary_open_rect_one_side_atTop_of_tendsto_top
+    y hcont s hs hdiff hC₂
+    (tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero htendsto)
 
 /-- **Deformation of open rectangular contours:** Given two infinite vertical contours such that a
 function satisfies Cauchy-Goursat conditions between them, the limit of interval integrals along the
 first contour equals the sum of a translation integral and the limit of interval integrals along
 the second integral. -/
+theorem integral_boundary_open_rect_eq_zero_of_tendsto_top
+    (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
+    (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
+    {C₁ : E} (hC₁ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop (𝓝 C₁))
+    {C₂ : E} (hC₂ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
+    (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
+    (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂ - C₁ = 0 := by
+  rw [sub_eq_zero]
+  symm
+  exact tendsto_nhds_unique hC₁ <|
+    tendsto_integral_boundary_open_rect_one_side_atTop_of_tendsto_top
+      y hcont s hs hdiff hC₂ htop
+
+/-- Wrapper for the globally-decaying formulation. -/
 theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable
     (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
     (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
     {C₁ : E} (hC₁ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop (𝓝 C₁))
     {C₂ : E} (hC₂ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
     (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
-    (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂ - C₁ = 0 := by
-  rw [sub_eq_zero]
-  symm
-  exact tendsto_nhds_unique hC₁ <|
-    tendsto_integral_boundary_open_rect_one_side_atTop_nhds_sum_other_two_sides
-      y hcont s hs hdiff hC₂ htendsto
+    (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂ - C₁ = 0 :=
+  integral_boundary_open_rect_eq_zero_of_tendsto_top
+    y hcont s hs hdiff hC₁ hC₂
+    (tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero htendsto)
 
 /-- **Deformation of open rectangular contours:** Given two infinite vertical contours such that a
 function satisfies Cauchy-Goursat conditions between them, the limit of interval integrals along the
@@ -182,6 +240,17 @@ sole difference is that the assumptions in this lemma do not include the factor 
 from contour parametrisation. The reason we state this version is that it might be more convenient
 to use in certain cases.
 -/
+theorem integral_boundary_open_rect_eq_zero_of_tendsto_top'
+    (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
+    (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
+    {C₁ : E} (hC₁ : Tendsto (fun m ↦ ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop (𝓝 C₁))
+    {C₂ : E} (hC₂ : Tendsto (fun m ↦ ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
+    (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
+    (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + (I • C₂) - (I • C₁) = 0 :=
+  integral_boundary_open_rect_eq_zero_of_tendsto_top
+    y hcont s hs hdiff (hC₁.const_smul I) (hC₂.const_smul I) htop
+
+/-- Wrapper for the globally-decaying formulation. -/
 theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable'
     (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
     (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
@@ -189,8 +258,9 @@ theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable'
     {C₂ : E} (hC₂ : Tendsto (fun m ↦ ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
     (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
     (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + (I • C₂) - (I • C₁) = 0 :=
-  integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable y hcont s hs hdiff
-    (hC₁.const_smul I) (hC₂.const_smul I) htendsto
+  integral_boundary_open_rect_eq_zero_of_tendsto_top'
+    y hcont s hs hdiff hC₁ hC₂
+    (tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero htendsto)
 
 end Contour_Deformation_Tensdsto
 
@@ -207,6 +277,20 @@ it requires the integral of the norm of the function to be finite rather than ju
 function. We nevertheless include this version of the theorem because it is likely that in
 applications involving specific functions, there will already be proofs of integrability.
 -/
+theorem integral_boundary_open_rect_eq_zero_of_integrable_on_of_tendsto_top
+    (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
+    (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
+    (hint₁ : IntegrableOn (fun (t : ℝ) ↦ f (x₁ + t * I)) (Ioi y) volume)
+    (hint₂ : IntegrableOn (fun (t : ℝ) ↦ f (x₂ + t * I)) (Ioi y) volume)
+    (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
+    (∫ (x : ℝ) in x₁..x₂, f (x + y * I)) + (I • ∫ (t : ℝ) in Ioi y, f (x₂ + t * I))
+      - (I • ∫ (t : ℝ) in Ioi y, f (x₁ + t * I)) = 0 := by
+  refine integral_boundary_open_rect_eq_zero_of_tendsto_top'
+    y hcont s hs hdiff ?_ ?_ htop
+  · exact intervalIntegral_tendsto_integral_Ioi y hint₁ fun ⦃U⦄ a ↦ a
+  · exact intervalIntegral_tendsto_integral_Ioi y hint₂ fun ⦃U⦄ a ↦ a
+
+/-- Wrapper for the globally-decaying formulation. -/
 theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable_of_integrable_on
     (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s : Set ℂ) (hs : s.Countable)
     (hdiff : ∀ x ∈ ((Ioo (min x₁ x₂) (max x₁ x₂)) ×ℂ (Ioi y)) \ s, DifferentiableAt ℂ f x)
@@ -214,11 +298,10 @@ theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable_o
     (hint₂ : IntegrableOn (fun (t : ℝ) ↦ f (x₂ + t * I)) (Ioi y) volume)
     (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, M ≤ z.im → ‖f z‖ < ε) :
     (∫ (x : ℝ) in x₁..x₂, f (x + y * I)) + (I • ∫ (t : ℝ) in Ioi y, f (x₂ + t * I))
-      - (I • ∫ (t : ℝ) in Ioi y, f (x₁ + t * I)) = 0 := by
-  refine integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable' y hcont s hs hdiff
-    ?_ ?_ htendsto
-  · exact intervalIntegral_tendsto_integral_Ioi y hint₁ fun ⦃U⦄ a ↦ a
-  · exact intervalIntegral_tendsto_integral_Ioi y hint₂ fun ⦃U⦄ a ↦ a
+      - (I • ∫ (t : ℝ) in Ioi y, f (x₁ + t * I)) = 0 :=
+  integral_boundary_open_rect_eq_zero_of_integrable_on_of_tendsto_top
+    y hcont s hs hdiff hint₁ hint₂
+    (tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero htendsto)
 
 end Contour_Deformation_of_Integrable_along_BOTH
 
