@@ -168,10 +168,14 @@ lemma integrableOn_verticalBound (r : ℝ) (hr : 2 < r) :
   have i3 : IntegrableOn (fun s => (36 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * s))
       (Ici 1) volume :=
     (_root_.integrableOn_exp_mul_Ici (-(π * r - 2 * π)) (by linarith)).const_mul _
-  convert (i1.add i2).add i3 using 1
-  funext s
-  simp [verticalBound]
-  ring_nf
+  have heq : verticalBound r = fun s => C_φ₀ * (s ^ 2 * Real.exp (-(2 * π + π * r) * s))
+      + (12 * C_φ₂' / π) * (s * Real.exp (-(π * r) * s))
+      + (36 * C_φ₄' / π ^ 2) * Real.exp (-(π * r - 2 * π) * s) := by
+    funext s
+    simp [verticalBound]
+    ring_nf
+  rw [heq]
+  exact (i1.add i2).add i3
 
 /-- Vertical ray integrand is integrable on [1,∞) for r > 2. -/
 lemma integrableOn_verticalIntegrandX (x r : ℝ) (hr : 2 < r) :
