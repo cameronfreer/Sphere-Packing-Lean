@@ -99,8 +99,7 @@ def verticalIntegrand (r t : ℝ) : ℂ := verticalIntegrandX 0 r t
 lemma norm_cexp_verticalPhase (x r t : ℝ) :
     ‖Complex.exp (Complex.I * π * r * (x + Complex.I * t))‖ = Real.exp (-π * r * t) := by
   rw [Complex.norm_exp]
-  ring_nf
-  simp
+  norm_num
 
 /-! ## Integrability (complex-valued) -/
 
@@ -130,34 +129,25 @@ lemma norm_verticalIntegrandX_le (x r t : ℝ) (ht : 1 ≤ t) :
                + (12 / (π * t)) * C_φ₂'
                + (36 / (π^2 * t^2)) * C_φ₄' * Real.exp (2 * π * t))
           * Real.exp (-π * r * t) := by
-        exact mul_le_mul_of_nonneg_right
-          (mul_le_mul_of_nonneg_left hbound (sq_nonneg t)) (Real.exp_pos _).le
+        gcongr
     _ = verticalBound r t := by
-        simp only [verticalBound]
-        have ht_ne : t ≠ 0 := ne_of_gt ht_pos
-        have hexp1 : Real.exp (-2 * π * t) * Real.exp (-π * r * t) =
-            Real.exp (-(2 * π + π * r) * t) := by rw [← Real.exp_add]; ring_nf
-        have hexp3 : Real.exp (2 * π * t) * Real.exp (-π * r * t) =
-            Real.exp (-(π * r - 2 * π) * t) := by rw [← Real.exp_add]; ring_nf
-        calc t^2 * (C_φ₀ * Real.exp (-2 * π * t) + (12 / (π * t)) * C_φ₂'
-               + (36 / (π^2 * t^2)) * C_φ₄' * Real.exp (2 * π * t))
-             * Real.exp (-π * r * t)
-           = C_φ₀ * t^2 * (Real.exp (-2 * π * t) * Real.exp (-π * r * t))
-             + (12 * C_φ₂' / π) * t * Real.exp (-π * r * t)
-             + (36 * C_φ₄' / π^2) * (Real.exp (2 * π * t) * Real.exp (-π * r * t)) := by
-               field_simp
-         _ = C_φ₀ * t^2 * Real.exp (-(2 * π + π * r) * t)
-             + (12 * C_φ₂' / π) * t * Real.exp (-π * r * t)
-             + (36 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * t) := by
-               rw [hexp1, hexp3]
+        rw [verticalBound, show -(2 * π + π * r) * t = -2 * π * t + -π * r * t from by ring,
+          show -(π * r - 2 * π) * t = 2 * π * t + -π * r * t from by ring, Real.exp_add,
+          Real.exp_add]
+        field_simp
+
+/-- For `r > 2` the three exponential rates occurring in `verticalBound` and `topEdgeBound`
+are positive. -/
+private lemma pi_rate_pos (r : ℝ) (hr : 2 < r) :
+    0 < 2 * π + π * r ∧ 0 < π * r ∧ 0 < π * r - 2 * π :=
+  have hπ := Real.pi_pos
+  ⟨by nlinarith, by nlinarith, by nlinarith⟩
 
 /-- The vertical bound is integrable on [1,∞) for r > 2. -/
 lemma integrableOn_verticalBound (r : ℝ) (hr : 2 < r) :
     IntegrableOn (verticalBound r) (Ici 1) volume := by
   -- Sum of three integrable functions
-  have h1 : 0 < 2 * π + π * r := by nlinarith [Real.pi_pos]
-  have h2 : 0 < π * r := by nlinarith [Real.pi_pos]
-  have h3 : 0 < π * r - 2 * π := by nlinarith [Real.pi_pos]
+  obtain ⟨h1, h2, h3⟩ := pi_rate_pos r hr
   -- Define integrable components (note: const_mul applies on the left as c * f(x))
   have i1 : IntegrableOn (fun s => C_φ₀ * (s^2 * Real.exp (-(2 * π + π * r) * s)))
       (Ici 1) volume :=
@@ -172,7 +162,7 @@ lemma integrableOn_verticalBound (r : ℝ) (hr : 2 < r) :
       + (12 * C_φ₂' / π) * (s * Real.exp (-(π * r) * s))
       + (36 * C_φ₄' / π ^ 2) * Real.exp (-(π * r - 2 * π) * s) := by
     funext s
-    simp [verticalBound]
+    simp only [verticalBound]
     ring_nf
   rw [heq]
   exact (i1.add i2).add i3
@@ -191,17 +181,9 @@ lemma integrableOn_verticalIntegrandX (x r : ℝ) (hr : 2 < r) :
       simp [div_mul_eq_div_div, Complex.div_I]
     have h_cont : ContinuousOn (fun t : ℝ => verticalIntegrandX x r t) (Ici 1) := by
       unfold verticalIntegrandX
-      refine ((continuousOn_const.mul h_cont_phi).mul ?_).mul ?_
-      · exact (continuousOn_const.mul Complex.continuous_ofReal.continuousOn).pow _
-      · refine Complex.continuous_exp.comp_continuousOn ?_
-        refine (continuousOn_const.mul continuousOn_const).mul ?_
-        exact continuousOn_const.add
-          (continuousOn_const.mul Complex.continuous_ofReal.continuousOn)
+      fun_prop
     exact h_cont.aestronglyMeasurable measurableSet_Ici
-  · rw [ae_restrict_iff' measurableSet_Ici]
-    apply ae_of_all
-    intro t ht
-    simp only [mem_Ici] at ht
+  · filter_upwards [ae_restrict_mem measurableSet_Ici] with t ht
     exact norm_verticalIntegrandX_le x r t ht
 
 /-- Corollary: norm is also integrable. -/
@@ -214,9 +196,7 @@ lemma integrableOn_norm_verticalIntegrandX (x r : ℝ) (hr : 2 < r) :
 /-- The vertical bound → 0 as t → ∞ for r > 2. -/
 lemma tendsto_verticalBound_atTop (r : ℝ) (hr : 2 < r) :
     Tendsto (verticalBound r) atTop (𝓝 0) := by
-  have h1 : 0 < 2 * π + π * r := by nlinarith [Real.pi_pos]
-  have h2 : 0 < π * r := by nlinarith [Real.pi_pos]
-  have h3 : 0 < π * r - 2 * π := by nlinarith [Real.pi_pos]
+  obtain ⟨h1, h2, h3⟩ := pi_rate_pos r hr
   -- Each term tends to 0
   have t1 : Tendsto (fun s => C_φ₀ * s^2 * Real.exp (-(2 * π + π * r) * s)) atTop (𝓝 0) := by
     simpa [Real.rpow_two] using
@@ -238,24 +218,11 @@ lemma verticalBound_nonneg (r t : ℝ) (ht : 1 ≤ t) : 0 ≤ verticalBound r t 
 
 /-- Vertical integrand → 0 as t → ∞ for r > 2. -/
 lemma tendsto_verticalIntegrandX_atTop (x r : ℝ) (hr : 2 < r) :
-    Tendsto (fun t => verticalIntegrandX x r t) atTop (𝓝 0) := by
-  -- Use squeeze theorem: ‖f(t)‖ ≤ g(t) → 0 implies f(t) → 0
-  apply Metric.tendsto_atTop.mpr
-  intro ε hε
-  obtain ⟨N₁, hN₁⟩ := Metric.tendsto_atTop.mp (tendsto_verticalBound_atTop r hr) ε hε
-  -- Use max(N₁, 1) to ensure we can apply norm_verticalIntegrandX_le
-  use max N₁ 1
-  intro t ht
-  have ht_ge_1 : 1 ≤ t := le_of_max_le_right ht
-  have ht_ge_N₁ : t ≥ N₁ := le_of_max_le_left ht
-  simp only [dist_zero_right]
-  -- ‖integrand‖ ≤ bound < ε
-  calc ‖verticalIntegrandX x r t‖
-      ≤ verticalBound r t := norm_verticalIntegrandX_le x r t ht_ge_1
-    _ < ε := by
-        have := hN₁ t ht_ge_N₁
-        simp only [dist_zero_right, Real.norm_eq_abs] at this
-        rwa [abs_of_nonneg (verticalBound_nonneg r t ‹_›)] at this
+    Tendsto (fun t => verticalIntegrandX x r t) atTop (𝓝 0) :=
+  -- Squeeze: ‖verticalIntegrandX x r t‖ ≤ verticalBound r t → 0
+  squeeze_zero_norm'
+    (by filter_upwards [eventually_ge_atTop 1] with t ht using norm_verticalIntegrandX_le x r t ht)
+    (tendsto_verticalBound_atTop r hr)
 
 /-- Uniform vanishing: the vertical integrand is arbitrarily small for all z
     with sufficiently large imaginary part. This is the form needed by Cauchy-Goursat. -/
@@ -289,13 +256,10 @@ lemma norm_x_add_I_mul_T_bounds (x T : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) (hT : 
     exact (sq_le_sq₀ (by linarith : 0 ≤ T) (norm_nonneg _)).mp hsq
   · -- Upper bound: ‖z‖ ≤ |x| + |T| ≤ 1 + T
     simp only [mem_Icc] at hx
-    calc ‖(↑x + Complex.I * ↑T : ℂ)‖
-        ≤ ‖(↑x : ℂ)‖ + ‖Complex.I * ↑T‖ := norm_add_le _ _
-      _ = |x| + |T| := by simp [Complex.norm_real, Complex.norm_I, Real.norm_eq_abs]
-      _ ≤ 1 + T := by
-          have hx_abs : |x| ≤ 1 := abs_le.mpr ⟨by linarith, by linarith⟩
-          have hT_abs : |T| = T := abs_of_pos (by linarith)
-          linarith
+    refine (norm_add_le _ _).trans ?_
+    simp only [Complex.norm_real, norm_mul, Complex.norm_I, one_mul, Real.norm_eq_abs,
+      abs_of_pos (show (0:ℝ) < T by linarith)]
+    linarith [abs_le.mpr (⟨hx.1, hx.2⟩ : -1 ≤ x ∧ x ≤ 1)]
 
 /-- S action on x + iT gives -1/(x + iT).
     This is a restatement of `modular_S_smul` with explicit computation. -/
@@ -329,10 +293,8 @@ def topEdgeBound (r T : ℝ) : ℝ :=
 lemma tendsto_topEdgeBound_atTop (r : ℝ) (hr : 2 < r) :
     Tendsto (topEdgeBound r) atTop (𝓝 0) := by
   unfold topEdgeBound
-  have hπ := Real.pi_pos
-  have h1 : 0 < π * r + 2 * π := by nlinarith
-  have h2 : 0 < π * r := by nlinarith
-  have h3 : 0 < π * r - 2 * π := by nlinarith
+  obtain ⟨h1', h2, h3⟩ := pi_rate_pos r hr
+  have h1 : 0 < π * r + 2 * π := by linarith
   -- Strategy: Expand (1+T)² = 1 + 2T + T² and use individual tendsto lemmas
   -- Term 1: C₀ * (1+T)² * exp(-(πr+2π)T) → 0
   have t1 : Tendsto (fun T => C_φ₀ * (1 + T)^2 * Real.exp (-(π * r + 2 * π) * T))
@@ -375,8 +337,8 @@ lemma tendsto_topEdgeBound_atTop (r : ℝ) (hr : 2 < r) :
           = (12 * C_φ₂' / π) * (1 / T + 2 + T) * Real.exp (-π * r * T) := by
               rw [h1, h2]
         _ ≤ (12 * C_φ₂' / π) * (4 * T) * Real.exp (-π * r * T) := by
-            exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left h3
-              (div_nonneg (by linarith [C_φ₂'_pos]) hπ.le)) (Real.exp_pos _).le
+            have := C_φ₂'_pos
+            gcongr
         _ = (48 * C_φ₂' / π) * T * Real.exp (-(π * r) * T) := by ring_nf
     · exact hbound
   -- Term 3: (36C₄/(π²T²)) * (1+T)² * exp(2πT-πrT) → 0
@@ -412,8 +374,8 @@ lemma tendsto_topEdgeBound_atTop (r : ℝ) (hr : 2 < r) :
         _ = (36 * C_φ₄' / π^2) * (1 / T + 1)^2 * Real.exp (-(π * r - 2 * π) * T) := by
               rw [h1, hexp_comb]
         _ ≤ (36 * C_φ₄' / π^2) * 4 * Real.exp (-(π * r - 2 * π) * T) := by
-            exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left h2
-              (div_nonneg (by linarith [C_φ₄'_pos]) (sq_nonneg π))) (Real.exp_pos _).le
+            have := C_φ₄'_pos
+            gcongr
         _ = (144 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * T) := by ring
     · exact hbound
   simpa [pow_two, topEdgeBound, mul_add, add_mul, left_distrib, right_distrib,
@@ -462,25 +424,14 @@ lemma norm_topEdgeIntegrand_le (r : ℝ) (x T : ℝ)
             36 / (π^2 * ‖(w : ℂ)‖^2) * C_φ₄' * Real.exp (2 * π * T) := hS_bound
       _ ≤ C_φ₀ * Real.exp (-2 * π * T) + 12 / (π * T) * C_φ₂' +
             36 / (π^2 * T^2) * C_φ₄' * Real.exp (2 * π * T) := by
-          apply add_le_add
-          · apply add_le_add le_rfl
-            apply mul_le_mul_of_nonneg_right _ (le_of_lt C_φ₂'_pos)
-            exact div_le_div_of_nonneg_left (by norm_num) (by positivity)
-              (mul_le_mul_of_nonneg_left hz_norm_ge (le_of_lt Real.pi_pos))
-          · apply mul_le_mul_of_nonneg_right _ (le_of_lt (Real.exp_pos _))
-            apply mul_le_mul_of_nonneg_right _ (le_of_lt C_φ₄'_pos)
-            exact div_le_div_of_nonneg_left (by norm_num) (by positivity)
-              (mul_le_mul_of_nonneg_left
-                ((sq_le_sq₀ (by linarith : 0 ≤ T) (norm_nonneg _)).mpr hz_norm_ge) (sq_nonneg π))
+          gcongr <;> [exact C_φ₂'_pos.le; exact C_φ₄'_pos.le]
       _ = _ := by ring
   calc ‖φ₀ (ModularGroup.S • w)‖ * ‖(↑x + Complex.I * ↑T)^2‖ * Real.exp (-π * r * T)
       ≤ (C_φ₀ * Real.exp (-2 * π * T) + 12 * C_φ₂' / (π * T) +
           36 * C_φ₄' / (π^2 * T^2) * Real.exp (2 * π * T)) * (1 + T)^2 *
             Real.exp (-π * r * T) := by
-        apply mul_le_mul_of_nonneg_right _ (le_of_lt (Real.exp_pos _))
-        apply mul_le_mul hS_bound' hz_sq_norm (norm_nonneg _)
         have := C_φ₀_pos; have := C_φ₂'_pos; have := C_φ₄'_pos
-        positivity
+        gcongr
     _ = _ := by ring
 
 /-- Uniform vanishing: the top edge integrand is arbitrarily small for all z = x + iT
@@ -583,9 +534,7 @@ lemma norm_shiftedMobiusIntegrand_le (a b r t : ℝ) (ht : 1 ≤ t) :
       = ‖φ₀'' (-1 / z)‖ * ‖z ^ 2‖ * Real.exp (-π * r * t) := by
         rw [norm_mul, norm_mul, hexp_norm]
     _ ≤ ‖φ₀'' (-1 / z)‖ * ((a ^ 2 + 1) * t ^ 2) * Real.exp (-π * r * t) := by
-        apply mul_le_mul_of_nonneg_right
-        · apply mul_le_mul_of_nonneg_left hz_sq_bound (norm_nonneg _)
-        · exact (Real.exp_pos _).le
+        gcongr
     _ = (a ^ 2 + 1) * (‖φ₀'' (-1 / z)‖ * t ^ 2 * Real.exp (-π * r * t)) := by ring
     _ = (a ^ 2 + 1) * (‖φ₀ (ModularGroup.S • w)‖ * t ^ 2 * Real.exp (-π * r * t)) := by
         rw [hφ₀_eq]
@@ -651,10 +600,8 @@ lemma integrableOn_φ₀_shifted_Möbius (a b r : ℝ) (hr : 2 < r) :
       fun_prop
     exact h_cont.aestronglyMeasurable measurableSet_Ioi
   · -- Norm bound: dominated by `(a²+1)·verticalBound` (see `norm_shiftedMobiusIntegrand_le`)
-    rw [ae_restrict_iff' measurableSet_Ioi]
-    refine ae_of_all _ fun t ht => ?_
-    simp only [mem_Ioi] at ht
-    exact norm_shiftedMobiusIntegrand_le a b r t ht.le
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+    exact norm_shiftedMobiusIntegrand_le a b r t (le_of_lt ht)
 
 /-! ## Relationship to verticalIntegrandX
 
@@ -671,8 +618,7 @@ lemma centreRay_eq_verticalIntegrandX (r t : ℝ) :
     Complex.I * φ₀'' (-1 / (Complex.I * t)) * (Complex.I * t)^2 *
       Complex.exp (Complex.I * π * r * (Complex.I * t)) =
     verticalIntegrandX 0 r t := by
-  unfold verticalIntegrandX
-  simp only [neg_one_div_I_mul, Complex.ofReal_zero, zero_add]
+  simp only [verticalIntegrandX, neg_one_div_I_mul, Complex.ofReal_zero, zero_add]
 
 /-- Goal 2 integrand equals -I * verticalIntegrandX (-1) r t.
 
@@ -682,8 +628,8 @@ lemma leftRay_eq_neg_I_verticalIntegrandX (r t : ℝ) :
     φ₀'' (-1 / (t * Complex.I)) * (t * Complex.I)^2 *
       Complex.exp (π * Complex.I * r * (-1 + t * Complex.I)) =
     -Complex.I * verticalIntegrandX (-1) r t := by
-  unfold verticalIntegrandX
-  simp only [neg_one_div_mul_I, mul_pow, Complex.ofReal_neg, Complex.ofReal_one, neg_mul]
+  simp only [verticalIntegrandX, neg_one_div_mul_I, mul_pow, Complex.ofReal_neg,
+    Complex.ofReal_one, neg_mul]
   conv_rhs => rw [Complex.I_sq]
   ring_nf
 
@@ -694,8 +640,7 @@ lemma rightRay_eq_neg_I_verticalIntegrandX (r t : ℝ) :
     φ₀'' (-1 / (t * Complex.I)) * (t * Complex.I)^2 *
       Complex.exp (π * Complex.I * r * (1 + t * Complex.I)) =
     -Complex.I * verticalIntegrandX 1 r t := by
-  unfold verticalIntegrandX
-  simp only [neg_one_div_mul_I, mul_pow, Complex.ofReal_one, neg_mul]
+  simp only [verticalIntegrandX, neg_one_div_mul_I, mul_pow, Complex.ofReal_one, neg_mul]
   conv_rhs => rw [Complex.I_sq]
   ring_nf
 
@@ -707,8 +652,7 @@ lemma leftRay_Ici_eq_verticalIntegrandX (r t : ℝ) :
     Complex.I * (φ₀'' (-1 / (t * Complex.I)) * (t * Complex.I)^2 *
       Complex.exp (π * Complex.I * r * (-1 + t * Complex.I))) =
     verticalIntegrandX (-1) r t := by
-  unfold verticalIntegrandX
-  simp only [neg_one_div_mul_I]
+  simp only [verticalIntegrandX, neg_one_div_mul_I]
   ring_nf
   simp [pow_two]
 
@@ -720,8 +664,7 @@ lemma rightRay_Ici_eq_verticalIntegrandX (r t : ℝ) :
     Complex.I * (φ₀'' (-1 / (t * Complex.I)) * (t * Complex.I)^2 *
       Complex.exp (π * Complex.I * r * (1 + t * Complex.I))) =
     verticalIntegrandX 1 r t := by
-  unfold verticalIntegrandX
-  simp only [neg_one_div_mul_I]
+  simp only [verticalIntegrandX, neg_one_div_mul_I]
   ring_nf
   simp [pow_two]
 
@@ -759,18 +702,10 @@ lemma integrableOn_verticalIntegrandX_Ioc (x r : ℝ) (hr : 2 < r) :
     have ht2_le : t^2 ≤ 1 := by nlinarith [sq_nonneg t, sq_nonneg (t - 1)]
     have hexp_neg : Real.exp (-π * r * t) ≤ 1 := by
       rw [Real.exp_le_one_iff]; have := mul_pos (mul_pos Real.pi_pos hr_pos) ht_pos; linarith
-    have hexp_bound : Real.exp (-2 * π / t) ≤ Real.exp (-2 * π) := by
-      apply Real.exp_le_exp_of_le
-      have h1t : 1 ≤ 1 / t := by rw [le_div_iff₀ ht_pos]; linarith
-      have hπ := Real.pi_pos
-      have h2πt : 2 * π ≤ 2 * π / t := by
-        calc 2 * π = 2 * π * 1 := by ring
-          _ ≤ 2 * π * (1 / t) := by nlinarith
-          _ = 2 * π / t := by ring
-      have hneg : -(2 * π / t) ≤ -(2 * π) := neg_le_neg h2πt
-      calc -2 * π / t = -(2 * π / t) := by ring
-        _ ≤ -(2 * π) := hneg
-        _ = -2 * π := by ring
+    have hexp_bound : Real.exp (-2 * π / t) ≤ Real.exp (-2 * π) :=
+      Real.exp_le_exp_of_le <| by
+        rw [div_le_iff₀ ht_pos]
+        nlinarith [Real.pi_pos]
     calc t^2 * ‖φ₀'' (Complex.I / ↑t)‖ * Real.exp (-π * r * t)
         ≤ 1 * (C_φ₀ * Real.exp (-2 * π / t)) * 1 := by
           have h1 : t^2 * ‖φ₀'' (Complex.I / ↑t)‖ ≤ 1 * (C_φ₀ * Real.exp (-2 * π / t)) :=
@@ -785,12 +720,6 @@ lemma integrableOn_verticalIntegrandX_Ioc (x r : ℝ) (hr : 2 < r) :
   exact IntegrableOn.of_bound measure_Ioc_lt_top hmeas (C_φ₀ * Real.exp (-2 * π)) <| by
     rw [ae_restrict_iff' measurableSet_Ioc]
     exact ae_of_all _ hbound
-
-/-- IntegrableOn is preserved by constant multiplication. -/
-lemma IntegrableOn.const_mul' {c : ℂ} {f : ℝ → ℂ} {s : Set ℝ}
-    (hf : IntegrableOn f s volume) : IntegrableOn (fun t => c * f t) s volume := by
-  rw [IntegrableOn] at hf ⊢
-  exact hf.smul c
 
 /-- Integrability on [0,∞) for functions equal to verticalIntegrandX on (0,∞).
     Factors out the common proof pattern from Goals 1, 6, and 7. -/
@@ -809,7 +738,7 @@ lemma integrableOn_Ici_of_eqOn_verticalIntegrandX (x r : ℝ) (hr : 2 < r) {f : 
 lemma integrableOn_Ioi_of_eqOn_neg_I_verticalIntegrandX (x r : ℝ) (hr : 2 < r) {f : ℝ → ℂ}
     (hEq : EqOn f (fun t => -Complex.I * verticalIntegrandX x r t) (Ioi 1)) :
     IntegrableOn f (Ioi 1) volume :=
-  (IntegrableOn.const_mul' (integrableOn_verticalIntegrandX_Ioi x r hr)).congr_fun
+  IntegrableOn.congr_fun ((integrableOn_verticalIntegrandX_Ioi x r hr).const_mul (-Complex.I))
     (fun _ ht => (hEq ht).symm) measurableSet_Ioi
 
 /-- Integrability for shifted Möbius integrands with exponential phase t*I.
