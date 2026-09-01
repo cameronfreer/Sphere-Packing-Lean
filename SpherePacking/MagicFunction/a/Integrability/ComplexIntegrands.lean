@@ -99,7 +99,7 @@ theorem Φ₂'_contDiffOn_ℂ : ContDiffOn ℂ ∞ (Φ₂' r) ℍ₀ := Φ₁'_c
 theorem Φ₃'_holo : Holo(Φ₃' r) := by
   refine DifferentiableOn.mul ?_ ((Complex.differentiable_exp.comp <| (differentiable_const _).mul
       differentiable_fun_id).differentiableOn)
-  simpa only [sub_eq_add_neg] using
+  simpa only [Pi.mul_def, Pi.pow_apply, sub_eq_add_neg] using
     (φ₀''_neg_inv_add_holo (c := -1) (by simp)).mul
       ((differentiable_fun_id.differentiableOn.add_const _).pow 2)
 
@@ -112,7 +112,7 @@ theorem Φ₄'_contDiffOn_ℂ : ContDiffOn ℂ ∞ (Φ₄' r) ℍ₀ := Φ₃'_c
 theorem Φ₅'_holo : Holo(Φ₅' r) := by
   refine DifferentiableOn.mul ?_ ((Complex.differentiable_exp.comp <| (differentiable_const _).mul
       differentiable_fun_id).differentiableOn)
-  simpa only [add_zero] using
+  simpa only [Pi.mul_def, add_zero] using
     (φ₀''_neg_inv_add_holo (c := 0) (by simp)).mul (differentiableOn_pow 2)
 
 theorem Φ₅'_contDiffOn_ℂ : ContDiffOn ℂ ∞ (Φ₅' r) ℍ₀ := Φ₅'_holo.contDiffOn isOpen_upperHalfPlaneSet
