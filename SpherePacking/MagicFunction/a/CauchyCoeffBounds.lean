@@ -64,7 +64,9 @@ def cauchyCoeff (a b : ℕ → ℂ) (n : ℕ) : ℂ :=
   ∑ kl ∈ Finset.antidiagonal n, a kl.1 * b kl.2
 
 /-- Re-index an ℕ-indexed `q`-series (`q = e^{2πiz}`) as a ℤ-indexed `r`-series
-(`r = e^{πiz}`, `q = r²`): even indices `2m` carry `b m`, odd and negative indices `0`. -/
+(`r = e^{πiz}`, `q = r²`): even indices `2m` (`m ≥ 0`) carry `b m`, odd indices carry `0`.
+Beware that a negative even index `k` also carries `b 0` (via `Int.toNat`); the
+`evenCoeff_cauchyCoeff_zero_*` lemmas give vanishing there from `b 0 = 0`. -/
 def evenCoeff (b : ℕ → ℂ) : ℤ → ℂ := fun k => if Even k then b (k / 2).toNat else 0
 
 /-- Coefficient function for (E₂E₄ - E₆)²: Cauchy product of bg with itself,
