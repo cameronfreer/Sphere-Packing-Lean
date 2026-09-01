@@ -49,7 +49,7 @@ namespace MagicFunction.a.DoubleZeroes
 
 /-- The point it as an element of ℍ for t > 0. -/
 def mkI_mul_t (t : ℝ) (ht : 0 < t) : ℍ :=
-  ⟨Complex.I * t, by simp; exact ht⟩
+  ⟨Complex.I * t, by simpa using ht⟩
 
 /-- S action on it gives i/t. -/
 lemma S_smul_I_mul_t (t : ℝ) (ht : 0 < t) :
@@ -64,7 +64,7 @@ lemma mkI_mul_t_im (t : ℝ) (ht : 0 < t) : (mkI_mul_t t ht).im = t := by
 /-- φ₀''(I/t) equals φ₀ applied to S•(I*t). -/
 lemma φ₀''_I_div_t_eq (t : ℝ) (ht : 0 < t) :
     φ₀'' (Complex.I / t) = φ₀ (ModularGroup.S • mkI_mul_t t ht) := by
-  rw [φ₀''_def (by rw [Complex.div_ofReal_im, Complex.I_im]; positivity)]
+  rw [φ₀''_def (by simpa [Complex.div_ofReal_im] using ht)]
   simpa using congrArg φ₀ (UpperHalfPlane.ext (S_smul_I_mul_t t ht).symm)
 
 /-- Norm of I*t equals t for t > 0. -/
@@ -93,16 +93,8 @@ lemma norm_φ₀_S_smul_le (z : ℍ) (hz : 1 ≤ z.im) :
   -- Step 1: Use the S-transform formula
   rw [φ₀_S_transform]
   -- Step 2: Apply triangle inequality twice for a - b - c
-  have h_tri : ‖φ₀ z - (12 * Complex.I) / (↑π * z) * φ₂' z - 36 / (↑π ^ 2 * ↑z ^ 2) * φ₄' z‖
-      ≤ ‖φ₀ z‖ + ‖(12 * Complex.I) / (↑π * z) * φ₂' z‖
-          + ‖36 / (↑π ^ 2 * ↑z ^ 2) * φ₄' z‖ := by
-    have h1 : ‖φ₀ z - (12 * Complex.I) / (↑π * z) * φ₂' z - 36 / (↑π ^ 2 * ↑z ^ 2) * φ₄' z‖
-        ≤ ‖φ₀ z - (12 * Complex.I) / (↑π * z) * φ₂' z‖
-            + ‖36 / (↑π ^ 2 * ↑z ^ 2) * φ₄' z‖ := norm_sub_le _ _
-    have h2 : ‖φ₀ z - (12 * Complex.I) / (↑π * z) * φ₂' z‖
-        ≤ ‖φ₀ z‖ + ‖(12 * Complex.I) / (↑π * z) * φ₂' z‖ := norm_sub_le _ _
-    linarith
-  refine h_tri.trans ?_
+  refine le_trans (norm_sub_le _ _) ?_
+  refine le_trans (add_le_add_left (norm_sub_le _ _) _) ?_
   -- Step 3: Bound each of the three terms
   -- Derive 1/2 < z.im from 1 ≤ z.im for the φ-bound lemmas
   have hz' : 1/2 < z.im := by linarith
@@ -146,26 +138,20 @@ lemma norm_φ₀_I_div_t_small :
     ∀ t ∈ Ioo (0 : ℝ) 2, ‖φ₀'' (Complex.I / t)‖ ≤ C_φ₀ * Real.exp (-2 * π / t) := by
   intro t ⟨ht_pos, ht_lt⟩
   -- i/t has imaginary part 1/t > 1/2 for t < 2
-  have hI_div_pos : 0 < (Complex.I / t).im := by simp [Complex.div_ofReal_im]; positivity
+  have hI_div_pos : 0 < (Complex.I / t).im := by simpa [Complex.div_ofReal_im] using ht_pos
   have hI_div_gt : 1 / 2 < (Complex.I / t).im := by
-    simp only [Complex.div_ofReal_im, Complex.I_im]
-    rw [one_div_lt_one_div (by norm_num : (0:ℝ) < 2) ht_pos]
-    linarith
+    simpa [Complex.div_ofReal_im] using one_div_lt_one_div_of_lt ht_pos ht_lt
   -- φ₀'' equals φ₀ on the upper half-plane, so the Corollary 7.5 bound applies
   rw [φ₀''_def hI_div_pos]
   have h := φ₀_bound ⟨Complex.I / t, hI_div_pos⟩ hI_div_gt
-  have him : UpperHalfPlane.im ⟨Complex.I / t, hI_div_pos⟩ = 1 / t := by
-    simp [UpperHalfPlane.im]
-  simp only [him] at h
-  convert h using 2
-  field_simp
+  have him : UpperHalfPlane.im ⟨Complex.I / t, hI_div_pos⟩ = 1 / t := by simp [UpperHalfPlane.im]
+  rwa [him, show -2 * π * (1 / t) = -2 * π / t from by ring] at h
 
 /-- Helper: t² ≤ exp(4πt) for t ≥ 2. Used in Thesis Lemma 4.4.4.
     Proof: For t ≤ 4π, we have t² ≤ 4πt ≤ exp(4πt).
     For t > 4π, exp grows much faster than any polynomial. -/
 lemma sq_le_exp_4pi_t (t : ℝ) (ht : 2 ≤ t) : t^2 ≤ Real.exp (4 * π * t) := by
   -- exp(4πt) ≥ 1 + 4πt + (4πt)²/2 = 1 + 4πt + 8π²t² ≥ t², uniformly (8π² > 1 since π > 3)
-  have ht_pos : 0 < t := by linarith
   have h4πt_pos : 0 ≤ 4 * π * t := by positivity
   have hquad := Real.quadratic_le_exp_of_nonneg h4πt_pos
   have h8π2 : 8 * π ^ 2 > 1 := by nlinarith [Real.pi_gt_three]
@@ -175,11 +161,10 @@ lemma sq_le_exp_4pi_t (t : ℝ) (ht : 2 ≤ t) : t^2 ≤ Real.exp (4 * π * t) :
 lemma exp_neg_le_inv_sq_exp (t : ℝ) (ht : 2 ≤ t) :
     Real.exp (-2 * π * t) ≤ (1 / t^2) * Real.exp (2 * π * t) := by
   have ht_pos : 0 < t := by linarith
-  have ht2_le_exp := sq_le_exp_4pi_t t ht
   calc Real.exp (-2 * π * t) = Real.exp (2 * π * t) / Real.exp (4 * π * t) := by
-          rw [← Real.exp_sub]; ring_nf
-    _ ≤ Real.exp (2 * π * t) / t^2 := by
-        apply div_le_div_of_nonneg_left (le_of_lt (Real.exp_pos _)) (by positivity) ht2_le_exp
+          rw [← Real.exp_sub, show 2 * π * t - 4 * π * t = -2 * π * t from by ring]
+    _ ≤ Real.exp (2 * π * t) / t^2 :=
+        div_le_div_of_nonneg_left (Real.exp_pos _).le (by positivity) (sq_le_exp_4pi_t t ht)
     _ = (1 / t^2) * Real.exp (2 * π * t) := by rw [one_div, div_eq_mul_inv, mul_comm]
 
 /-- Helper: t ≤ exp(2πt) for t ≥ 0. Used for 1/t ≤ (1/t²) * exp(2πt). -/
@@ -206,41 +191,24 @@ lemma norm_φ₀_I_div_t_large :
   -- (2) 1/t ≤ t^(-2) * exp(2πt)  [since t ≤ exp(2πt)]
   -- (3) 1/t² * exp(2πt) = t^(-2) * exp(2πt)  [exact equality]
   have hπ := Real.pi_pos
-  have hexp_pos := Real.exp_pos (2 * π * t)
   -- Rewrite t^(-2 : ℤ) as 1/t²
-  have hpow : t ^ (-2 : ℤ) = 1 / t^2 := by
-    rw [zpow_neg, zpow_ofNat]
-    field_simp
-  rw [hpow]
+  rw [show t ^ (-2 : ℤ) = 1 / t^2 from by field_simp]
   -- Bound term 1: C₀ * exp(-2πt) ≤ C₀ * (1/t²) * exp(2πt)
-  have h1 : C_φ₀ * Real.exp (-2 * π * t) ≤
-      C_φ₀ * (1 / t^2) * Real.exp (2 * π * t) := by
-    have hexp_bound := exp_neg_le_inv_sq_exp t ht
-    calc C_φ₀ * Real.exp (-2 * π * t)
-        ≤ C_φ₀ * ((1 / t^2) * Real.exp (2 * π * t)) :=
-            mul_le_mul_of_nonneg_left hexp_bound C_φ₀_pos.le
-      _ = C_φ₀ * (1 / t^2) * Real.exp (2 * π * t) := by ring
+  have h1 : C_φ₀ * Real.exp (-2 * π * t) ≤ C_φ₀ * (1 / t^2) * Real.exp (2 * π * t) := by
+    rw [mul_assoc C_φ₀]
+    exact mul_le_mul_of_nonneg_left (exp_neg_le_inv_sq_exp t ht) C_φ₀_pos.le
   -- Bound term 2: (12/(πt)) * C₂ ≤ (12*C₂/π) * (1/t²) * exp(2πt)
   -- Need: 1/t ≤ (1/t²) * exp(2πt), i.e., t ≤ exp(2πt)
   have h2 : (12 / (π * t)) * C_φ₂' ≤
       (12 * C_φ₂' / π) * (1 / t^2) * Real.exp (2 * π * t) := by
-    have ht_le_exp := t_le_exp_two_pi_t t (by linarith)
     -- 1/t ≤ (1/t²) * exp(2πt) is equivalent to t ≤ exp(2πt) (after multiplying by t² and dividing)
     have h_t_inv : 1 / t ≤ (1 / t^2) * Real.exp (2 * π * t) := by
-      have ht2_pos : 0 < t^2 := sq_pos_of_pos ht_pos
-      have ht2_nonneg : 0 ≤ t^2 := ht2_pos.le
-      -- 1/t ≤ exp(2πt)/t² is equivalent to t ≤ exp(2πt)
-      have hexp_ge_t : t ≤ Real.exp (2 * π * t) := ht_le_exp
-      -- Simplify: 1/t = t/t² and exp/t² ≥ t/t² iff exp ≥ t
       calc 1 / t = t / t^2 := by field_simp
-        _ ≤ Real.exp (2 * π * t) / t^2 := div_le_div_of_nonneg_right hexp_ge_t ht2_nonneg
+        _ ≤ Real.exp (2 * π * t) / t^2 :=
+            div_le_div_of_nonneg_right (t_le_exp_two_pi_t t ht_pos.le) (by positivity)
         _ = (1 / t^2) * Real.exp (2 * π * t) := by ring
-    calc (12 / (π * t)) * C_φ₂'
-        = 12 * C_φ₂' / π * (1 / t) := by field_simp
-      _ ≤ 12 * C_φ₂' / π * ((1 / t^2) * Real.exp (2 * π * t)) := by
-          apply mul_le_mul_of_nonneg_left h_t_inv
-          apply div_nonneg (by nlinarith [C_φ₂'_pos.le]) hπ.le
-      _ = (12 * C_φ₂' / π) * (1 / t^2) * Real.exp (2 * π * t) := by ring
+    rw [show 12 / (π * t) * C_φ₂' = 12 * C_φ₂' / π * (1 / t) from by field_simp, mul_assoc]
+    exact mul_le_mul_of_nonneg_left h_t_inv (div_nonneg (by nlinarith [C_φ₂'_pos.le]) hπ.le)
   -- Bound term 3: (36/(π²*t²)) * C₄ * exp(2πt) = (36*C₄/π²) * (1/t²) * exp(2πt)  [exact]
   have h3 : (36 / (π^2 * t^2)) * C_φ₄' * Real.exp (2 * π * t) =
             (36 * C_φ₄' / π^2) * (1 / t^2) * Real.exp (2 * π * t) := by
