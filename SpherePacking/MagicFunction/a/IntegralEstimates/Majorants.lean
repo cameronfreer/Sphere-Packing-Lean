@@ -201,6 +201,13 @@ lemma exp_neg_two_pi_div_mul_sq_le (ht : 0 < t) (ht' : t ≤ 1) :
     _ ≤ rexp (-2 * π) * 1 := by gcongr; nlinarith
     _ = rexp (-2 * π) := mul_one _
 
+/-- For `t ∈ (0, 1]`, `exp (-2π/t) * t⁻² ≤ exp (-2π)`: at the cusp the super-exponential decay
+beats the quadratic pole left over after integrating the scaled Gaussian. -/
+lemma exp_neg_div_mul_inv_sq_le (ht : 0 < t) (ht' : t ≤ 1) :
+    rexp (-2 * π / t) * t⁻¹ ^ 2 ≤ rexp (-2 * π) := by
+  have h := _root_.exp_neg_div_mul_inv_sq_le (2 * π) t (by linarith [Real.two_le_pi]) ht ht'
+  simpa [neg_mul] using h
+
 /-- `Φ₁` is `Φ₅` up to the unit-modulus phase `exp (-πIr)`: on `[0,1]`, `z₁' t + 1 = z₅' t`. -/
 lemma Φ₁_eq_Φ₅_mul_phase (ht : t ∈ Icc (0 : ℝ) 1) :
     Φ₁ r t = Φ₅ r t * cexp ((-(π * r) : ℝ) * I) := by
