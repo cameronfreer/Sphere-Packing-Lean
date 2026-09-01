@@ -18,8 +18,8 @@ The alternate integral representation of `a` used in the double-zeroes argument 
 different characters, and this file proves both.
 
 * **Small `t`** (`norm_φ₀_I_div_t_small`, thesis Lemma 4.4.3). For `t ∈ (0, 2)` the point
-  `i/t` has imaginary part `1/t > 1/2`, so the cusp bound applies directly and gives
-  super-exponential decay `exp (-2π/t)`.
+  `i/t` has imaginary part `1/t > 1/2`, so `φ₀_bound` applies directly and gives
+  super-exponential decay `C_φ₀ * exp (-2π/t)`.
 * **Large `t`** (`norm_φ₀_I_div_t_large`, thesis Lemma 4.4.4 = blueprint Corollary 7.13).
   For `t ≥ 2` the point `i/t` approaches the *real* axis, where `φ₀` blows up. The
   S-transformation formula `φ₀_S_transform` rewrites `φ₀(i/t)` in terms of `φ₀`, `φ₂'` and
@@ -142,22 +142,19 @@ Together these give convergence of the alternate integral in thesis Definition 4
 
 /-- Lemma 4.4.3: For small t ∈ (0, 2), φ₀(i/t) has super-exponential decay.
     This follows from the cusp bound (4.2.1) with z = i/t. -/
-lemma norm_φ₀_I_div_t_small (C₀ : ℝ) (_hC₀ : 0 < C₀)
-    (hbound : ∀ z : UpperHalfPlane, 1/2 < z.im → ‖φ₀ z‖ ≤ C₀ * Real.exp (-2 * π * z.im)) :
-    ∀ t ∈ Ioo (0 : ℝ) 2, ‖φ₀'' (Complex.I / t)‖ ≤ C₀ * Real.exp (-2 * π / t) := by
+lemma norm_φ₀_I_div_t_small :
+    ∀ t ∈ Ioo (0 : ℝ) 2, ‖φ₀'' (Complex.I / t)‖ ≤ C_φ₀ * Real.exp (-2 * π / t) := by
   intro t ⟨ht_pos, ht_lt⟩
   -- i/t has imaginary part 1/t > 1/2 for t < 2
   have hI_div_pos : 0 < (Complex.I / t).im := by simp [Complex.div_ofReal_im]; positivity
-  have hI_div_gt : 1/2 < (Complex.I / t).im := by
+  have hI_div_gt : 1 / 2 < (Complex.I / t).im := by
     simp only [Complex.div_ofReal_im, Complex.I_im]
     rw [one_div_lt_one_div (by norm_num : (0:ℝ) < 2) ht_pos]
     linarith
-  -- φ₀'' equals φ₀ on upper half-plane, apply the bound
+  -- φ₀'' equals φ₀ on the upper half-plane, so the Corollary 7.5 bound applies
   rw [φ₀''_def hI_div_pos]
-  have h := hbound ⟨Complex.I / t, hI_div_pos⟩ hI_div_gt
-  -- The bound hbound gives us the inequality for z.im = 1/t
-  -- UpperHalfPlane.im ⟨I/t, _⟩ = (I/t).im = 1/t
-  have him : UpperHalfPlane.im ⟨Complex.I / t, hI_div_pos⟩ = 1/t := by
+  have h := φ₀_bound ⟨Complex.I / t, hI_div_pos⟩ hI_div_gt
+  have him : UpperHalfPlane.im ⟨Complex.I / t, hI_div_pos⟩ = 1 / t := by
     simp [UpperHalfPlane.im]
   simp only [him] at h
   convert h using 2
