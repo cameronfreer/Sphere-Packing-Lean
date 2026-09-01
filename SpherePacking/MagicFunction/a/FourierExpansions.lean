@@ -258,20 +258,30 @@ lemma norm_qseries_shift_le {a : ℕ → ℂ} (n₀ : ℕ)
       Complex.ofReal_im, mul_zero, sub_zero, Complex.I_re, Complex.mul_im, zero_mul, add_zero,
       Complex.I_im, mul_one, sub_self, Complex.add_re, Complex.natCast_re, Complex.add_im,
       Complex.natCast_im, UpperHalfPlane.coe_re, zero_add, UpperHalfPlane.coe_im, zero_sub, neg_mul]
-  have hexp_bound (m : ℕ) :
-      rexp (-(2 * π) * (↑m + ↑n₀) * z.im) ≤ rexp (-π * (m : ℝ)) * rexp (-π * (n₀ : ℝ)) := by
+  -- One pointwise exponential comparison, reused for both the summability test and the
+  -- final `tsum` inequality: `exp(-2π(m+n₀)·im) ≤ exp(-πm)·exp(-2πn₀·im)` when `im ≥ 1/2`.
+  have hexp_split (m : ℕ) : rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
+      ≤ rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := by
     rw [← Real.exp_add, Real.exp_le_exp]
-    have hprod : (0:ℝ) ≤ ((m : ℝ) + n₀) * (2 * z.im - 1) :=
+    have hprod : (0:ℝ) ≤ (m : ℝ) * (2 * z.im - 1) :=
       mul_nonneg (by positivity) (by linarith [hz])
     nlinarith [Real.pi_pos, hprod]
+  have hn₀ : rexp (-(2 * π) * n₀ * z.im) ≤ rexp (-π * (n₀ : ℝ)) := by
+    rw [Real.exp_le_exp]
+    have hprod : (0:ℝ) ≤ (n₀ : ℝ) * (2 * z.im - 1) :=
+      mul_nonneg (by positivity) (by linarith [hz])
+    nlinarith [Real.pi_pos, hprod]
+  have key (m : ℕ) : ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
+      ≤ ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := by
+    calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
+        ≤ ‖a m‖ * (rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im)) :=
+          mul_le_mul_of_nonneg_left (hexp_split m) (norm_nonneg (a m))
+      _ = ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := (mul_assoc _ _ _).symm
   have hsum_norms : Summable fun m =>
       ‖a m * cexp (2 * ↑π * Complex.I * ((m + n₀ : ℕ) : ℂ) * z)‖ := by
     refine .of_nonneg_of_le (fun _ => norm_nonneg _) (fun m => ?_) (ha.mul_right (rexp (-π * n₀)))
     simp only [norm_mul, Complex.norm_exp, hexp_re]
-    calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
-        ≤ ‖a m‖ * (rexp (-π * (m : ℝ)) * rexp (-π * (n₀ : ℝ))) :=
-          mul_le_mul_of_nonneg_left (hexp_bound m) (norm_nonneg _)
-      _ = ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-π * (n₀ : ℝ)) := by ring
+    exact (key m).trans (mul_le_mul_of_nonneg_left hn₀ (by positivity))
   have hsum_norms' : Summable fun m => ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im) := by
     convert hsum_norms using 2 with m; rw [norm_mul, Complex.norm_exp, hexp_re]
   calc ‖∑' m, a m * cexp (2 * ↑π * Complex.I * ((m + n₀ : ℕ) : ℂ) * z)‖
@@ -279,22 +289,8 @@ lemma norm_qseries_shift_le {a : ℕ → ℂ} (n₀ : ℕ)
         norm_tsum_le_tsum_norm hsum_norms
     _ = ∑' m, ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im) := by
         simp only [norm_mul, Complex.norm_exp, hexp_re]
-    _ ≤ ∑' m, ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := by
-        refine Summable.tsum_le_tsum (fun m => ?_) hsum_norms' (ha.mul_right _)
-        have hsplit : rexp (-(2 * π) * (↑m + ↑n₀) * z.im) =
-            rexp (-(2 * π) * m * z.im) * rexp (-(2 * π) * n₀ * z.im) := by
-          rw [← Real.exp_add]; ring_nf
-        have hexp_m : rexp (-(2 * π) * m * z.im) ≤ rexp (-π * (m : ℝ)) := by
-          rw [Real.exp_le_exp]
-          have hprod : (0:ℝ) ≤ (m : ℝ) * (2 * z.im - 1) :=
-            mul_nonneg (by positivity) (by linarith [hz])
-          nlinarith [Real.pi_pos, hprod]
-        calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
-            = ‖a m‖ * rexp (-(2 * π) * m * z.im) * rexp (-(2 * π) * n₀ * z.im) := by
-              rw [hsplit]; ring
-          _ ≤ ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) :=
-              mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hexp_m (norm_nonneg _))
-                (le_of_lt (Real.exp_pos _))
+    _ ≤ ∑' m, ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) :=
+        Summable.tsum_le_tsum key hsum_norms' (ha.mul_right _)
     _ = (∑' m, ‖a m‖ * rexp (-π * (m : ℝ))) * rexp (-(2 * π) * n₀ * z.im) := tsum_mul_right
 
 /-- The constant `∑ ‖b m‖·exp(-πm)` converges for any polynomially-bounded `b`. -/
