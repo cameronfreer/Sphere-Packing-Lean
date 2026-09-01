@@ -104,26 +104,22 @@ the `m`-th coefficient at the even index `2m` and `0` on odd indices; `evenCoeff
 lemma qexp_eq_fouterm (b : ℕ → ℂ) (x : ℍ) :
     (∑' m : ℕ, b m * cexp (2 * ↑π * Complex.I * ↑m * ↑x))
       = ∑' n : ℕ, fouterm (evenCoeff b) x (↑n + 0) := by
-  have hg : Function.Injective (fun j : ℕ => 2 * j) :=
-    fun a b h => Nat.mul_left_cancel (n := 2) (m := a) (k := b) (by norm_num) h
+  have hg : Function.Injective (fun j : ℕ => 2 * j) := mul_right_injective₀ two_ne_zero
   have hsupp : Function.support (fun n : ℕ => fouterm (evenCoeff b) x (↑n + 0)) ⊆
       Set.range (fun j : ℕ => 2 * j) := by
     intro n hn
-    rw [Function.mem_support] at hn
-    have hcn : evenCoeff b (↑n) ≠ 0 := by
-      intro h; exact hn (by simp only [fouterm, add_zero, h, zero_mul])
     have heven : Even (n : ℤ) := by
       by_contra hodd
-      exact hcn (by simp only [evenCoeff, if_neg hodd])
+      exact hn (by simp only [fouterm, add_zero, evenCoeff, if_neg hodd, zero_mul])
     obtain ⟨j, hj⟩ := (Int.even_coe_nat n).mp heven
     exact ⟨j, (two_mul j).trans hj.symm⟩
   rw [← hg.tsum_eq hsupp]
   refine tsum_congr (fun j => ?_)
   have h2j : Even ((2 * j : ℕ) : ℤ) := by exact_mod_cast even_two_mul j
   simp only [fouterm, add_zero, evenCoeff, if_pos h2j]
-  rw [show (((2 * j : ℕ) : ℤ) / 2).toNat = j by push_cast; omega]
-  rw [show (↑π * Complex.I * ((2 * j : ℕ) : ℤ) * ↑x : ℂ) = 2 * ↑π * Complex.I * ↑j * ↑x by
-    push_cast; ring]
+  rw [show (((2 * j : ℕ) : ℤ) / 2).toNat = j by push_cast; omega,
+    show (↑π * Complex.I * ((2 * j : ℕ) : ℤ) * ↑x : ℂ) = 2 * ↑π * Complex.I * ↑j * ↑x by
+      push_cast; ring]
 
 /-! ## Linear factor q-coefficients and fouterm identities
 
@@ -137,8 +133,7 @@ lemma E₄_qexp_nat (z : ℍ) :
   have hsummable : Summable (fun m : ℕ => bE₄ m * cexp (2 * ↑π * Complex.I * ↑m * ↑z)) := by
     rw [← summable_pnat_iff_summable_nat]
     refine ((sigma3_qexp_summable z).mul_left 240).congr (fun n => ?_)
-    have hn : (n : ℕ) ≠ 0 := n.ne_zero
-    simp only [bE₄, hn, if_false]
+    simp only [bE₄, n.ne_zero, if_false]
     ring
   rw [hsummable.tsum_eq_zero_add, E₄_sigma_qexp]
   congr 1
@@ -146,8 +141,7 @@ lemma E₄_qexp_nat (z : ℍ) :
   · rw [tsum_pnat_eq_tsum_succ
       (f := fun k : ℕ => (σ 3 k : ℂ) * cexp (2 * ↑π * Complex.I * ↑k * ↑z)), ← tsum_mul_left]
     refine tsum_congr (fun m => ?_)
-    have hm : m + 1 ≠ 0 := Nat.succ_ne_zero m
-    simp only [bE₄, hm, if_false]
+    simp only [bE₄, Nat.succ_ne_zero m, if_false]
     push_cast; ring
 
 /-- `E₄` in `fouterm` form (`n₀ = 0`). -/
@@ -160,7 +154,6 @@ lemma g_qexp_nat (z : ℍ) :
   have hsupp : Function.support (fun m : ℕ => bg m * cexp (2 * ↑π * Complex.I * ↑m * ↑z)) ⊆
       Set.range ((↑·) : ℕ+ → ℕ) := by
     intro m hm
-    rw [Function.mem_support] at hm
     have hm0 : m ≠ 0 := by rintro rfl; simp [bg] at hm
     exact ⟨⟨m, Nat.pos_of_ne_zero hm0⟩, rfl⟩
   rw [E₂_mul_E₄_sub_E₆, ← tsum_mul_left, ← PNat.coe_injective.tsum_eq
@@ -173,18 +166,15 @@ lemma g_qexp_nat (z : ℍ) :
 lemma g_eq_fouterm (z : ℍ) :
     E₂ z * E₄ z - E₆ z = ∑' n : ℕ, fouterm (evenCoeff bg) z (↑n + 2) := by
   rw [g_qexp_nat z, qexp_eq_fouterm bg z]
-  have hinj : Function.Injective (fun n : ℕ => n + 2) :=
-    fun a b h => Nat.add_right_cancel (n := a) (k := b) (m := 2) h
+  have hinj : Function.Injective (fun n : ℕ => n + 2) := add_left_injective 2
   have hsupp : Function.support (fun n : ℕ => fouterm (evenCoeff bg) z (↑n + 0)) ⊆
       Set.range (fun n : ℕ => n + 2) := by
     intro n hn
-    rw [Function.mem_support] at hn
     have h0 : n ≠ 0 := by rintro rfl; simp [fouterm, evenCoeff, bg] at hn
     have h1 : n ≠ 1 := by rintro rfl; simp [fouterm, evenCoeff] at hn
     exact ⟨n - 2, Nat.sub_add_cancel (by omega)⟩
   rw [← hinj.tsum_eq hsupp]
-  refine tsum_congr (fun n => ?_)
-  congr 1
+  exact tsum_congr fun n => by congr 1
 
 /-! ## Polynomial growth of the linear-factor coefficients
 
@@ -203,15 +193,11 @@ lemma evenCoeff_isBigO {b : ℕ → ℂ} {k : ℕ}
     · simp
   have htend : Filter.Tendsto (fun j : ℤ => (j / 2).toNat) Filter.atTop Filter.atTop :=
     Filter.tendsto_atTop_atTop.mpr (fun N => ⟨2 * N, fun j hj => by omega⟩)
-  refine (hdom.trans (hb.comp_tendsto htend)).trans ?_
-  rw [Asymptotics.isBigO_iff]
-  refine ⟨1, Filter.eventually_atTop.mpr ⟨0, fun j hj => ?_⟩⟩
-  have hjr : (0:ℝ) ≤ (j:ℝ) := by exact_mod_cast hj
-  simp only [Function.comp_apply, one_mul, Real.norm_eq_abs]
-  rw [abs_of_nonneg (pow_nonneg (Nat.cast_nonneg (j / 2).toNat) k),
-      abs_of_nonneg (pow_nonneg hjr k)]
+  refine (hdom.trans (hb.comp_tendsto htend)).trans (Asymptotics.isBigO_of_le _ fun j => ?_)
+  rw [Function.comp_apply, Real.norm_eq_abs, Real.norm_eq_abs, abs_pow, abs_pow,
+    abs_of_nonneg (Nat.cast_nonneg (j / 2).toNat)]
   gcongr
-  exact_mod_cast (show ((j / 2).toNat : ℤ) ≤ j by omega)
+  exact_mod_cast (show ((j / 2).toNat : ℤ) ≤ j.natAbs by omega).trans_eq (Int.abs_eq_natAbs j).symm
 
 /-- `bg m = 720·m·σ₃(m)` has growth `O(n⁵)`. -/
 lemma bg_isBigO : bg =O[Filter.atTop] (fun n : ℕ => (n ^ 5 : ℝ)) := by
@@ -252,32 +238,27 @@ lemma norm_qseries_shift_le {a : ℕ → ℂ} (n₀ : ℕ)
       Complex.ofReal_im, mul_zero, sub_zero, Complex.I_re, Complex.mul_im, zero_mul, add_zero,
       Complex.I_im, mul_one, sub_self, Complex.add_re, Complex.natCast_re, Complex.add_im,
       Complex.natCast_im, UpperHalfPlane.coe_re, zero_add, UpperHalfPlane.coe_im, zero_sub, neg_mul]
-  -- One pointwise exponential comparison, reused for both the summability test and the
-  -- final `tsum` inequality: `exp(-2π(m+n₀)·im) ≤ exp(-πm)·exp(-2πn₀·im)` when `im ≥ 1/2`.
+  -- One exponent comparison `-2πc·im ≤ -πc` (valid for `c ≥ 0` when `im ≥ 1/2`), feeding both
+  -- the summability test (`hn₀`) and the final `tsum` inequality (`hexp_split`).
+  have hmono (c : ℝ) (hc : 0 ≤ c) : -(2 * π) * c * z.im ≤ -π * c := by
+    nlinarith [Real.pi_pos, mul_nonneg hc (by linarith [hz] : (0:ℝ) ≤ 2 * z.im - 1)]
   have hexp_split (m : ℕ) : rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
       ≤ rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := by
     rw [← Real.exp_add, Real.exp_le_exp]
-    have hprod : (0:ℝ) ≤ (m : ℝ) * (2 * z.im - 1) :=
-      mul_nonneg (by positivity) (by linarith [hz])
-    nlinarith [Real.pi_pos, hprod]
-  have hn₀ : rexp (-(2 * π) * n₀ * z.im) ≤ rexp (-π * (n₀ : ℝ)) := by
-    rw [Real.exp_le_exp]
-    have hprod : (0:ℝ) ≤ (n₀ : ℝ) * (2 * z.im - 1) :=
-      mul_nonneg (by positivity) (by linarith [hz])
-    nlinarith [Real.pi_pos, hprod]
+    linarith [hmono m m.cast_nonneg]
+  have hn₀ : rexp (-(2 * π) * n₀ * z.im) ≤ rexp (-π * (n₀ : ℝ)) :=
+    Real.exp_le_exp.mpr (hmono n₀ n₀.cast_nonneg)
   have key (m : ℕ) : ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
       ≤ ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := by
-    calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
-        ≤ ‖a m‖ * (rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im)) :=
-          mul_le_mul_of_nonneg_left (hexp_split m) (norm_nonneg (a m))
-      _ = ‖a m‖ * rexp (-π * (m : ℝ)) * rexp (-(2 * π) * n₀ * z.im) := (mul_assoc _ _ _).symm
+    rw [mul_assoc ‖a m‖]
+    exact mul_le_mul_of_nonneg_left (hexp_split m) (norm_nonneg (a m))
   have hsum_norms : Summable fun m =>
       ‖a m * cexp (2 * ↑π * Complex.I * ((m + n₀ : ℕ) : ℂ) * z)‖ := by
     refine .of_nonneg_of_le (fun _ => norm_nonneg _) (fun m => ?_) (ha.mul_right (rexp (-π * n₀)))
     simp only [norm_mul, Complex.norm_exp, hexp_re]
     exact (key m).trans (mul_le_mul_of_nonneg_left hn₀ (by positivity))
-  have hsum_norms' : Summable fun m => ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im) := by
-    convert hsum_norms using 2 with m; rw [norm_mul, Complex.norm_exp, hexp_re]
+  have hsum_norms' : Summable fun m => ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im) :=
+    hsum_norms.congr fun m => by rw [norm_mul, Complex.norm_exp, hexp_re]
   calc ‖∑' m, a m * cexp (2 * ↑π * Complex.I * ((m + n₀ : ℕ) : ℂ) * z)‖
       ≤ ∑' m, ‖a m * cexp (2 * ↑π * Complex.I * ((m + n₀ : ℕ) : ℂ) * z)‖ :=
         norm_tsum_le_tsum_norm hsum_norms
@@ -358,20 +339,16 @@ Direct `DivDiscBoundOfPolyFourierCoeff` applications using the linear `fouterm` 
 /-- `‖(E₂E₄−E₆)/Δ‖ ≤ DivDiscBound (evenCoeff bg) 2` (constant: `n₀=2 ⇒ exp 0 = 1`). -/
 lemma g_div_Δ_bound (z : ℍ) (hz : 1 / 2 < z.im) :
     ‖(E₂ z * E₄ z - E₆ z) / Δ z‖ ≤ DivDiscBound (evenCoeff bg) 2 := by
-  have h := DivDiscBoundOfPolyFourierCoeff z hz (evenCoeff bg) 2
+  simpa using DivDiscBoundOfPolyFourierCoeff z hz (evenCoeff bg) 2
     (summable_fouterm_of_poly (evenCoeff_isBigO bg_isBigO) z 2) 5 (evenCoeff_isBigO bg_isBigO)
     (fun x => E₂ x * E₄ x - E₆ x) g_eq_fouterm
-  convert h using 2
-  norm_num
 
 /-- `‖E₄/Δ‖ ≤ DivDiscBound (evenCoeff bE₄) 0 · exp(2π·im)` (from `n₀=0`). -/
 lemma E₄_div_Δ_bound (z : ℍ) (hz : 1 / 2 < z.im) :
     ‖E₄ z / Δ z‖ ≤ DivDiscBound (evenCoeff bE₄) 0 * Real.exp (2 * π * z.im) := by
-  have h := DivDiscBoundOfPolyFourierCoeff z hz (evenCoeff bE₄) 0
+  simpa [mul_comm π 2] using DivDiscBoundOfPolyFourierCoeff z hz (evenCoeff bE₄) 0
     (summable_fouterm_of_poly (evenCoeff_isBigO bE₄_isBigO) z 0) 5 (evenCoeff_isBigO bE₄_isBigO)
     (fun x => E₄ x) E₄_eq_fouterm
-  convert h using 2
-  ring_nf
 
 end MagicFunction.a.FourierExpansions
 
