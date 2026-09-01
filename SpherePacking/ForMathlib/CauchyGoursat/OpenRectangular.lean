@@ -49,27 +49,18 @@ as `Im z → ∞` within a bounded strip while growing without bound along a hor
 lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc
     (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, z.re ∈ [[x₁, x₂]] → M ≤ z.im → ‖f z‖ < ε) :
     Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0) := by
-  wlog hne : x₁ ≠ x₂
-  · rw [ne_eq, Decidable.not_not] at hne
-    simp only [hne, integral_same, tendsto_const_nhds_iff]
+  obtain rfl | hne := eq_or_ne x₁ x₂
+  · simp only [integral_same, tendsto_const_nhds_iff]
   simp only [NormedAddGroup.tendsto_nhds_zero, eventually_atTop]
   intro ε hε
-  obtain ⟨M, hM⟩ := htendsto ((1 / 2) * (ε / |x₂ - x₁|)) <| by
-    simp only [one_div, inv_pos, Nat.ofNat_pos, mul_pos_iff_of_pos_left]
-    exact (div_pos hε (abs_sub_pos.mpr hne.symm))
-  use M
-  intro y hy
+  have hlen : 0 < |x₂ - x₁| := abs_sub_pos.mpr hne.symm
+  obtain ⟨M, hM⟩ := htendsto ((1 / 2) * (ε / |x₂ - x₁|)) (mul_pos one_half_pos (div_pos hε hlen))
+  refine ⟨M, fun y hy ↦ ?_⟩
   calc ‖∫ (x : ℝ) in x₁..x₂, f (↑x + ↑y * I)‖
   _ ≤ ((1 / 2) * (ε / |x₂ - x₁|)) * |x₂ - x₁| :=
-      intervalIntegral.norm_integral_le_of_norm_le_const <| by
-      intro x hx
-      specialize hM (x + y * I)
-      rw [re_of_real_add_real_mul_I x y, im_of_real_add_real_mul_I x y] at hM
-      exact le_of_lt (hM (Set.uIoc_subset_uIcc hx) hy)
-  _ = (1 / 2) * ε := by
-      rw [mul_assoc]
-      have : 0 ≠ |x₂ - x₁| := ne_of_lt (abs_sub_pos.mpr hne.symm)
-      field_simp [this]
+      intervalIntegral.norm_integral_le_of_norm_le_const fun x hx ↦
+        (hM (x + y * I) (by simpa using uIoc_subset_uIcc hx) (by simpa using hy)).le
+  _ = (1 / 2) * ε := by rw [mul_assoc, div_mul_cancel₀ _ hlen.ne']
   _ < ε := by linarith
 
 /-- If $f(z) \to 0$ as $\Im(z) \to \infty$, then
@@ -98,27 +89,17 @@ private lemma hzero (hcont : ContinuousOn f ([[x₁, x₂]] ×ℂ (Ici y))) (s :
       - ∫ (t : ℝ) in (x₁ + y * I).re..(x₂ + m * I).re, f (t + (x₂ + m * I).im * I))
       + I • ∫ (t : ℝ) in (x₁ + y * I).im..(x₂ + m * I).im, f ((x₂ + m * I).re + t * I))
       - I • ∫ (t : ℝ) in (x₁ + y * I).im..(x₂ + m * I).im, f ((x₁ + y * I).re + t * I) := by
-      simp only [re_of_real_add_real_mul_I x₁ y, re_of_real_add_real_mul_I x₂ m,
-                 im_of_real_add_real_mul_I x₁ y, im_of_real_add_real_mul_I x₂ m]
+      simp only [re_of_real_add_real_mul_I, im_of_real_add_real_mul_I]
   _ = 0 := by
       refine Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable
         f (x₁ + y * I) (x₂ + m * I) s hs ?_ ?_ <;>
-      simp only [re_of_real_add_real_mul_I x₁ y, re_of_real_add_real_mul_I x₂ m,
-                im_of_real_add_real_mul_I x₁ y, im_of_real_add_real_mul_I x₂ m]
-      · apply hcont.mono
-        rw [reProdIm_subset_iff]
+      simp only [re_of_real_add_real_mul_I, im_of_real_add_real_mul_I]
+      · refine hcont.mono (reProdIm_subset_iff.mpr ?_)
         gcongr
-        rw [uIcc_of_le hm]
-        exact Icc_subset_Ici_self
-      · intro z hz
-        apply hdiff z
-        obtain ⟨hz₁, hz₂⟩ := hz
-        refine ⟨?_, hz₂⟩
-        rw [mem_reProdIm] at hz₁ ⊢
-        refine ⟨hz₁.1, ?_⟩
-        rw [mem_Ioi]
-        rw [inf_eq_left.2 hm] at hz₁
-        exact hz₁.2.1
+        exact (uIcc_of_le hm).subset.trans Icc_subset_Ici_self
+      · rintro z ⟨hz₁, hz₂⟩
+        rw [mem_reProdIm, inf_eq_left.2 hm] at hz₁
+        exact hdiff z ⟨⟨hz₁.1, hz₁.2.1⟩, hz₂⟩
 
 /-- A direct consequence of the **Cauchy-Goursat Theorem for rectangles**: given the conditions of
 the Cauchy-Goursat Theorem between two vertical lines in the Complex plane, fixing some `y`, the
@@ -136,9 +117,8 @@ lemma integral_boundary_rect_eq_zero_eventually_atTop_of_differentiable_on_off_c
         - (∫ (x : ℝ) in x₁..x₂, f (x + m * I))
         + (I • ∫ (t : ℝ) in y..m, f (x₂ + t * I))
         - (I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)))
-    =ᶠ[atTop] (fun (_ : ℝ) ↦ 0) := by
-  filter_upwards [eventually_ge_atTop y] with m hm
-  exact hzero y hcont s hs hdiff m hm
+    =ᶠ[atTop] (fun (_ : ℝ) ↦ 0) :=
+  (eventually_ge_atTop y).mono (hzero y hcont s hs hdiff)
 
 end Eventually_Eq_Zero
 
@@ -159,17 +139,9 @@ theorem tendsto_integral_boundary_open_rect_one_side_atTop_of_tendsto_top
     (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
     Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop <|
       𝓝 ((∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂) := by
-  have heventually : (fun (m : ℝ) ↦
-      (∫ (x : ℝ) in x₁..x₂, f (x + y * I))
-        - (∫ (x : ℝ) in x₁..x₂, f (x + m * I))
-        + (I • ∫ (t : ℝ) in y..m, f (x₂ + t * I)))
-      =ᶠ[atTop] (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) := by
-    filter_upwards [eventually_ge_atTop y] with m hm
-    rw [← sub_eq_zero, ← (hzero y hcont s hs hdiff m hm)]
-  rw [tendsto_congr' heventually.symm, ← sub_zero (∫ (t : ℝ) in x₁..x₂, f (↑t + ↑y * I))]
-  refine (Tendsto.sub ?_ ?_).add hC₂
-  · rw [sub_zero, tendsto_const_nhds_iff]
-  · exact htop
+  refine Tendsto.congr' ((eventually_ge_atTop y).mono fun m hm ↦
+    sub_eq_zero.mp (hzero y hcont s hs hdiff m hm)) ?_
+  simpa using (tendsto_const_nhds.sub htop).add hC₂
 
 /-- **Deformation of open rectangular contours.** The original formulation, whose decay hypothesis
 is global in the real direction; it is a wrapper around the `_of_tendsto_top` version. -/
@@ -194,12 +166,10 @@ theorem integral_boundary_open_rect_eq_zero_of_tendsto_top
     {C₁ : E} (hC₁ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₁ + t * I)) atTop (𝓝 C₁))
     {C₂ : E} (hC₂ : Tendsto (fun m ↦ I • ∫ (t : ℝ) in y..m, f (x₂ + t * I)) atTop (𝓝 C₂))
     (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
-    (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂ - C₁ = 0 := by
-  rw [sub_eq_zero]
-  symm
-  exact tendsto_nhds_unique hC₁ <|
-    tendsto_integral_boundary_open_rect_one_side_atTop_of_tendsto_top
-      y hcont s hs hdiff hC₂ htop
+    (∫ (t : ℝ) in x₁..x₂, f (t + y * I)) + C₂ - C₁ = 0 :=
+  sub_eq_zero_of_eq <| tendsto_nhds_unique
+    (tendsto_integral_boundary_open_rect_one_side_atTop_of_tendsto_top y hcont s hs hdiff hC₂ htop)
+    hC₁
 
 /-- Wrapper for the globally-decaying formulation. -/
 theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable
@@ -267,11 +237,10 @@ theorem integral_boundary_open_rect_eq_zero_of_integrable_on_of_tendsto_top
     (hint₂ : IntegrableOn (fun (t : ℝ) ↦ f (x₂ + t * I)) (Ioi y) volume)
     (htop : Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0)) :
     (∫ (x : ℝ) in x₁..x₂, f (x + y * I)) + (I • ∫ (t : ℝ) in Ioi y, f (x₂ + t * I))
-      - (I • ∫ (t : ℝ) in Ioi y, f (x₁ + t * I)) = 0 := by
-  refine integral_boundary_open_rect_eq_zero_of_tendsto_top'
-    y hcont s hs hdiff ?_ ?_ htop
-  · exact intervalIntegral_tendsto_integral_Ioi y hint₁ fun ⦃U⦄ a ↦ a
-  · exact intervalIntegral_tendsto_integral_Ioi y hint₂ fun ⦃U⦄ a ↦ a
+      - (I • ∫ (t : ℝ) in Ioi y, f (x₁ + t * I)) = 0 :=
+  integral_boundary_open_rect_eq_zero_of_tendsto_top' y hcont s hs hdiff
+    (intervalIntegral_tendsto_integral_Ioi y hint₁ tendsto_id)
+    (intervalIntegral_tendsto_integral_Ioi y hint₂ tendsto_id) htop
 
 /-- Wrapper for the globally-decaying formulation. -/
 theorem integral_boundary_open_rect_eq_zero_of_differentiable_on_off_countable_of_integrable_on
