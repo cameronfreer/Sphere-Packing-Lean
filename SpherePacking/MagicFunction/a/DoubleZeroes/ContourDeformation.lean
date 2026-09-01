@@ -23,17 +23,26 @@ exactly the range in which `exp(-πrt)` beats the `e^{2πt}` growth of `φ₀(i/
 
 ## Main results
 
+### The central estimate
+
+* `norm_shiftedMobiusIntegrand_le` — for `t ≥ 1` the shifted-Möbius integrand
+  `φ₀''(-1/(a+it)) · (a+it)² · exp(iπr(b+it))` is dominated by `(a²+1) · verticalBound r t`.
+  Every decay statement below is a specialisation of this single bound.
+
 ### Vertical rays
 
 * `verticalIntegrandX x r t` — the integrand along the vertical ray at horizontal position
-  `x`, with `verticalBound r t` as its majorant (`norm_verticalIntegrandX_le`);
+  `x`; the case `a = 0` of the central estimate gives its majorant
+  (`norm_verticalIntegrandX_le`);
 * `integrableOn_verticalIntegrandX` — integrability on `[1, ∞)` for `r > 2`;
 * `tendsto_verticalIntegrandX_atTop` and `uniform_vanishing_verticalIntegrandX` — vanishing
   as `t → ∞`, uniformly in `x`.
 
 ### Top edge
 
-* `topEdgeIntegrand r x T` — the integrand along the closing edge at height `T`;
+* `topEdgeIntegrand r x T` — the integrand along the closing edge at height `T`; the case
+  `a = b = x ∈ [-1,1]` of the central estimate bounds it by `2 · verticalBound r T`
+  (`norm_topEdgeIntegrand_le_two_mul`);
 * `uniform_vanishing_topEdgeIntegrand` and `tendsto_topEdgeIntegral_zero` — the top edge
   contributes nothing as `T → ∞`.
 
@@ -92,14 +101,106 @@ def verticalIntegrandX (x r t : ℝ) : ℂ :=
   Complex.I * φ₀'' (Complex.I / t) * (Complex.I * t)^2 *
     Complex.exp (Complex.I * π * r * (x + Complex.I * t))
 
-/-- Special case x = 0. -/
-def verticalIntegrand (r t : ℝ) : ℂ := verticalIntegrandX 0 r t
-
 /-- The exponential phase factor has norm independent of x. -/
 lemma norm_cexp_verticalPhase (x r t : ℝ) :
     ‖Complex.exp (Complex.I * π * r * (x + Complex.I * t))‖ = Real.exp (-π * r * t) := by
   rw [Complex.norm_exp]
   norm_num
+
+/-- Bounding function for the vertical integrand norm.
+    Uses the 3-term Cor 7.13 bound with t² · exp(-πrt) distributed. -/
+def verticalBound (r t : ℝ) : ℝ :=
+  C_φ₀ * t^2 * Real.exp (-(2 * π + π * r) * t)
+  + (12 * C_φ₂' / π) * t * Real.exp (-π * r * t)
+  + (36 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * t)
+
+/-! ## The Central Shifted-Möbius Estimate
+
+For `z = a + it` in the upper half-plane, `φ₀''(-1/z) = φ₀(S•z)`, so `norm_φ₀_S_smul_le`
+bounds `φ₀''(-1/(a+it)) · (a+it)² · exp(iπr(b+it))` by `(a²+1) · verticalBound r t`. All the
+decay estimates in this file specialise this bound.
+-/
+
+/-- For z = a + I*t with t > 0, we have Im(-1/z) = t/(a² + t²) > 0.
+    This ensures the Möbius-transformed argument stays in the upper half-plane. -/
+lemma im_neg_inv_pos (a t : ℝ) (ht : 0 < t) :
+    0 < ((-1 : ℂ) / (a + Complex.I * t)).im := by
+  -- -1/(a+I·t) = (-(a+I·t))⁻¹, and a+I·t ∈ ℍ, so apply `im_inv_neg_coe_pos`.
+  simpa [neg_div, one_div, neg_inv] using
+    UpperHalfPlane.im_inv_neg_coe_pos
+      (⟨a + Complex.I * t, by simp [Complex.add_im]; exact ht⟩ : UpperHalfPlane)
+
+/-- S action on x + iT gives -1/(x + iT).
+    This is a restatement of `modular_S_smul` with explicit computation. -/
+lemma S_smul_x_add_I_mul_T (x T : ℝ) (hT : 0 < T) :
+    let w : ℍ := ⟨↑x + Complex.I * ↑T, by simp; exact hT⟩
+    (↑(ModularGroup.S • w) : ℂ) = -1 / (↑x + Complex.I * ↑T) := by
+  simp only [modular_S_smul, UpperHalfPlane.coe_mk]
+  rw [← neg_inv]; ring
+
+/-- φ₀''(-1/z) equals φ₀(S•w) where w = ⟨z, _⟩ ∈ ℍ.
+    This connects the extension φ₀'' on ℂ to the original φ₀ on ℍ via S-transform. -/
+lemma φ₀''_neg_inv_eq_φ₀_S_smul (x T : ℝ) (hT : 0 < T) :
+    let z : ℂ := ↑x + Complex.I * ↑T
+    let w : ℍ := ⟨z, by simp only [z]; simp; exact hT⟩
+    φ₀'' (-1 / z) = φ₀ (ModularGroup.S • w) := by
+  intro z w
+  have hneg_inv_im : 0 < (-1 / z : ℂ).im := by
+    simp only [z, neg_div, one_div, neg_inv]
+    exact UpperHalfPlane.im_inv_neg_coe_pos ⟨_, by simp [Complex.add_im]; exact hT⟩
+  rw [φ₀''_def hneg_inv_im]
+  exact congrArg φ₀ (UpperHalfPlane.ext (S_smul_x_add_I_mul_T x T hT).symm)
+
+/-- Pointwise norm bound for the shifted-Möbius integrand: for `t ≥ 1` it is dominated by
+`(a²+1)·verticalBound r t`. This is the analytic core reused by the integrability goals. -/
+lemma norm_shiftedMobiusIntegrand_le (a b r t : ℝ) (ht : 1 ≤ t) :
+    ‖φ₀'' (-1 / ((a : ℂ) + Complex.I * t)) * ((a : ℂ) + Complex.I * t) ^ 2 *
+        Complex.exp (Complex.I * π * r * ((b : ℂ) + Complex.I * t))‖ ≤
+      (a ^ 2 + 1) * verticalBound r t := by
+  have ht_pos : 0 < t := lt_of_lt_of_le one_pos ht
+  let z : ℂ := a + Complex.I * t
+  have hz_im : z.im = t := by simp [z]
+  have hz_im_pos : 0 < z.im := by rw [hz_im]; exact ht_pos
+  let w : UpperHalfPlane := ⟨z, hz_im_pos⟩
+  have hw_im : w.im = t := hz_im
+  have hw_im_ge : 1 ≤ w.im := by rw [hw_im]; exact ht
+  have hφ₀_eq : φ₀'' (-1 / z) = φ₀ (ModularGroup.S • w) :=
+    φ₀''_neg_inv_eq_φ₀_S_smul a t ht_pos
+  have hS_bound := norm_φ₀_S_smul_le w hw_im_ge
+  have hz_sq_bound : ‖z ^ 2‖ ≤ (a ^ 2 + 1) * t ^ 2 := by
+    simp only [z, norm_pow, ← Complex.normSq_eq_norm_sq, mul_comm Complex.I,
+      Complex.normSq_add_mul_I]
+    nlinarith [sq_nonneg a, sq_nonneg (t - 1), sq_nonneg (a * (t - 1))]
+  have hexp_norm : ‖Complex.exp (Complex.I * π * r * (b + Complex.I * t))‖ =
+      Real.exp (-π * r * t) := norm_cexp_verticalPhase b r t
+  calc ‖φ₀'' (-1 / z) * z ^ 2 * Complex.exp (Complex.I * π * r * (b + Complex.I * t))‖
+      = ‖φ₀'' (-1 / z)‖ * ‖z ^ 2‖ * Real.exp (-π * r * t) := by
+        rw [norm_mul, norm_mul, hexp_norm]
+    _ ≤ ‖φ₀'' (-1 / z)‖ * ((a ^ 2 + 1) * t ^ 2) * Real.exp (-π * r * t) := by
+        gcongr
+    _ = (a ^ 2 + 1) * (‖φ₀'' (-1 / z)‖ * t ^ 2 * Real.exp (-π * r * t)) := by ring
+    _ = (a ^ 2 + 1) * (‖φ₀ (ModularGroup.S • w)‖ * t ^ 2 * Real.exp (-π * r * t)) := by
+        rw [hφ₀_eq]
+    _ ≤ (a ^ 2 + 1) * verticalBound r t := by
+        apply mul_le_mul_of_nonneg_left _ (by nlinarith)
+        have hw_norm_ge : t ≤ ‖(w : ℂ)‖ := by
+          simpa [hw_im, abs_of_pos ht_pos] using abs_im_le_norm (w : ℂ)
+        have hS_bound' : ‖φ₀ (ModularGroup.S • w)‖ ≤
+            C_φ₀ * Real.exp (-2 * π * t) + (12 / (π * t)) * C_φ₂'
+            + (36 / (π ^ 2 * t ^ 2)) * C_φ₄' * Real.exp (2 * π * t) := by
+          rw [hw_im] at hS_bound
+          refine hS_bound.trans ?_
+          gcongr <;> [exact C_φ₂'_pos.le; exact C_φ₄'_pos.le]
+        calc ‖φ₀ (ModularGroup.S • w)‖ * t ^ 2 * Real.exp (-π * r * t)
+            ≤ (C_φ₀ * Real.exp (-2 * π * t) + (12 / (π * t)) * C_φ₂'
+                + (36 / (π ^ 2 * t ^ 2)) * C_φ₄' * Real.exp (2 * π * t))
+              * t ^ 2 * Real.exp (-π * r * t) := by gcongr
+          _ = C_φ₀ * t ^ 2 * (Real.exp (-2 * π * t) * Real.exp (-π * r * t))
+              + (12 * C_φ₂' / π) * t * Real.exp (-π * r * t)
+              + (36 * C_φ₄' / π ^ 2) * (Real.exp (2 * π * t) * Real.exp (-π * r * t)) := by
+                field_simp
+          _ = verticalBound r t := by
+                simp only [verticalBound, ← Real.exp_add]; ring_nf
 
 /-! ## Integrability (complex-valued) -/
 
@@ -109,35 +210,16 @@ lemma norm_verticalIntegrandX (x r t : ℝ) (_ht : 0 < t) :
   simp [verticalIntegrandX, norm_cexp_verticalPhase, sq]
   ring
 
-/-- Bounding function for the vertical integrand norm.
-    Uses the 3-term Cor 7.13 bound with t² · exp(-πrt) distributed. -/
-def verticalBound (r t : ℝ) : ℝ :=
-  C_φ₀ * t^2 * Real.exp (-(2 * π + π * r) * t)
-  + (12 * C_φ₂' / π) * t * Real.exp (-π * r * t)
-  + (36 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * t)
-
-/-- The vertical bound dominates the integrand norm for t ≥ 1. -/
+/-- The vertical bound dominates the integrand norm for t ≥ 1.
+    This is the `a = 0` case of `norm_shiftedMobiusIntegrand_le`, since `-1/(it) = i/t`. -/
 lemma norm_verticalIntegrandX_le (x r t : ℝ) (ht : 1 ≤ t) :
     ‖verticalIntegrandX x r t‖ ≤ verticalBound r t := by
-  have ht_pos : 0 < t := one_pos.trans_le ht
-  rw [norm_verticalIntegrandX x r t ht_pos]
-  -- Apply Cor 7.13 bound: ‖φ₀''(I/t)‖ ≤ 3-term bound
-  have hbound := norm_φ₀''_I_div_t_le t ht
-  -- Need: t² * ‖φ₀''(I/t)‖ * exp(-πrt) ≤ verticalBound
-  calc t^2 * ‖φ₀'' (Complex.I / ↑t)‖ * Real.exp (-π * r * t)
-      ≤ t^2 * (C_φ₀ * Real.exp (-2 * π * t)
-               + (12 / (π * t)) * C_φ₂'
-               + (36 / (π^2 * t^2)) * C_φ₄' * Real.exp (2 * π * t))
-          * Real.exp (-π * r * t) := by
-        gcongr
-    _ = verticalBound r t := by
-        rw [verticalBound, show -(2 * π + π * r) * t = -2 * π * t + -π * r * t from by ring,
-          show -(π * r - 2 * π) * t = 2 * π * t + -π * r * t from by ring, Real.exp_add,
-          Real.exp_add]
-        field_simp
+  have h := norm_shiftedMobiusIntegrand_le 0 x r t ht
+  simp only [Complex.ofReal_zero, zero_add, neg_one_div_I_mul] at h
+  norm_num at h
+  simpa [verticalIntegrandX] using h
 
-/-- For `r > 2` the three exponential rates occurring in `verticalBound` and `topEdgeBound`
-are positive. -/
+/-- For `r > 2` the three exponential rates occurring in `verticalBound` are positive. -/
 private lemma pi_rate_pos (r : ℝ) (hr : 2 < r) :
     0 < 2 * π + π * r ∧ 0 < π * r ∧ 0 < π * r - 2 * π :=
   have hπ := Real.pi_pos
@@ -185,11 +267,6 @@ lemma integrableOn_verticalIntegrandX (x r : ℝ) (hr : 2 < r) :
     exact h_cont.aestronglyMeasurable measurableSet_Ici
   · filter_upwards [ae_restrict_mem measurableSet_Ici] with t ht
     exact norm_verticalIntegrandX_le x r t ht
-
-/-- Corollary: norm is also integrable. -/
-lemma integrableOn_norm_verticalIntegrandX (x r : ℝ) (hr : 2 < r) :
-    IntegrableOn (fun t => ‖verticalIntegrandX x r t‖) (Ici 1) volume :=
-  (integrableOn_verticalIntegrandX x r hr).norm
 
 /-! ## Tendsto at Infinity (Proposition 7.14) -/
 
@@ -245,194 +322,14 @@ def topEdgeIntegrand (r x T : ℝ) : ℂ :=
   φ₀'' (-1 / (↑x + Complex.I * ↑T)) * (↑x + Complex.I * ↑T)^2 *
     Complex.exp (Complex.I * π * r * (↑x + Complex.I * ↑T))
 
-/-- Norm of z = x + iT when x ∈ [-1,1] and T ≥ 1. -/
-lemma norm_x_add_I_mul_T_bounds (x T : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) (hT : 1 ≤ T) :
-    T ≤ ‖(↑x + Complex.I * ↑T : ℂ)‖ ∧ ‖(↑x + Complex.I * ↑T : ℂ)‖ ≤ 1 + T := by
-  constructor
-  · have hsq : T^2 ≤ ‖(↑x + Complex.I * ↑T : ℂ)‖^2 := by
-      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]
-      simp
-      nlinarith [sq_nonneg x]
-    exact (sq_le_sq₀ (by linarith : 0 ≤ T) (norm_nonneg _)).mp hsq
-  · -- Upper bound: ‖z‖ ≤ |x| + |T| ≤ 1 + T
-    simp only [mem_Icc] at hx
-    refine (norm_add_le _ _).trans ?_
-    simp only [Complex.norm_real, norm_mul, Complex.norm_I, one_mul, Real.norm_eq_abs,
-      abs_of_pos (show (0:ℝ) < T by linarith)]
-    linarith [abs_le.mpr (⟨hx.1, hx.2⟩ : -1 ≤ x ∧ x ≤ 1)]
-
-/-- S action on x + iT gives -1/(x + iT).
-    This is a restatement of `modular_S_smul` with explicit computation. -/
-lemma S_smul_x_add_I_mul_T (x T : ℝ) (hT : 0 < T) :
-    let w : ℍ := ⟨↑x + Complex.I * ↑T, by simp; exact hT⟩
-    (↑(ModularGroup.S • w) : ℂ) = -1 / (↑x + Complex.I * ↑T) := by
-  simp only [modular_S_smul, UpperHalfPlane.coe_mk]
-  rw [← neg_inv]; ring
-
-/-- φ₀''(-1/z) equals φ₀(S•w) where w = ⟨z, _⟩ ∈ ℍ.
-    This connects the extension φ₀'' on ℂ to the original φ₀ on ℍ via S-transform. -/
-lemma φ₀''_neg_inv_eq_φ₀_S_smul (x T : ℝ) (hT : 0 < T) :
-    let z : ℂ := ↑x + Complex.I * ↑T
-    let w : ℍ := ⟨z, by simp only [z]; simp; exact hT⟩
-    φ₀'' (-1 / z) = φ₀ (ModularGroup.S • w) := by
-  intro z w
-  have hneg_inv_im : 0 < (-1 / z : ℂ).im := by
-    simp only [z, neg_div, one_div, neg_inv]
-    exact UpperHalfPlane.im_inv_neg_coe_pos ⟨_, by simp [Complex.add_im]; exact hT⟩
-  rw [φ₀''_def hneg_inv_im]
-  exact congrArg φ₀ (UpperHalfPlane.ext (S_smul_x_add_I_mul_T x T hT).symm)
-
-/-- Bounding function for top edge integrand norm.
-    For z = x + iT with x ∈ [-1,1] and T ≥ 1, this bounds ‖topEdgeIntegrand r x T‖. -/
-def topEdgeBound (r T : ℝ) : ℝ :=
-  (1 + T)^2 * Real.exp (-π * r * T) *
-    (C_φ₀ * Real.exp (-2 * π * T) + (12 * C_φ₂' / (π * T))
-        + (36 * C_φ₄' / (π^2 * T^2)) * Real.exp (2 * π * T))
-
-/-- The top edge bound → 0 as T → ∞ for r > 2. -/
-lemma tendsto_topEdgeBound_atTop (r : ℝ) (hr : 2 < r) :
-    Tendsto (topEdgeBound r) atTop (𝓝 0) := by
-  unfold topEdgeBound
-  obtain ⟨h1', h2, h3⟩ := pi_rate_pos r hr
-  have h1 : 0 < π * r + 2 * π := by linarith
-  -- Strategy: Expand (1+T)² = 1 + 2T + T² and use individual tendsto lemmas
-  -- Term 1: C₀ * (1+T)² * exp(-(πr+2π)T) → 0
-  have t1 : Tendsto (fun T => C_φ₀ * (1 + T)^2 * Real.exp (-(π * r + 2 * π) * T))
-      atTop (𝓝 0) := by
-    -- Expand: (1+T)² = 1 + 2T + T²
-    have t1a : Tendsto (fun T => C_φ₀ * Real.exp (-(π * r + 2 * π) * T)) atTop (𝓝 0) := by
-      simpa using tendsto_const_mul_rpow_mul_exp_neg_atTop C_φ₀ (π * r + 2 * π) 0 h1
-    have t1b : Tendsto (fun T => 2 * C_φ₀ * T * Real.exp (-(π * r + 2 * π) * T)) atTop (𝓝 0) := by
-      simpa using tendsto_const_mul_rpow_mul_exp_neg_atTop (2 * C_φ₀) (π * r + 2 * π) 1 h1
-    have t1c : Tendsto (fun T => C_φ₀ * T^2 * Real.exp (-(π * r + 2 * π) * T)) atTop (𝓝 0) := by
-      simpa [Real.rpow_two] using
-        tendsto_const_mul_rpow_mul_exp_neg_atTop C_φ₀ (π * r + 2 * π) 2 h1
-    have hsum := (t1a.add t1b).add t1c
-    simp only [add_zero] at hsum
-    convert hsum using 1
-    funext T; ring
-  -- Term 2: (12C₂/(πT)) * (1+T)² * exp(-πrT) → 0
-  -- Use squeeze: (1+T)²/T ≤ 4T for T ≥ 1
-  have t2 : Tendsto (fun T => (12 * C_φ₂' / (π * T)) * (1 + T)^2 * Real.exp (-π * r * T))
-      atTop (𝓝 0) := by
-    have hbound : Tendsto (fun T => (48 * C_φ₂' / π) * T * Real.exp (-(π * r) * T))
-        atTop (𝓝 0) := by
-      simpa using tendsto_const_mul_rpow_mul_exp_neg_atTop (48 * C_φ₂' / π) (π * r) 1 h2
-    apply squeeze_zero'
-    · filter_upwards [eventually_ge_atTop 1] with T hT
-      have hT_pos : 0 < T := by linarith
-      apply mul_nonneg (mul_nonneg _ (sq_nonneg _)) (le_of_lt (Real.exp_pos _))
-      exact div_nonneg (by linarith [C_φ₂'_pos]) (by positivity)
-    · filter_upwards [eventually_ge_atTop 1] with T hT
-      have hT_pos : 0 < T := by linarith
-      have hπT_pos : 0 < π * T := by positivity
-      have h1 : (12 * C_φ₂' / (π * T)) * (1 + T)^2 =
-          (12 * C_φ₂' / π) * ((1 + T)^2 / T) := by
-        field_simp
-      have h2 : (1 + T)^2 / T = 1 / T + 2 + T := by field_simp; ring
-      have h3 : 1 / T + 2 + T ≤ 4 * T := by
-        have : 1 / T ≤ 1 := (div_le_one hT_pos).mpr hT
-        linarith
-      calc (12 * C_φ₂' / (π * T)) * (1 + T)^2 * Real.exp (-π * r * T)
-          = (12 * C_φ₂' / π) * (1 / T + 2 + T) * Real.exp (-π * r * T) := by
-              rw [h1, h2]
-        _ ≤ (12 * C_φ₂' / π) * (4 * T) * Real.exp (-π * r * T) := by
-            have := C_φ₂'_pos
-            gcongr
-        _ = (48 * C_φ₂' / π) * T * Real.exp (-(π * r) * T) := by ring_nf
-    · exact hbound
-  -- Term 3: (36C₄/(π²T²)) * (1+T)² * exp(2πT-πrT) → 0
-  -- Use squeeze: (1+T)²/T² ≤ 4 for T ≥ 1
-  have t3 : Tendsto (fun T => (36 * C_φ₄' / (π^2 * T^2)) * (1 + T)^2 *
-      Real.exp (2 * π * T) * Real.exp (-π * r * T)) atTop (𝓝 0) := by
-    have hbound : Tendsto (fun T => (144 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * T))
-        atTop (𝓝 0) := by
-      simpa using tendsto_const_mul_rpow_mul_exp_neg_atTop (144 * C_φ₄' / π^2) (π * r - 2 * π) 0 h3
-    apply squeeze_zero'
-    · filter_upwards [eventually_ge_atTop 1] with T hT
-      have hT_pos : 0 < T := by linarith
-      apply mul_nonneg (mul_nonneg (mul_nonneg _ (sq_nonneg _)) (le_of_lt (Real.exp_pos _)))
-          (le_of_lt (Real.exp_pos _))
-      exact div_nonneg (by linarith [C_φ₄'_pos]) (by positivity)
-    · filter_upwards [eventually_ge_atTop 1] with T hT
-      have hT_pos : 0 < T := by linarith
-      have hexp_comb : Real.exp (2 * π * T) * Real.exp (-π * r * T) =
-          Real.exp (-(π * r - 2 * π) * T) := by rw [← Real.exp_add]; ring_nf
-      have h1 : (1 + T)^2 / T^2 = (1 / T + 1)^2 := by field_simp
-      have hle2 : 1 / T + 1 ≤ 2 := by
-        have : 1 / T ≤ 1 := (div_le_one hT_pos).mpr hT
-        linarith
-      have h2 : (1 / T + 1)^2 ≤ 4 := by
-        have h0 : 0 ≤ 1 / T + 1 := by positivity
-        calc (1 / T + 1)^2 ≤ 2^2 := sq_le_sq' (by linarith) hle2
-          _ = 4 := by norm_num
-      -- Combine the exponentials and rearrange
-      calc (36 * C_φ₄' / (π^2 * T^2)) * (1 + T)^2 * Real.exp (2 * π * T) *
-               Real.exp (-π * r * T)
-          = (36 * C_φ₄' / π^2) * ((1 + T)^2 / T^2) *
-              (Real.exp (2 * π * T) * Real.exp (-π * r * T)) := by field_simp
-        _ = (36 * C_φ₄' / π^2) * (1 / T + 1)^2 * Real.exp (-(π * r - 2 * π) * T) := by
-              rw [h1, hexp_comb]
-        _ ≤ (36 * C_φ₄' / π^2) * 4 * Real.exp (-(π * r - 2 * π) * T) := by
-            have := C_φ₄'_pos
-            gcongr
-        _ = (144 * C_φ₄' / π^2) * Real.exp (-(π * r - 2 * π) * T) := by ring
-    · exact hbound
-  simpa [pow_two, topEdgeBound, mul_add, add_mul, left_distrib, right_distrib,
-    mul_assoc, mul_left_comm, mul_comm, Real.exp_add] using (t1.add t2).add t3
-
-/-- The top edge bound is nonnegative for T ≥ 1. -/
-lemma topEdgeBound_nonneg (r T : ℝ) (hT : 1 ≤ T) : 0 ≤ topEdgeBound r T := by
-  simp only [topEdgeBound]
-  have := C_φ₀_pos; have := C_φ₂'_pos; have := C_φ₄'_pos
-  positivity
-
-/-- Uniform bound on top edge integrand for x ∈ [-1,1], T ≥ 1.
-    Uses S-transform bound (norm_φ₀_S_smul_le) with ‖z‖ ≥ T.
-
-    Proof strategy:
-    1. Show φ₀''(-1/z) = φ₀(S•w) where w = x + iT ∈ ℍ
-    2. Apply norm_φ₀_S_smul_le to get 3-term bound
-    3. Use ‖z‖ ≥ T to bound 1/‖z‖ terms by 1/T
-    4. Combine with ‖z²‖ ≤ (1+T)² and exponential phase norm -/
-lemma norm_topEdgeIntegrand_le (r : ℝ) (x T : ℝ)
-    (hx : x ∈ Icc (-1 : ℝ) 1) (hT : 1 ≤ T) :
-    ‖topEdgeIntegrand r x T‖ ≤ topEdgeBound r T := by
-  have hT_pos : 0 < T := lt_of_lt_of_le one_pos hT
-  let z : ℂ := ↑x + Complex.I * ↑T
-  have hz_im : z.im = T := by simp [z]
-  let w : ℍ := ⟨z, hz_im ▸ hT_pos⟩
-  rcases norm_x_add_I_mul_T_bounds x T hx hT with ⟨hz_norm_ge, hz_norm_le⟩
-  have hφ₀_eq : φ₀'' (-1 / z) = φ₀ (ModularGroup.S • w) := by
-    simpa [w, z] using φ₀''_neg_inv_eq_φ₀_S_smul x T hT_pos
-  have hS_bound := norm_φ₀_S_smul_le w (by simpa [w, z] using hT)
-  have hz_sq_norm : ‖z^2‖ ≤ (1 + T)^2 := by
-    rw [norm_pow]
-    exact sq_le_sq' (by linarith) hz_norm_le
-  have hexp_norm : ‖Complex.exp (Complex.I * π * r * z)‖ = Real.exp (-π * r * T) := by
-    simpa [z] using norm_cexp_verticalPhase x r T
-  unfold topEdgeIntegrand topEdgeBound
-  simp only [z] at *
-  rw [norm_mul, norm_mul, hφ₀_eq, hexp_norm]
-  -- Replace ‖z‖ with T in the S-transform bound (‖z‖ ≥ T → 1/‖z‖ ≤ 1/T)
-  have hS_bound' : ‖φ₀ (ModularGroup.S • w)‖ ≤
-      C_φ₀ * Real.exp (-2 * π * T) + 12 * C_φ₂' / (π * T) +
-        36 * C_φ₄' / (π^2 * T^2) * Real.exp (2 * π * T) := by
-    rw [show w.im = T from hz_im] at hS_bound
-    calc ‖φ₀ (ModularGroup.S • w)‖
-        ≤ C_φ₀ * Real.exp (-2 * π * T) + 12 / (π * ‖(w : ℂ)‖) * C_φ₂' +
-            36 / (π^2 * ‖(w : ℂ)‖^2) * C_φ₄' * Real.exp (2 * π * T) := hS_bound
-      _ ≤ C_φ₀ * Real.exp (-2 * π * T) + 12 / (π * T) * C_φ₂' +
-            36 / (π^2 * T^2) * C_φ₄' * Real.exp (2 * π * T) := by
-          gcongr <;> [exact C_φ₂'_pos.le; exact C_φ₄'_pos.le]
-      _ = _ := by ring
-  calc ‖φ₀ (ModularGroup.S • w)‖ * ‖(↑x + Complex.I * ↑T)^2‖ * Real.exp (-π * r * T)
-      ≤ (C_φ₀ * Real.exp (-2 * π * T) + 12 * C_φ₂' / (π * T) +
-          36 * C_φ₄' / (π^2 * T^2) * Real.exp (2 * π * T)) * (1 + T)^2 *
-            Real.exp (-π * r * T) := by
-        have := C_φ₀_pos; have := C_φ₂'_pos; have := C_φ₄'_pos
-        gcongr
-    _ = _ := by ring
+/-- Uniform bound on the top edge integrand for x ∈ [-1,1], T ≥ 1: the shifted-Möbius
+    estimate `norm_shiftedMobiusIntegrand_le` with `a = b = x`, together with `x² + 1 ≤ 2`. -/
+lemma norm_topEdgeIntegrand_le_two_mul (r : ℝ) {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) {T : ℝ}
+    (hT : 1 ≤ T) : ‖topEdgeIntegrand r x T‖ ≤ 2 * verticalBound r T := by
+  have hx2 : x ^ 2 + 1 ≤ 2 := by nlinarith [hx.1, hx.2]
+  unfold topEdgeIntegrand
+  exact (norm_shiftedMobiusIntegrand_le x x r T hT).trans
+    (mul_le_mul_of_nonneg_right hx2 (verticalBound_nonneg r T hT))
 
 /-- Uniform vanishing: the top edge integrand is arbitrarily small for all z = x + iT
     with x ∈ [-1,1] and sufficiently large T. This is the form needed by Cauchy-Goursat. -/
@@ -440,17 +337,20 @@ lemma uniform_vanishing_topEdgeIntegrand (r : ℝ) (hr : 2 < r) :
     ∀ ε > 0, ∃ M : ℝ, ∀ x T : ℝ, x ∈ Icc (-1 : ℝ) 1 → M ≤ T →
       ‖topEdgeIntegrand r x T‖ < ε := by
   intro ε hε
-  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.mp (tendsto_topEdgeBound_atTop r hr) ε hε
+  have h2 : Tendsto (fun T => 2 * verticalBound r T) atTop (𝓝 0) := by
+    simpa using (tendsto_verticalBound_atTop r hr).const_mul 2
+  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.mp h2 ε hε
   refine ⟨max N 1, fun x T hx hT => ?_⟩
   have hT1 : 1 ≤ T := le_trans (le_max_right N 1) hT
   have hTN : N ≤ T := le_trans (le_max_left N 1) hT
-  exact lt_of_le_of_lt (norm_topEdgeIntegrand_le r x T hx hT1)
-    (by simpa [abs_of_nonneg (topEdgeBound_nonneg r T hT1)] using hN T hTN)
+  refine lt_of_le_of_lt (norm_topEdgeIntegrand_le_two_mul r hx hT1) ?_
+  simpa [abs_of_nonneg (verticalBound_nonneg r T hT1)] using hN T hTN
 
 /-! ## Filter formulations
 
-Note: `topEdgeBound` requires `x ∈ [-1,1]`, since the bound uses `‖z‖ ≤ 1+T`. The rectangle
-contour of the Cauchy–Goursat application has bounded real part, so this is no restriction.
+Note: the top-edge bound requires `x ∈ [-1,1]`, since `norm_shiftedMobiusIntegrand_le` gives
+the constant `x² + 1 ≤ 2`. The rectangle contour of the Cauchy–Goursat application has
+bounded real part, so this is no restriction.
 -/
 
 /-- Filter version of `uniform_vanishing_topEdgeIntegrand` for a fixed `x ∈ [-1,1]`.
@@ -474,90 +374,30 @@ lemma eventually_norm_topEdgeIntegrand_lt (r : ℝ) (hr : 2 < r) (ε : ℝ) (hε
     The integrand involves φ₀(-1/z) = φ₀(S•z), not φ₀(z) directly.
     For z = x + iT with T large, the S-transform bound gives exponential decay.
 
-    Strategy: Use squeeze theorem with topEdgeBound
-    ‖∫₋₁¹ f(x,T) dx‖ ≤ ∫₋₁¹ ‖f(x,T)‖ dx ≤ 2 * topEdgeBound(T) → 0 -/
+    Strategy: Squeeze against the constant-in-x bound of `norm_topEdgeIntegrand_le_two_mul`:
+    ‖∫₋₁¹ f(x,T) dx‖ ≤ 2 * (2 * verticalBound r T) → 0 -/
 lemma tendsto_topEdgeIntegral_zero (r : ℝ) (hr : 2 < r) :
     Tendsto (fun (T : ℝ) => ∫ x : ℝ in Icc (-1 : ℝ) 1, topEdgeIntegrand r x T)
     atTop (𝓝 0) := by
-  -- Strategy: Use tendsto_zero_iff_norm_tendsto_zero + squeeze_zero'
   rw [tendsto_zero_iff_norm_tendsto_zero]
   apply squeeze_zero'
   · exact Eventually.of_forall fun _ => norm_nonneg _
   · filter_upwards [eventually_ge_atTop 1] with T hT
     calc ‖∫ x in Icc (-1 : ℝ) 1, topEdgeIntegrand r x T‖
-        ≤ topEdgeBound r T * volume.real (Icc (-1 : ℝ) 1) :=
+        ≤ 2 * verticalBound r T * volume.real (Icc (-1 : ℝ) 1) :=
           norm_setIntegral_le_of_norm_le_const measure_Icc_lt_top
-            (fun x hx => norm_topEdgeIntegrand_le r x T hx hT)
-      _ = 2 * topEdgeBound r T := by
-          norm_num [Measure.real, Real.volume_Icc, mul_comm]
-  · simpa using (tendsto_topEdgeBound_atTop r hr).const_mul 2
-
+            (fun x hx => norm_topEdgeIntegrand_le_two_mul r hx hT)
+      _ = 4 * verticalBound r T := by
+          have h2 : volume.real (Icc (-1 : ℝ) 1) = 2 := by
+            norm_num [Measure.real, Real.volume_Icc]
+          rw [h2]; ring
+  · simpa using (tendsto_verticalBound_atTop r hr).const_mul 4
 
 /-! ## General Shifted Möbius Integrability
 
 A unified lemma that handles all six integrability goals via parameter instantiation.
-Uses φ₀''_neg_inv_eq_φ₀_S_smul + norm_φ₀_S_smul_le infrastructure from 
+The dominating bound is `norm_shiftedMobiusIntegrand_le`.
 -/
-
-/-- For z = a + I*t with t > 0, we have Im(-1/z) = t/(a² + t²) > 0.
-    This ensures the Möbius-transformed argument stays in the upper half-plane. -/
-lemma im_neg_inv_pos (a t : ℝ) (ht : 0 < t) :
-    0 < ((-1 : ℂ) / (a + Complex.I * t)).im := by
-  -- -1/(a+I·t) = (-(a+I·t))⁻¹, and a+I·t ∈ ℍ, so apply `im_inv_neg_coe_pos`.
-  simpa [neg_div, one_div, neg_inv] using
-    UpperHalfPlane.im_inv_neg_coe_pos
-      (⟨a + Complex.I * t, by simp [Complex.add_im]; exact ht⟩ : UpperHalfPlane)
-
-/-- Pointwise norm bound for the shifted-Möbius integrand: for `t ≥ 1` it is dominated by
-`(a²+1)·verticalBound r t`. This is the analytic core reused by the integrability goals. -/
-lemma norm_shiftedMobiusIntegrand_le (a b r t : ℝ) (ht : 1 ≤ t) :
-    ‖φ₀'' (-1 / ((a : ℂ) + Complex.I * t)) * ((a : ℂ) + Complex.I * t) ^ 2 *
-        Complex.exp (Complex.I * π * r * ((b : ℂ) + Complex.I * t))‖ ≤
-      (a ^ 2 + 1) * verticalBound r t := by
-  have ht_pos : 0 < t := lt_of_lt_of_le one_pos ht
-  let z : ℂ := a + Complex.I * t
-  have hz_im : z.im = t := by simp [z]
-  have hz_im_pos : 0 < z.im := by rw [hz_im]; exact ht_pos
-  let w : UpperHalfPlane := ⟨z, hz_im_pos⟩
-  have hw_im : w.im = t := hz_im
-  have hw_im_ge : 1 ≤ w.im := by rw [hw_im]; exact ht
-  have hφ₀_eq : φ₀'' (-1 / z) = φ₀ (ModularGroup.S • w) :=
-    φ₀''_neg_inv_eq_φ₀_S_smul a t ht_pos
-  have hS_bound := norm_φ₀_S_smul_le w hw_im_ge
-  have hz_sq_bound : ‖z ^ 2‖ ≤ (a ^ 2 + 1) * t ^ 2 := by
-    simp only [z, norm_pow, ← Complex.normSq_eq_norm_sq, mul_comm Complex.I,
-      Complex.normSq_add_mul_I]
-    nlinarith [sq_nonneg a, sq_nonneg (t - 1), sq_nonneg (a * (t - 1))]
-  have hexp_norm : ‖Complex.exp (Complex.I * π * r * (b + Complex.I * t))‖ =
-      Real.exp (-π * r * t) := norm_cexp_verticalPhase b r t
-  calc ‖φ₀'' (-1 / z) * z ^ 2 * Complex.exp (Complex.I * π * r * (b + Complex.I * t))‖
-      = ‖φ₀'' (-1 / z)‖ * ‖z ^ 2‖ * Real.exp (-π * r * t) := by
-        rw [norm_mul, norm_mul, hexp_norm]
-    _ ≤ ‖φ₀'' (-1 / z)‖ * ((a ^ 2 + 1) * t ^ 2) * Real.exp (-π * r * t) := by
-        gcongr
-    _ = (a ^ 2 + 1) * (‖φ₀'' (-1 / z)‖ * t ^ 2 * Real.exp (-π * r * t)) := by ring
-    _ = (a ^ 2 + 1) * (‖φ₀ (ModularGroup.S • w)‖ * t ^ 2 * Real.exp (-π * r * t)) := by
-        rw [hφ₀_eq]
-    _ ≤ (a ^ 2 + 1) * verticalBound r t := by
-        apply mul_le_mul_of_nonneg_left _ (by nlinarith)
-        have hw_norm_ge : t ≤ ‖(w : ℂ)‖ := by
-          simpa [hw_im, abs_of_pos ht_pos] using abs_im_le_norm (w : ℂ)
-        have hS_bound' : ‖φ₀ (ModularGroup.S • w)‖ ≤
-            C_φ₀ * Real.exp (-2 * π * t) + (12 / (π * t)) * C_φ₂'
-            + (36 / (π ^ 2 * t ^ 2)) * C_φ₄' * Real.exp (2 * π * t) := by
-          rw [hw_im] at hS_bound
-          refine hS_bound.trans ?_
-          gcongr <;> [exact C_φ₂'_pos.le; exact C_φ₄'_pos.le]
-        calc ‖φ₀ (ModularGroup.S • w)‖ * t ^ 2 * Real.exp (-π * r * t)
-            ≤ (C_φ₀ * Real.exp (-2 * π * t) + (12 / (π * t)) * C_φ₂'
-                + (36 / (π ^ 2 * t ^ 2)) * C_φ₄' * Real.exp (2 * π * t))
-              * t ^ 2 * Real.exp (-π * r * t) := by gcongr
-          _ = C_φ₀ * t ^ 2 * (Real.exp (-2 * π * t) * Real.exp (-π * r * t))
-              + (12 * C_φ₂' / π) * t * Real.exp (-π * r * t)
-              + (36 * C_φ₄' / π ^ 2) * (Real.exp (2 * π * t) * Real.exp (-π * r * t)) := by
-                field_simp
-          _ = verticalBound r t := by
-                simp only [verticalBound, ← Real.exp_add]; ring_nf
 
 /-- General integrability for φ₀''(-1/(a + I*t)) * (a + I*t)² * cexp(I*π*r*(b + I*t)) on Ioi 1.
 
@@ -607,11 +447,6 @@ lemma integrableOn_φ₀_shifted_Möbius (a b r : ℝ) (hr : 2 < r) :
 
 The Category A goals (1, 2, 4, 6) are scalar multiples of `verticalIntegrandX`.
 -/
-
-/-- Helper: (I*t)² = -t². Useful for clearing I² in integrands. -/
-@[simp]
-lemma I_mul_t_sq (t : ℝ) : (Complex.I * t : ℂ)^2 = -(t^2) := by
-  simp [mul_pow, Complex.I_sq, ← Complex.ofReal_neg, ← Complex.ofReal_pow]
 
 /-- Goal 1 integrand equals verticalIntegrandX 0 r t. -/
 lemma centreRay_eq_verticalIntegrandX (r t : ℝ) :
@@ -815,8 +650,6 @@ lemma integrableOn_rightRay_Ici (r : ℝ) (hr : 2 < r) :
                  (Ici (0 : ℝ)) volume :=
   integrableOn_Ici_of_eqOn_verticalIntegrandX 1 r hr fun t _ =>
     rightRay_Ici_eq_verticalIntegrandX r t
-
-
 
 
 end MagicFunction.a.DoubleZeroes
