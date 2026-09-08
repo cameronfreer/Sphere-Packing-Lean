@@ -107,6 +107,25 @@ lemma qexp_eq_fouterm (b : ℕ → ℂ) (x : ℍ) :
     show (↑π * Complex.I * ((2 * j : ℕ) : ℤ) * ↑x : ℂ) = 2 * ↑π * Complex.I * ↑j * ↑x by
       push_cast; ring]
 
+/-- A `fouterm` sum whose coefficients vanish below `n₀` can start at index `n₀`:
+`∑ₙ fouterm c x (n + 0) = ∑ₙ fouterm c x (n + n₀)`. -/
+lemma tsum_fouterm_shift {c : ℤ → ℂ} (x : ℍ) (n₀ : ℕ)
+    (hvan : ∀ k : ℤ, k < n₀ → c k = 0) :
+    ∑' n : ℕ, fouterm c x (↑n + 0) = ∑' n : ℕ, fouterm c x (↑n + ↑n₀) := by
+  have hinj : Function.Injective fun n : ℕ ↦ n + n₀ := add_left_injective n₀
+  have hsupp : Function.support (fun n : ℕ ↦ fouterm c x (↑n + 0)) ⊆
+      Set.range fun n : ℕ ↦ n + n₀ := by
+    intro n hn
+    rw [Function.mem_support] at hn
+    have hge : n₀ ≤ n := by
+      by_contra hlt
+      exact hn (by simp only [fouterm, add_zero,
+        hvan ↑n (by exact_mod_cast Nat.lt_of_not_le hlt), zero_mul])
+    exact ⟨n - n₀, Nat.sub_add_cancel hge⟩
+  rw [← hinj.tsum_eq hsupp]
+  refine tsum_congr fun n ↦ ?_
+  congr 1
+
 /-! ## Linear factor q-coefficients and fouterm identities
 
 `E₄` and `E₂E₄−E₆` are the *linear* factors of the φ-numerators. Their genuine `q`-coefficients
@@ -117,8 +136,14 @@ keystone they have clean `fouterm` expansions. -/
 lemma E₄_qexp_nat (z : ℍ) :
     E₄ z = ∑' m : ℕ, bE₄ m * cexp (2 * ↑π * Complex.I * ↑m * ↑z) := by
   have hsummable : Summable (fun m : ℕ ↦ bE₄ m * cexp (2 * ↑π * Complex.I * ↑m * ↑z)) := by
+    have hσ : Summable (fun n : ℕ ↦ (σ 3 n : ℂ) * cexp (2 * π * Complex.I * n * z)) := by
+      refine (EisensteinSeries.summable_sigma_mul_cexp_pow (k := 4) (by norm_num) z).congr ?_
+      intro n
+      rw [← Complex.exp_nat_mul]
+      congr 2
+      ring
     rw [← summable_pnat_iff_summable_nat]
-    refine ((sigma3_qexp_summable z).mul_left 240).congr (fun n ↦ ?_)
+    refine ((summable_pnat_iff_summable_nat.mpr hσ).mul_left 240).congr (fun n ↦ ?_)
     simp only [bE₄, n.ne_zero, if_false]
     ring
   rw [hsummable.tsum_eq_zero_add, E₄_sigma_qexp]
@@ -152,15 +177,10 @@ lemma g_qexp_nat (z : ℍ) :
 lemma g_eq_fouterm (z : ℍ) :
     E₂ z * E₄ z - E₆ z = ∑' n : ℕ, fouterm (evenCoeff bg) z (↑n + 2) := by
   rw [g_qexp_nat z, qexp_eq_fouterm bg z]
-  have hinj : Function.Injective (fun n : ℕ ↦ n + 2) := add_left_injective 2
-  have hsupp : Function.support (fun n : ℕ ↦ fouterm (evenCoeff bg) z (↑n + 0)) ⊆
-      Set.range (fun n : ℕ ↦ n + 2) := by
-    intro n hn
-    have h0 : n ≠ 0 := by rintro rfl; simp [fouterm, evenCoeff, bg] at hn
-    have h1 : n ≠ 1 := by rintro rfl; simp [fouterm, evenCoeff] at hn
-    exact ⟨n - 2, Nat.sub_add_cancel (by omega)⟩
-  rw [← hinj.tsum_eq hsupp]
-  exact tsum_congr fun n ↦ by congr 1
+  exact tsum_fouterm_shift z 2 (by
+    intro k hk
+    have hk0 : (k / 2).toNat = 0 := by omega
+    simp [evenCoeff, hk0, bg])
 
 /-! ## Factor norm bounds
 
