@@ -389,13 +389,10 @@ lemma integral_norm_I₅_le : ∃ C > 0, ∀ t ∈ Ioc (0 : ℝ) 1,
   have hgauss := gaussian_integrable_scaled π t Real.pi_pos ht.1
   have hmaj : Integrable (fun x : V ↦ C * rexp (-2 * π / t) * t ^ 2 * rexp (-π * t * ‖x‖ ^ 2)) :=
     hgauss.const_mul _
-  have hint : Integrable (fun x : V ↦ ‖I₅_integrand (x, t)‖) :=
-    Integrable.mono' hmaj (continuous_norm.comp (Φ₅_slice_continuous t)).aestronglyMeasurable
-      (ae_of_all _ fun x ↦ by
-        rw [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]; exact hC x t ht)
   calc ∫ x : V, ‖I₅_integrand (x, t)‖
       ≤ ∫ x : V, C * rexp (-2 * π / t) * t ^ 2 * rexp (-π * t * ‖x‖ ^ 2) :=
-        integral_mono hint hmaj fun x ↦ hC x t ht
+        integral_mono_of_nonneg (ae_of_all _ fun _ ↦ norm_nonneg _)
+          hmaj (ae_of_all _ fun x ↦ hC x t ht)
     _ = C * rexp (-2 * π / t) * t ^ 2 * ∫ x : V, rexp (-π * t * ‖x‖ ^ 2) := by
         rw [← MeasureTheory.integral_const_mul]
     _ = C * rexp (-2 * π / t) * t ^ 2 * t⁻¹ ^ 4 := by rw [integral_gaussian_scaled ht.1]
