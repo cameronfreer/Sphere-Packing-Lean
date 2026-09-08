@@ -219,32 +219,17 @@ evenCoeff a = O(n^k) on ℤ. -/
 lemma evenCoeff_poly {a : ℕ → ℂ} {k : ℕ}
     (ha : a =O[Filter.atTop] (fun n ↦ (n ^ k : ℝ))) :
     evenCoeff a =O[Filter.atTop] (fun n : ℤ ↦ (n ^ k : ℝ)) := by
-  rw [Asymptotics.isBigO_iff] at ha ⊢
-  obtain ⟨C, hC⟩ := ha
-  -- Use |C| to ensure we have a nonnegative constant
-  use |C|
-  rw [Filter.eventually_atTop] at hC ⊢
-  obtain ⟨N, hN⟩ := hC
-  refine ⟨2 * N, fun m hm ↦ ?_⟩
-  have hm0 : (0 : ℤ) ≤ m := by omega
-  have hm_nonneg : (0 : ℝ) ≤ (m : ℝ) ^ k := pow_nonneg (by exact_mod_cast hm0) k
-  rw [Real.norm_eq_abs, abs_of_nonneg hm_nonneg]
+  obtain ⟨M, hM, hbound⟩ := exists_global_poly_bound ha
+  refine Asymptotics.IsBigO.of_bound M ?_
+  filter_upwards [Filter.eventually_ge_atTop (1 : ℤ)] with m hm
   by_cases he : Even m
-  · -- m = 2*n with n ≥ N, and evenCoeff a m = a n
-    set n : ℕ := (m / 2).toNat with hn_def
-    have hn_ge : n ≥ N := by omega
-    have hn_le : (n : ℝ) ≤ (m : ℝ) := by exact_mod_cast (by omega : (n : ℤ) ≤ m)
-    rw [evenCoeff, if_pos he]
-    have hbound := hN n hn_ge
-    have hn_nonneg : (0 : ℝ) ≤ (n : ℝ) ^ k := by positivity
-    rw [Real.norm_eq_abs, abs_of_nonneg hn_nonneg] at hbound
-    calc ‖a n‖ ≤ C * (n : ℝ) ^ k := hbound
-      _ ≤ |C| * (n : ℝ) ^ k := mul_le_mul_of_nonneg_right (le_abs_self C) hn_nonneg
-      _ ≤ |C| * (m : ℝ) ^ k :=
-          mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (Nat.cast_nonneg _) hn_le k) (abs_nonneg C)
-  · -- m is odd, so evenCoeff a m = 0
-    rw [evenCoeff_odd _ he, norm_zero]
-    exact mul_nonneg (abs_nonneg C) hm_nonneg
+  · have h := hbound m.toNat (m / 2).toNat (by omega) (by omega)
+    have hmcast : (m.toNat : ℝ) = m := by
+      exact_mod_cast Int.toNat_of_nonneg (by omega : 0 ≤ m)
+    simpa [evenCoeff, he, hmcast, Real.norm_eq_abs,
+      abs_of_nonneg (by positivity : (0 : ℝ) ≤ m)] using h
+  · simp only [evenCoeff_odd _ he, norm_zero]
+    positivity
 
 /-- c_E₂E₄E₆ has polynomial growth O(n^11).
     Cauchy product of two O(n^5) sequences, then even re-indexing. -/
