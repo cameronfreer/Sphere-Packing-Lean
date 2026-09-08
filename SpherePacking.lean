@@ -16,11 +16,13 @@ public import SpherePacking.ForMathlib.Fourier
 public import SpherePacking.ForMathlib.FunctionsBoundedAtInfty
 public import SpherePacking.ForMathlib.InvPowSummability
 public import SpherePacking.ForMathlib.MDifferentiableFunProp
+public import SpherePacking.ForMathlib.QSeriesBounds
 public import SpherePacking.ForMathlib.RadialSchwartz.Basic
 public import SpherePacking.ForMathlib.RadialSchwartz.Multidimensional
 public import SpherePacking.ForMathlib.RadialSchwartz.SchwartzMap
 public import SpherePacking.ForMathlib.SlashActions
 public import SpherePacking.ForMathlib.SpecificLimits
+public import SpherePacking.ForMathlib.Test.QSeriesBounds
 public import SpherePacking.ForMathlib.UpperHalfPlane
 public import SpherePacking.ForMathlib.Vec
 public import SpherePacking.ForMathlib.VolumeOfBalls
@@ -29,6 +31,7 @@ public import SpherePacking.ForMathlib.tprod
 public import SpherePacking.MagicFunction.IntegralParametrisations
 public import SpherePacking.MagicFunction.PolyFourierCoeffBound
 public import SpherePacking.MagicFunction.a.Basic
+public import SpherePacking.MagicFunction.a.CauchyCoeffBounds
 public import SpherePacking.MagicFunction.a.DoubleZeroes.CuspBounds
 public import SpherePacking.MagicFunction.a.Eigenfunction
 public import SpherePacking.MagicFunction.a.FourierExpansions
