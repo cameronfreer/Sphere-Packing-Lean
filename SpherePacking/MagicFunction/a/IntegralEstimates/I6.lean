@@ -87,29 +87,6 @@ theorem I₆'_bounding (r : ℝ) (hr : 0 ≤ r) : ∃ C₁ > 0,
       rw [smul_eq_mul]
       ac_rfl
 
-theorem I₆'_bounding_eq (r : ℝ) (hr : 0 ≤ r) : ∃ C₂ > 0,
-    ‖I₆' r‖ ≤ C₂ * rexp (-π * (r ^ 2 + 2)) / (r ^ 2 + 2) :=
-by
-  obtain ⟨C₁, _, hC₁⟩ := I₆'_bounding r hr
-  let A : ℝ := ∫ t in Ici (1 : ℝ), C₁ * rexp (-2 * π * t) * rexp (-π * r * t)
-  let K : ℝ := rexp (-π * (r ^ 2 + 2)) / (r ^ 2 + 2)
-  have hKpos : 0 < K := by
-    have hden : 0 < r ^ 2 + 2 := by
-      have : 0 ≤ r ^ 2 := by simpa using sq_nonneg r
-      linarith
-    simpa [K] using div_pos (Real.exp_pos _) hden
-  refine ⟨|A| / K + 1, add_pos_of_nonneg_of_pos (div_nonneg (abs_nonneg _) hKpos.le) one_pos, ?_⟩
-  have h : ‖I₆' r‖ ≤ (|A| / K + 1) * K := by
-    have hKne : K ≠ 0 := ne_of_gt hKpos
-    calc
-      ‖I₆' r‖ ≤ A := hC₁
-      _ ≤ |A| + K := (le_abs_self A).trans (le_add_of_nonneg_right hKpos.le)
-      _ = (|A| / K + 1) * K := by
-        have h1 : (|A| / K) * K = |A| := by field_simp [div_eq_mul_inv, hKne]
-        have h2 : (|A| / K + 1) * K = (|A| / K) * K + 1 * K := by ring
-        simp [h2, h1]
-  simpa [K, A, mul_div_assoc] using h
-
 end Bounding_Integral
 
 end Bounding

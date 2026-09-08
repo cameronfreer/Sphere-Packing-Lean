@@ -5,11 +5,8 @@ Authors: Sidharth Hariharan
 -/
 module
 
-public import Mathlib.Algebra.Ring.IsFormallyReal
-public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
-public import Mathlib.Topology.EMetricSpace.Paracompact
-public import Mathlib.Topology.Separation.CompletelyRegular
 public import SpherePacking.ForMathlib.Analysis.Complex.Exponential
+public import SpherePacking.MagicFunction.a.Integrability.RealDecay
 
 /-!
 # Bound on the integral with which we bound I₁, I₃, I₅, J₁, J₃, J₅ and their derivatives
@@ -18,22 +15,6 @@ public import SpherePacking.ForMathlib.Analysis.Complex.Exponential
 @[expose] public section
 
 open Real MeasureTheory Set
-
-
--- [TODO] improve using dot notation for integrability lemmas
-/-- Exponential decay beats polynomial growth: for `c < 0` and `0 ≤ a`, the function
-`s ↦ exp (c * s) * (d * s ^ n)` is integrable on the ray `[a, ∞)`.
-
-This is the `p = 1`, natural-power case of `integrableOn_rpow_mul_exp_neg_mul_rpow`,
-transported from `Ioi 0` to an arbitrary ray `Ici a` with `0 ≤ a`. -/
-theorem integrableOn_exp_mul_const_mul_pow_Ici {a c : ℝ} (ha : 0 ≤ a) (hc : c < 0) (d : ℝ)
-    (n : ℕ) : IntegrableOn (fun s : ℝ => rexp (c * s) * (d * s ^ n)) (Ici a) volume := by
-  rw [integrableOn_Ici_iff_integrableOn_Ioi]
-  refine IntegrableOn.congr_fun (((integrableOn_rpow_mul_exp_neg_mul_rpow (s := n) (p := 1)
-    (b := -c) (neg_one_lt_zero.trans_le n.cast_nonneg) le_rfl (neg_pos.2 hc)).mono_set
-    (Ioi_subset_Ioi ha)).const_mul d) (fun s _ => ?_) measurableSet_Ioi
-  rw [rpow_one, rpow_natCast, neg_neg]
-  ring
 
 namespace MagicFunction
 
@@ -76,54 +57,24 @@ theorem pow_mul_integral_le {r : ℝ} (hr : 0 ≤ r) {n : ℕ} :
       · filter_upwards with x
         change x ∈ Set.Ici 1 → x ∈ Set.Ici 0
         grind
-  _ = (n / π * rexp (-1)) ^ n *
-        ∫ s in Ici (0 : ℝ), 1 / (2 * π) ^ n * rexp (-2 * π * s) * (2 * π * s) ^ n := by
-      congr with s
-      field
-  _ = (n / π * rexp (-1)) ^ n * 1 / (2 * π) ^ n *
-        ∫ s in Ici (0 : ℝ), rexp (-2 * π * s) * (2 * π * s) ^ n := by
-      rw [mul_div_assoc, mul_assoc]
-      congr 1
-      simp only [← smul_eq_mul (a := 1 / (2 * π) ^ n), ← integral_smul]
-      grind [smul_eq_mul (a := 1 / (2 * π) ^ n)]
-  _ = (n / π * rexp (-1)) ^ n * 1 / (2 * π) ^ (n + 1) * Gamma (n + 1) := by
-      rw [Gamma_eq_integral (by positivity), mul_div_assoc, mul_div_assoc,
-        show 1 / (2 * π) ^ (n + 1) = 1 / (2 * π) ^ n * 1 / (2 * π) by field,
-        mul_assoc, mul_assoc, mul_div_assoc, mul_assoc]
-      congr 2
-      -- Now this is a change of variables inside an integral
-      let f : ℝ → ℝ := fun x ↦ 2 * π * x
-      let f' : ℝ → ℝ := fun _ ↦ 2 * π
-      let g : ℝ → ℝ := fun x ↦ rexp (-x) * x ^ n
-      let s : Set ℝ := Ici 0
-      have hs : MeasurableSet s := measurableSet_Ici
-      have hf' : ∀ x ∈ s, HasDerivWithinAt f (f' x) s x := by
-        intro x hx
-        convert_to HasDerivWithinAt ((2 * π) • id) ((2 * π) • 1) s x
-        · aesop
-        · aesop
-        exact (hasDerivWithinAt_id x s).fun_const_smul (c := (2 * π))
-      have hf : InjOn f s := by aesop
-      rw [← integral_Ici_eq_integral_Ioi]
-      convert_to ∫ (x : ℝ) in s, g (f x) = 1 / (2 * π) * ∫ (x : ℝ) in s, g x
-      · simp [s, g, f]
-      · simp [s, g]
-      have hfs : f '' s = s := by
-        ext x
-        simp only [mem_image, mem_Ici, s]
-        constructor <;> intro hx
-        · obtain ⟨y, hy₁, hy₂⟩ := hx
-          rw [← hy₂]
-          positivity
-        · refine ⟨x / (2 * π), by positivity, ?_⟩
-          field
-      conv_rhs => rw [← hfs]
-      simp only [integral_image_eq_integral_abs_deriv_smul hs hf' hf g, f', integral_smul]
-      rw [smul_eq_mul, ← mul_assoc]
-      conv_lhs => rw [← one_mul (a := ∫ _ in _, _)]
-      congr
-      rw [abs_mul, abs_of_nonneg (pi_nonneg), abs_of_nonneg (by positivity)]
-      field_simp
-  _ = _ := by rw [Gamma_nat_eq_factorial n]; field
+  _ = _ := by
+    simpa only [neg_mul, mul_div_assoc] using
+      congrArg (fun x : ℝ ↦ (n / π * rexp (-1)) ^ n * x)
+        (integral_exp_mul_pow_Ici n (b := 2 * π) (by positivity))
+
+/-- Exact integral of the vertical-tail bound, with `r` the squared-radius parameter. -/
+theorem integral_majorant_vertical_eq (r C : ℝ) (hr : 0 ≤ r) :
+    (∫ t in Ici (1 : ℝ), C * rexp (-2 * π * t) * rexp (-π * r * t)) =
+      C * rexp (-π * (r + 2)) / (π * (r + 2)) := by
+  have hneg : -π * (r + 2) < 0 := mul_neg_of_neg_of_pos (neg_neg_of_pos pi_pos) (by positivity)
+  have heq : (fun t : ℝ ↦ C * rexp (-2 * π * t) * rexp (-π * r * t)) =
+      fun t ↦ C * rexp ((-π * (r + 2)) * t) := by
+    ext t
+    rw [mul_assoc, ← Real.exp_add]
+    congr 2
+    ring
+  rw [heq, integral_const_mul, integral_Ici_eq_integral_Ioi, integral_exp_mul_Ioi hneg 1]
+  simp only [mul_one, neg_mul, neg_div_neg_eq]
+  ring
 
 end MagicFunction
