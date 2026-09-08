@@ -33,6 +33,21 @@ open MagicFunction.a.RealIntegrals MagicFunction.a.Majorants
 
 namespace MagicFunction.a.IntegralEstimates
 
+/-- Exact integral of the vertical-tail bound, with `r` the squared-radius parameter. -/
+private lemma integral_majorant_vertical_eq (r C : ℝ) (hr : 0 ≤ r) :
+    (∫ t in Ici (1 : ℝ), C * rexp (-2 * π * t) * rexp (-π * r * t)) =
+      C * rexp (-π * (r + 2)) / (π * (r + 2)) := by
+  have hneg : -π * (r + 2) < 0 := mul_neg_of_neg_of_pos (neg_neg_of_pos pi_pos) (by positivity)
+  have heq : (fun t : ℝ ↦ C * rexp (-2 * π * t) * rexp (-π * r * t)) =
+      fun t ↦ C * rexp ((-π * (r + 2)) * t) := by
+    ext t
+    rw [mul_assoc, ← Real.exp_add]
+    congr 2
+    ring
+  rw [heq, integral_const_mul, integral_Ici_eq_integral_Ioi, integral_exp_mul_Ioi hneg 1]
+  simp only [mul_one, neg_mul, neg_div_neg_eq]
+  ring
+
 private lemma norm_cusp_integral_le {C r : ℝ} {g : ℝ → ℂ}
     (hφ : ∀ s : ℝ, 1 / 2 < s → ‖φ₀'' (I * s)‖ ≤ C * rexp (-2 * π * s))
     (hg : ∀ s ∈ Ici (1 : ℝ), ‖g s‖ ≤ ‖φ₀'' (I * s)‖ * rexp (-π * r / s)) :
