@@ -168,15 +168,9 @@ section Bounding_Integral
 
 lemma I₃'_bounding_1_aux_3 (r : ℝ) : ∃ C₀ > 0, ∫ (s : ℝ) in Ici 1, ‖g r s‖ ≤
     ∫ (s : ℝ) in Ici 1, C₀ * rexp (-2 * π * s) * rexp (-π * r / s) := by
-  wlog hint : IntegrableOn (fun t ↦ ‖g r t‖) (Ici (1 : ℝ)) volume
-  · refine ⟨1, by positivity, ?_⟩
-    haveI h₁ : CompleteSpace ℝ := inferInstance
-    have h₂ : ¬ (Integrable (fun t ↦ ‖g r t‖) (volume.restrict (Ici 1))) := hint
-    conv_lhs => simp only [integral, h₁, h₂, ↓reduceDIte]
-    positivity
-  obtain ⟨C₀, hC₀_pos, hC₀⟩ := I₃'_bounding_aux_2 r
-  use C₀, hC₀_pos
-  exact setIntegral_mono_on hint (integrableOn_majorant_cusp r C₀) measurableSet_Ici hC₀
+  obtain ⟨C₀, hpos, hb⟩ := I₃'_bounding_aux_2 r
+  exact ⟨C₀, hpos, setIntegral_mono_of_nonneg (fun _ _ ↦ norm_nonneg _) hb
+    (integrableOn_majorant_cusp r C₀)⟩
 
 theorem I₃'_bounding (r : ℝ) : ∃ C₀ > 0,
     ‖I₃' r‖ ≤ ∫ s in Ici (1 : ℝ), C₀ * rexp (-2 * π * s) * rexp (-π * r / s) := by
