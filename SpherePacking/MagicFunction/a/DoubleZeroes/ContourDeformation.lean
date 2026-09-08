@@ -316,7 +316,7 @@ lemma uniform_vanishing_verticalIntegrandX (r : ℝ) (hr : 2 < r) :
 /-! ## Top Edge Integral → 0 -/
 
 /-- Top edge integrand for the S-transformed function.
-    The actual integrand in the rectangle deformation is φ₀(-1/z) · z² · exp(πir²z)
+    The actual integrand in the rectangle deformation is φ₀(-1/z) · z² · exp(πirz)
     where z = x + iT. Note: φ₀''(-1/z) = φ₀(S•z) when z is in ℍ. -/
 def topEdgeIntegrand (r x T : ℝ) : ℂ :=
   φ₀'' (-1 / (↑x + Complex.I * ↑T)) * (↑x + Complex.I * ↑T)^2 *
@@ -392,6 +392,13 @@ lemma tendsto_topEdgeIntegral_zero (r : ℝ) (hr : 2 < r) :
             norm_num [Measure.real, Real.volume_Icc]
           rw [h2]; ring
   · simpa using (tendsto_verticalBound_atTop r hr).const_mul 4
+
+/-- The top-edge limit in the interval-integral form used by rectangular contour deformation. -/
+lemma tendsto_topEdgeIntervalIntegral_zero (r : ℝ) (hr : 2 < r) :
+    Tendsto (fun T : ℝ ↦ ∫ x : ℝ in (-1 : ℝ)..1, topEdgeIntegrand r x T)
+      atTop (𝓝 0) := by
+  simpa only [intervalIntegral.integral_of_le (by norm_num : (-1 : ℝ) ≤ 1),
+    integral_Icc_eq_integral_Ioc] using tendsto_topEdgeIntegral_zero r hr
 
 /-! ## General Shifted Möbius Integrability
 

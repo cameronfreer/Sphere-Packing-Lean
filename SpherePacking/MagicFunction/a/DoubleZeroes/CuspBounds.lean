@@ -90,30 +90,15 @@ lemma norm_φ₀_S_smul_le (z : ℍ) (hz : 1 ≤ z.im) :
         + (12 / (π * ‖(z : ℂ)‖)) * C_φ₂'
         + (36 / (π^2 * ‖(z : ℂ)‖^2)) * C_φ₄'
             * Real.exp (2 * π * z.im) := by
-  -- Step 1: Use the S-transform formula
+  have hz' : 1 / 2 < z.im := by linarith
+  have h₀ := φ₀_bound z hz'
+  have h₂ := φ₂'_bound z hz'
+  have h₄ := φ₄'_bound z hz'
   rw [φ₀_S_transform]
-  -- Step 2: Apply triangle inequality twice for a - b - c
-  refine le_trans (norm_sub_le _ _) ?_
-  refine le_trans (add_le_add_left (norm_sub_le _ _) _) ?_
-  -- Step 3: Bound each of the three terms
-  -- Derive 1/2 < z.im from 1 ≤ z.im for the φ-bound lemmas
-  have hz' : 1/2 < z.im := by linarith
-  -- Bound (i): ‖φ₀ z‖ ≤ C₀ * exp(-2πt)  [from φ₀_bound]
-  have hbound1 : ‖φ₀ z‖ ≤ C_φ₀ * exp (-2 * π * z.im) := φ₀_bound z hz'
-  -- Bound (ii): ‖(12I)/(πz) * φ₂' z‖ ≤ (12/(π‖z‖)) * C₂
-  have hbound2 : ‖(12 * Complex.I) / (↑π * z) * φ₂' z‖ ≤ (12 / (π * ‖(z : ℂ)‖)) * C_φ₂' := by
-    rw [norm_mul, norm_coeff_12I_div (z : ℂ)]
-    exact mul_le_mul_of_nonneg_left (φ₂'_bound z hz') (by positivity)
-  -- Bound (iii): ‖36/(π²z²) * φ₄' z‖ ≤ (36/(π²‖z‖²)) * C₄ * exp(2πt)
-  have hbound3 : ‖36 / (↑π ^ 2 * ↑z ^ 2) * φ₄' z‖ ≤
-      (36 / (π^2 * ‖(z : ℂ)‖^2)) * C_φ₄' * exp (2 * π * z.im) := by
-    rw [norm_mul, norm_coeff_36_div_sq (z : ℂ)]
-    calc 36 / (π ^ 2 * ‖(z : ℂ)‖ ^ 2) * ‖φ₄' z‖
-        ≤ 36 / (π ^ 2 * ‖(z : ℂ)‖ ^ 2) * (C_φ₄' * exp (2 * π * z.im)) :=
-          mul_le_mul_of_nonneg_left (φ₄'_bound z hz') (by positivity)
-      _ = 36 / (π ^ 2 * ‖(z : ℂ)‖ ^ 2) * C_φ₄' * exp (2 * π * z.im) := by ring
-  -- Combine bounds
-  linarith
+  refine (norm_sub_le _ _).trans ((add_le_add_left (norm_sub_le _ _) _).trans ?_)
+  simp only [norm_mul, norm_coeff_12I_div, norm_coeff_36_div_sq]
+  rw [mul_assoc (36 / (π ^ 2 * ‖(z : ℂ)‖ ^ 2))]
+  gcongr
 
 /-- Corollary 7.13: S-transform bound for φ₀(i/t) at large t.
     Specializes norm_φ₀_S_smul_le to z = I*t where z.im = ‖z‖ = t. -/
@@ -147,9 +132,7 @@ lemma norm_φ₀_I_div_t_small :
   have him : UpperHalfPlane.im ⟨Complex.I / t, hI_div_pos⟩ = 1 / t := by simp [UpperHalfPlane.im]
   rwa [him, show -2 * π * (1 / t) = -2 * π / t from by ring] at h
 
-/-- Helper: t² ≤ exp(4πt) for t ≥ 2. Used in Thesis Lemma 4.4.4.
-    Proof: For t ≤ 4π, we have t² ≤ 4πt ≤ exp(4πt).
-    For t > 4π, exp grows much faster than any polynomial. -/
+/-- For `t ≥ 2`, the exponential `exp (4πt)` bounds `t²`, as needed in thesis Lemma 4.4.4. -/
 lemma sq_le_exp_4pi_t (t : ℝ) (ht : 2 ≤ t) : t^2 ≤ Real.exp (4 * π * t) := by
   -- exp(4πt) ≥ 1 + 4πt + (4πt)²/2 = 1 + 4πt + 8π²t² ≥ t², uniformly (8π² > 1 since π > 3)
   have h4πt_pos : 0 ≤ 4 * π * t := by positivity

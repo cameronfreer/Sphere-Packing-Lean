@@ -62,11 +62,11 @@ def C_φ₄' : ℝ := B_E₄ * DivDiscBound (evenCoeff bE₄) 0
 /-! ## Positivity of Constants -/
 
 lemma divDiscBound_bg_pos : 0 < DivDiscBound (evenCoeff bg) 2 := by
-  refine DivDiscBound_pos (evenCoeff bg) 2 ?_ 5 (evenCoeff_isBigO bg_isBigO)
+  refine DivDiscBound_pos (evenCoeff bg) 2 ?_ 5 (evenCoeff_poly bg_poly)
   simp [evenCoeff, bg]
 
 lemma divDiscBound_bE₄_pos : 0 < DivDiscBound (evenCoeff bE₄) 0 := by
-  refine DivDiscBound_pos (evenCoeff bE₄) 0 ?_ 5 (evenCoeff_isBigO bE₄_isBigO)
+  refine DivDiscBound_pos (evenCoeff bE₄) 0 ?_ 4 (evenCoeff_poly bE₄_poly)
   simp [evenCoeff, bE₄]
 
 lemma C_φ₀_pos : 0 < C_φ₀ := mul_pos B_g_pos divDiscBound_bg_pos
@@ -79,41 +79,27 @@ lemma C_φ₄'_pos : 0 < C_φ₄' := mul_pos B_E₄_pos divDiscBound_bE₄_pos
 
 Each is `‖φ‖ = ‖factor‖ · ‖linear/Δ‖`, combining a factor-norm bound with a quotient bound. -/
 
-/-- Combine a factor-norm bound with a quotient bound: if `‖a‖ ≤ x` and `‖b‖ ≤ y` (with `0 ≤ x`)
-then `‖a · b‖ ≤ x · y`. Each φ-bound below is an instance with `a = factor`, `b = linear/Δ`. -/
-lemma norm_mul_le_mul {a b : ℂ} {x y : ℝ} (ha : ‖a‖ ≤ x) (hb : ‖b‖ ≤ y) (hx : 0 ≤ x) :
-    ‖a * b‖ ≤ x * y := by
-  rw [norm_mul]
-  exact mul_le_mul ha hb (norm_nonneg _) hx
-
 /-- Corollary 7.5: φ₀ decays like exp(-2πt) for Im(z) > 1/2. -/
 theorem φ₀_bound (z : ℍ) (hz : 1 / 2 < z.im) :
     ‖φ₀ z‖ ≤ C_φ₀ * Real.exp (-2 * π * z.im) := by
   have hfact : φ₀ z = (E₂ z * E₄ z - E₆ z) * ((E₂ z * E₄ z - E₆ z) / Δ z) := by
     simp only [φ₀]; ring
   rw [hfact, C_φ₀, show (-2 * π * z.im : ℝ) = -(2 * π) * z.im by ring]
-  calc ‖(E₂ z * E₄ z - E₆ z) * ((E₂ z * E₄ z - E₆ z) / Δ z)‖
-      ≤ B_g * rexp (-(2 * π) * z.im) * DivDiscBound (evenCoeff bg) 2 :=
-        norm_mul_le_mul (norm_g_le z hz.le) (g_div_Δ_bound z hz)
-          (mul_nonneg B_g_pos.le (Real.exp_pos _).le)
-    _ = B_g * DivDiscBound (evenCoeff bg) 2 * rexp (-(2 * π) * z.im) := by ring
+  exact (norm_mul_le_of_le (norm_g_le z hz.le) (g_div_Δ_bound z hz)).trans_eq (by ring)
 
 /-- Corollary 7.6: φ₂' is bounded for Im(z) > 1/2. -/
 theorem φ₂'_bound (z : ℍ) (hz : 1 / 2 < z.im) :
     ‖φ₂' z‖ ≤ C_φ₂' := by
   have hfact : φ₂' z = E₄ z * ((E₂ z * E₄ z - E₆ z) / Δ z) := by simp only [φ₂']; ring
   rw [hfact, C_φ₂']
-  exact norm_mul_le_mul (norm_E₄_le z hz.le) (g_div_Δ_bound z hz) B_E₄_pos.le
+  exact norm_mul_le_of_le (norm_E₄_le z hz.le) (g_div_Δ_bound z hz)
 
 /-- Corollary 7.7: φ₄' grows at most like exp(2πt) for Im(z) > 1/2. -/
 theorem φ₄'_bound (z : ℍ) (hz : 1 / 2 < z.im) :
     ‖φ₄' z‖ ≤ C_φ₄' * Real.exp (2 * π * z.im) := by
   have hfact : φ₄' z = E₄ z * (E₄ z / Δ z) := by simp only [φ₄']; ring
   rw [hfact, C_φ₄']
-  calc ‖E₄ z * (E₄ z / Δ z)‖
-      ≤ B_E₄ * (DivDiscBound (evenCoeff bE₄) 0 * Real.exp (2 * π * z.im)) :=
-        norm_mul_le_mul (norm_E₄_le z hz.le) (E₄_div_Δ_bound z hz) B_E₄_pos.le
-    _ = B_E₄ * DivDiscBound (evenCoeff bE₄) 0 * Real.exp (2 * π * z.im) := by ring
+  exact (norm_mul_le_of_le (norm_E₄_le z hz.le) (E₄_div_Δ_bound z hz)).trans_eq (by ring)
 
 /-! ## Big O Bounds
 
