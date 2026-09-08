@@ -13,11 +13,10 @@ public import Mathlib.Topology.Separation.CompletelyRegular
 
 /-! # Deforming Paths of Integration for Open Contours
 
-In this file, we prove that if a function tends to zero as the imaginary part of its input tends to
-infinity and satisfies Cauchy-Goursat-type conditions, then we can deform paths of integration along
-rectangular contours that extend infinitely in the vertical direction.
-
-TODO: Use `atImInfty` for vanishing as imaginary part tends to i infinity!
+We deform paths of integration along rectangular contours extending infinitely in the vertical
+direction, under Cauchy-Goursat-type conditions and the hypothesis that the top-edge integral tends
+to zero. Uniform decay within the vertical strip suffices for this limit. The original theorems
+assuming decay uniformly over all real parts are retained as wrappers.
 -/
 
 @[expose] public section
@@ -49,19 +48,16 @@ as `Im z → ∞` within a bounded strip while growing without bound along a hor
 lemma tendsto_integral_atTop_nhds_zero_of_tendsto_im_atTop_nhds_zero_of_mem_uIcc
     (htendsto : ∀ ε > 0, ∃ M : ℝ, ∀ z : ℂ, z.re ∈ [[x₁, x₂]] → M ≤ z.im → ‖f z‖ < ε) :
     Tendsto (fun (m : ℝ) ↦ ∫ (x : ℝ) in x₁..x₂, f (x + m * I)) atTop (𝓝 0) := by
-  obtain rfl | hne := eq_or_ne x₁ x₂
-  · simp only [integral_same, tendsto_const_nhds_iff]
   simp only [NormedAddGroup.tendsto_nhds_zero, eventually_atTop]
   intro ε hε
-  have hlen : 0 < |x₂ - x₁| := abs_sub_pos.mpr hne.symm
-  obtain ⟨M, hM⟩ := htendsto ((1 / 2) * (ε / |x₂ - x₁|)) (mul_pos one_half_pos (div_pos hε hlen))
+  obtain ⟨M, hM⟩ := htendsto (ε / (|x₂ - x₁| + 1)) (by positivity)
   refine ⟨M, fun y hy ↦ ?_⟩
-  calc ‖∫ (x : ℝ) in x₁..x₂, f (↑x + ↑y * I)‖
-  _ ≤ ((1 / 2) * (ε / |x₂ - x₁|)) * |x₂ - x₁| :=
-      intervalIntegral.norm_integral_le_of_norm_le_const fun x hx ↦
-        (hM (x + y * I) (by simpa using uIoc_subset_uIcc hx) (by simpa using hy)).le
-  _ = (1 / 2) * ε := by rw [mul_assoc, div_mul_cancel₀ _ hlen.ne']
-  _ < ε := by linarith
+  refine (intervalIntegral.norm_integral_le_of_norm_le_const fun x hx ↦
+    (hM (x + y * I) (by simpa using uIoc_subset_uIcc hx)
+      (by simpa using hy)).le).trans_lt ?_
+  have hpos : 0 < ε / (|x₂ - x₁| + 1) := by positivity
+  have hcancel := div_mul_cancel₀ ε (by positivity : |x₂ - x₁| + 1 ≠ 0)
+  nlinarith
 
 /-- If $f(z) \to 0$ as $\Im(z) \to \infty$, then
   $\lim_{m \to \infty} \int_{x_1}^{x_2} f(x + mI) dx = 0$.
