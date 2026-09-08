@@ -5,8 +5,9 @@ Authors: Cameron Freer
 -/
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+public import Mathlib.Analysis.Complex.Trigonometric
 public import Mathlib.Analysis.Normed.Group.InfiniteSum
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 
