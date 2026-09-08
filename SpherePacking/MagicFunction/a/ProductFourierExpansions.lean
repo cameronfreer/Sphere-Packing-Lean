@@ -9,10 +9,10 @@ public import SpherePacking.MagicFunction.a.FourierExpansions
 public import Mathlib.Analysis.Normed.Ring.InfiniteSum
 
 /-!
-# Fourier expansions of the quadratic products entering φ₀
+# Fourier expansions of the quadratic products entering φ₀, φ₂', and φ₄'
 
-Exact `fouterm` expansions of the three quadratic products that make up the numerator of
-`φ₀ = (E₂E₄ − E₆)² / Δ`:
+Exact `fouterm` expansions of the three quadratic products appearing in the formulas for
+`φ₀`, `φ₂'`, and `φ₄'`:
 
 - `(E₂E₄ − E₆)²`, with coefficients `c_E₂E₄E₆ = evenCoeff (cauchyCoeff bg bg)`;
 - `E₄ · (E₂E₄ − E₆)`, with coefficients `c_E₄_E₂E₄E₆ = evenCoeff (cauchyCoeff bE₄ bg)`;
@@ -53,11 +53,7 @@ coefficient bounds are `bg_poly`, `bE₄_poly` and their Cauchy products via `ca
 lemma summable_norm_q_series_of_poly {c : ℕ → ℂ} {k : ℕ}
     (hc : c =O[Filter.atTop] (fun n ↦ (n ^ k : ℝ))) (z : ℍ) :
     Summable fun m : ℕ ↦ ‖c m * cexp (2 * ↑π * Complex.I * ↑m * ↑z)‖ := by
-  have h1 := norm_exp_pi_I_z_lt_one z
-  have hr : ‖cexp (2 * ↑π * Complex.I * ↑z)‖ < 1 := by
-    rw [show (2 * ↑π * Complex.I * ↑z : ℂ) = ↑π * Complex.I * ↑z + ↑π * Complex.I * ↑z by ring,
-      Complex.exp_add, norm_mul]
-    nlinarith [norm_nonneg (cexp (↑π * Complex.I * ↑z))]
+  have hr := UpperHalfPlane.norm_exp_two_pi_I_lt_one z
   have hu : c =O[Filter.atTop] (fun n : ℕ ↦ (↑(n ^ k) : ℝ)) := by
     simpa [Nat.cast_pow] using hc
   refine (summable_real_norm_mul_geometric_of_norm_lt_one hr hu).congr fun m ↦ ?_
@@ -92,28 +88,6 @@ lemma antidiagonal_qexp_factor (a b : ℕ → ℂ) (z : ℍ) (n : ℕ) :
     _ = a k * b l * cexp (2 * ↑π * Complex.I * ↑k * ↑z +
           2 * ↑π * Complex.I * ↑l * ↑z) := by rw [← Complex.exp_add]
     _ = a k * b l * cexp (2 * ↑π * Complex.I * ↑n * ↑z) := by rw [hexp]
-
-/-! ## Index shift -/
-
-/-- A `fouterm` sum whose coefficients vanish below `n₀` can start at index `n₀`:
-`∑ₙ fouterm c x (n + 0) = ∑ₙ fouterm c x (n + n₀)`. Used with the
-`evenCoeff_cauchyCoeff_zero_*` vanishing lemmas to shift the product expansions. -/
-lemma tsum_fouterm_shift {c : ℤ → ℂ} (x : ℍ) (n₀ : ℕ)
-    (hvan : ∀ k : ℤ, k < n₀ → c k = 0) :
-    ∑' n : ℕ, fouterm c x (↑n + 0) = ∑' n : ℕ, fouterm c x (↑n + ↑n₀) := by
-  have hinj : Function.Injective fun n : ℕ ↦ n + n₀ := add_left_injective n₀
-  have hsupp : Function.support (fun n : ℕ ↦ fouterm c x (↑n + 0)) ⊆
-      Set.range fun n : ℕ ↦ n + n₀ := by
-    intro n hn
-    rw [Function.mem_support] at hn
-    have hge : n₀ ≤ n := by
-      by_contra hlt
-      exact hn (by simp only [fouterm, add_zero,
-        hvan ↑n (by exact_mod_cast Nat.lt_of_not_le hlt), zero_mul])
-    exact ⟨n - n₀, Nat.sub_add_cancel hge⟩
-  rw [← hinj.tsum_eq hsupp]
-  refine tsum_congr fun n ↦ ?_
-  congr 1
 
 /-! ## The three product expansions -/
 
