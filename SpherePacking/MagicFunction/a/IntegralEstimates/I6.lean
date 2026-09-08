@@ -67,15 +67,9 @@ section Bounding_Integral
 lemma I₆'_bounding_aux_3 (r : ℝ) (hr : 0 ≤ r) : ∃ C₀ > 0,
     ∫ t in Ici (1 : ℝ), ‖g r t‖ ≤
     ∫ t in Ici (1 : ℝ), C₀ * rexp (-2 * π * t) * rexp (-π * r * t) := by
-  wlog hint : IntegrableOn (fun t ↦ ‖g r t‖) (Ici (1 : ℝ)) volume
-  · refine ⟨1, by positivity, ?_⟩
-    haveI h₁ : CompleteSpace ℝ := inferInstance
-    have h₂ : ¬ (Integrable (fun t ↦ ‖g r t‖) (volume.restrict (Ici 1))) := hint
-    conv_lhs => simp only [integral, h₁, h₂, ↓reduceDIte]
-    positivity
-  obtain ⟨C₀, hC₀_pos, hC₀⟩ := I₆'_bounding_aux_2 r
-  use C₀, hC₀_pos
-  exact setIntegral_mono_on hint (integrableOn_majorant_vertical r C₀ hr) measurableSet_Ici hC₀
+  obtain ⟨C₀, hpos, hb⟩ := I₆'_bounding_aux_2 r
+  exact ⟨C₀, hpos, setIntegral_mono_of_nonneg (fun _ _ ↦ norm_nonneg _) hb
+    (integrableOn_majorant_vertical r C₀ hr)⟩
 
 theorem I₆'_bounding (r : ℝ) (hr : 0 ≤ r) : ∃ C₁ > 0,
     ‖I₆' r‖ ≤ ∫ t in Ici (1 : ℝ), C₁ * rexp (-2 * π * t) * rexp (-π * r * t) := by
@@ -119,43 +113,6 @@ by
 end Bounding_Integral
 
 end Bounding
-
-----------------------------------------------------------------
-
-section Higher_iteratedFDerivs
-
-
-
-end Higher_iteratedFDerivs
-
-----------------------------------------------------------------
-
-noncomputable section Schwartz_Decay
-
-open SchwartzMap
-
-section Zeroth_Derivative
-
-theorem decay'₀ : ∀ (k : ℕ), ∃ C, ∀ (x : ℝ), ‖x‖ ^ k * ‖I₆' x‖ ≤ C := by
-
-  sorry
-
-end Zeroth_Derivative
-
-section Higher_iteratedFDerivs
-
-theorem decay' : ∀ (k n : ℕ), ∃ C, ∀ (x : ℝ), ‖x‖ ^ k * ‖iteratedFDeriv ℝ n I₆' x‖ ≤ C := by
-
-  sorry
-
-end Higher_iteratedFDerivs
-
--- def I₆'_Schwartz : 𝓢(ℝ, ℂ) where
--- toFun := I₆'
--- smooth' := sorry
--- decay' := by extract_goal; sorry
-
-end Schwartz_Decay
 
 end I₆
 
