@@ -336,19 +336,22 @@ private meta def tryEvGoal (g : MVarId)
   -- Try user-provided within_disch tactic
   match withinDischStx? with
   | some disch =>
-    -- Direct attempt on the ∀ᶠ goal
-    let r ← try
-      Elab.Tactic.run g
-        (Elab.Tactic.evalTactic (← `(tactic| ($disch))))
-    catch _ => pure [g]
-    if r.isEmpty then return (r, .withinDisch)
+    -- Only keep complete proofs. Incomplete attempts can assign `g` to a proof with new
+    -- subgoals, so restore the original state before trying the pointwise fallback.
+    let tryClose (tac : TacticM Unit) : TacticM Bool := do
+      let saved ← saveState
+      try
+        let remaining ← Elab.Tactic.run g (Elab.Tactic.withoutRecover tac)
+        if remaining.isEmpty then return true
+      catch _ => pure ()
+      saved.restore
+      return false
+    if ← tryClose (Elab.Tactic.evalTactic (← `(tactic| ($disch)))) then
+      return ([], .withinDisch)
     -- Pointwise lift: apply Filter.univ_mem', intro, then the tactic
-    let r ← try
-      Elab.Tactic.run g
-        (Elab.Tactic.evalTactic
-          (← `(tactic| apply Filter.univ_mem'; intro _; ($disch))))
-    catch _ => pure [g]
-    if r.isEmpty then return (r, .pointwiseLift)
+    if ← tryClose (Elab.Tactic.evalTactic
+        (← `(tactic| apply Filter.univ_mem'; intro _; ($disch)))) then
+      return ([], .pointwiseLift)
   | none => pure ()
   return ([g], .undischarged)
 

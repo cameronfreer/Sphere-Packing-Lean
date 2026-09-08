@@ -728,6 +728,31 @@ example (h : Tendsto f atTop (nhds 3))
   tendsto_cont (within_disch :=
     exact Filter.univ_mem' (fun z => Set.mem_Ioi.mpr (hpos z)))
 
+-- A discharger that makes no progress must leave the original membership goal available.
+example (h : Tendsto f atTop (nhds 3)) (hpos : ∀ x, 0 < f x) :
+    Tendsto (fun z ↦ f z) atTop (nhdsWithin 3 (Set.Ioi 0)) := by
+  tendsto_cont (within_disch := skip)
+  guard_target = ∀ᶠ x in atTop, f x ∈ Set.Ioi 0
+  exact Filter.univ_mem' hpos
+
+-- Partial progress in the direct attempt is rolled back, rather than hiding its subgoals.
+example (h : Tendsto f atTop (nhds 3)) (hpos : ∀ x, 0 < f x) :
+    Tendsto (fun z ↦ f z) atTop (nhdsWithin 3 (Set.Ioi 0)) := by
+  tendsto_cont (within_disch := apply Filter.univ_mem')
+  guard_target = ∀ᶠ x in atTop, f x ∈ Set.Ioi 0
+  exact Filter.univ_mem' hpos
+
+-- The pointwise attempt still succeeds after a direct attempt that only partly solved the goal.
+example (h : Tendsto f atTop (nhds 3)) (hpos : ∀ x, 0 < f x) :
+    Tendsto (fun z ↦ f z) atTop (nhdsWithin 3 (Set.Ioi 0)) := by
+  tendsto_cont (within_disch := first | apply Filter.univ_mem' | exact hpos _)
+
+-- The constant-body path has the same rollback behavior.
+example : Tendsto (fun _ : ℝ ↦ (2 : ℝ)) atTop (nhdsWithin 2 (Set.Ioi 0)) := by
+  tendsto_cont (within_disch := skip)
+  guard_target = ∀ᶠ _ : ℝ in atTop, (2 : ℝ) ∈ Set.Ioi 0
+  exact Filter.univ_mem' (fun _ ↦ by norm_num)
+
 -- Without within_disch, the same nontrivial set goal is left open
 /--
 error: unsolved goals
